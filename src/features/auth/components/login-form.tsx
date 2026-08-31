@@ -18,6 +18,7 @@ import {
   FieldLabel,
 } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
+import { PasswordInput } from '@/components/password-input'
 import { mapAuthErrorToForm } from '../map-error-to-form'
 import { useLoginMutation } from '../mutations'
 import { loginSchema, type LoginFormValues } from '../schemas'
@@ -68,9 +69,8 @@ export function LoginForm() {
 
             <Field data-invalid={!!form.formState.errors.password}>
               <FieldLabel htmlFor="login-password">Password</FieldLabel>
-              <Input
+              <PasswordInput
                 id="login-password"
-                type="password"
                 autoComplete="current-password"
                 aria-invalid={!!form.formState.errors.password}
                 {...form.register('password')}
