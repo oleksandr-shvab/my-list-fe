@@ -1,14 +1,17 @@
+import { createFileRoute, redirect } from '@tanstack/react-router'
 import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { ThemeToggle } from '@/components/theme-toggle'
+import { useLogoutMutation } from '@/features/auth/mutations'
+import { useAuthStore } from '@/features/auth/store'
+
+export const Route = createFileRoute('/')({
+  beforeLoad: () => {
+    if (useAuthStore.getState().status !== 'authenticated') {
+      throw redirect({ to: '/login' })
+    }
+  },
+  component: HomePage,
+})
 
 const primaryScale = [
   { step: '50', color: 'oklch(0.97 0.02 355)' },
@@ -45,12 +48,26 @@ function Swatch({ label, color }: { label: string; color: string }) {
   )
 }
 
-function App() {
+function HomePage() {
+  const user = useAuthStore((state) => state.user)
+  const logout = useLogoutMutation()
+
   return (
     <div className="mx-auto flex min-h-svh max-w-3xl flex-col gap-10 px-6 py-10">
       <header className="flex items-center justify-between">
         <h1 className="text-2xl font-medium">MyList design preview</h1>
-        <ThemeToggle />
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-muted-foreground">{user?.email}</span>
+          <ThemeToggle />
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => logout.mutate()}
+            disabled={logout.isPending}
+          >
+            {logout.isPending ? 'Logging out…' : 'Logout'}
+          </Button>
+        </div>
       </header>
 
       <section className="flex flex-col gap-3">
@@ -93,25 +110,6 @@ function App() {
           <Button variant="link">Link</Button>
         </div>
       </section>
-
-      <section className="flex flex-col gap-3">
-        <h2 className="text-lg font-medium">Form preview</h2>
-        <Card className="max-w-sm">
-          <CardHeader>
-            <CardTitle>Sign up</CardTitle>
-            <CardDescription>Preview of the base form fields.</CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-3">
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="you@example.com" />
-            </div>
-            <Button className="w-full">Create account</Button>
-          </CardContent>
-        </Card>
-      </section>
     </div>
   )
 }
-
-export default App
