@@ -31,14 +31,22 @@ export const apiClient = axios.create({
   withCredentials: true,
 })
 
+function hasUsableDetail(
+  detail: string | ValidationErrorDetail[] | undefined,
+): detail is string | ValidationErrorDetail[] {
+  if (Array.isArray(detail)) return detail.length > 0
+  return typeof detail === 'string' && detail.trim().length > 0
+}
+
 apiClient.interceptors.response.use(
   (response) => response,
   (error: AxiosError<ErrorBody>) => {
     if (error.response) {
+      const detail = error.response.data?.detail
       return Promise.reject(
         new ApiError(
           error.response.status,
-          error.response.data?.detail ?? 'Something went wrong',
+          hasUsableDetail(detail) ? detail : 'Something went wrong',
         ),
       )
     }

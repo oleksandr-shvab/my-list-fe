@@ -10,6 +10,6 @@ export function meQueryOptions() {
     queryKey: authKeys.me,
     queryFn: getMe,
     retry: false,
-    staleTime: Infinity,
+    staleTime: 'static',
   })
 }

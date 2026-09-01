@@ -12,13 +12,17 @@ export function mapAuthErrorToForm(
   setError: UseFormSetError<AuthFormValues>,
 ) {
   if (error.isValidationError) {
+    const rootMessages: string[] = []
     for (const issue of error.detail as ValidationErrorDetail[]) {
       const field = issue.loc.at(-1)
       if (field === 'email' || field === 'password') {
         setError(field, { message: issue.msg })
       } else {
-        setError('root', { message: issue.msg })
+        rootMessages.push(issue.msg)
       }
+    }
+    if (rootMessages.length > 0) {
+      setError('root', { message: rootMessages.join(' ') })
     }
     return
   }
