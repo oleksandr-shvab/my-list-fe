@@ -57,6 +57,7 @@ Frontend only. Talks to a separate FastAPI backend (own repo: `item-list-backend
 - Path alias `@/` → `src/` (configured in `vite.config.ts` and the `paths` field of both `tsconfig.json` and `tsconfig.app.json`; no `baseUrl` — deprecated in the TS version this project pins)
 - Anything that touches the API goes through TanStack Query; Zustand only for state with no server counterpart
 - Client-side validation (Zod) is a UX convenience, not a security boundary — the backend re-validates everything regardless
+- Comments: only when the why isn't obvious from the code, 1-2 sentences max
 
 ## React conventions
 

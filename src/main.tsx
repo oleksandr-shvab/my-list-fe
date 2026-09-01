@@ -3,6 +3,7 @@ import { createRouter, RouterProvider } from '@tanstack/react-router'
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
+import './features/auth/session-guard'
 import { routeTree } from './routeTree.gen'
 
 const queryClient = new QueryClient()

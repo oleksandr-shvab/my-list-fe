@@ -45,12 +45,19 @@ export function useLogoutMutation() {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
 
-  return useMutation({
+  return useMutation<void, ApiError>({
     mutationFn: logoutRequest,
-    onSettled: () => {
+    onSettled: (_data, error) => {
+      // Clear locally regardless — a stale server session gets re-synced by getMe().
       useAuthStore.getState().clearUser()
       queryClient.clear()
       navigate({ to: '/login' })
+      if (error) {
+        console.error(
+          'Logout request failed; local session was cleared anyway.',
+          error,
+        )
+      }
     },
   })
 }
