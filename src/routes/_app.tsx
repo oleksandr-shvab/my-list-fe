@@ -2,6 +2,7 @@ import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
 
 import { AppSidebar } from '@/components/app-sidebar'
 import {
+  SIDEBAR_COOKIE_NAME,
   SidebarInset,
   SidebarProvider,
   SidebarTrigger,
@@ -23,7 +24,7 @@ export const Route = createFileRoute('/_app')({
 function getStoredSidebarOpen() {
   return !document.cookie
     .split('; ')
-    .some((entry) => entry === 'sidebar_state=false')
+    .some((entry) => entry === `${SIDEBAR_COOKIE_NAME}=false`)
 }
 
 function AppLayout() {

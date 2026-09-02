@@ -25,7 +25,7 @@ function Row({
   return (
     <div className="flex items-center justify-between gap-4">
       <span className="text-sm text-muted-foreground">{label}</span>
-      {children}
+      <div className="min-w-0">{children}</div>
     </div>
   )
 }
