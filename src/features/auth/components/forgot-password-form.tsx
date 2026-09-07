@@ -18,31 +18,50 @@ import {
   FieldLabel,
 } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
-import { PasswordInput } from '@/components/password-input'
 import { mapApiErrorToForm } from '../map-error-to-form'
-import { useLoginMutation } from '../mutations'
-import { loginSchema, type LoginFormValues } from '../schemas'
+import { useForgotPasswordMutation } from '../mutations'
+import { forgotPasswordSchema, type ForgotPasswordFormValues } from '../schemas'
 
-export function LoginForm() {
-  const form = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: { email: '', password: '' },
+export function ForgotPasswordForm() {
+  const form = useForm<ForgotPasswordFormValues>({
+    resolver: zodResolver(forgotPasswordSchema),
+    defaultValues: { email: '' },
   })
-  const login = useLoginMutation()
+  const forgotPassword = useForgotPasswordMutation()
 
-  function onSubmit(values: LoginFormValues) {
-    login.mutate(values, {
-      onError: (error) =>
-        mapApiErrorToForm(error, form.setError, ['email', 'password']),
+  function onSubmit(values: ForgotPasswordFormValues) {
+    forgotPassword.mutate(values, {
+      onError: (error) => mapApiErrorToForm(error, form.setError, ['email']),
     })
+  }
+
+  if (forgotPassword.isSuccess) {
+    return (
+      <Card className="w-full max-w-sm">
+        <CardHeader>
+          <CardTitle>Check your email</CardTitle>
+          <CardDescription>
+            If an account with that email exists, a reset link has been sent.
+          </CardDescription>
+        </CardHeader>
+        <CardFooter className="justify-center text-sm text-muted-foreground">
+          <Link
+            to="/login"
+            className="font-medium text-foreground underline underline-offset-4"
+          >
+            Back to log in
+          </Link>
+        </CardFooter>
+      </Card>
+    )
   }
 
   return (
     <Card className="w-full max-w-sm">
       <CardHeader>
-        <CardTitle>Log in</CardTitle>
+        <CardTitle>Forgot password</CardTitle>
         <CardDescription>
-          Enter your email and password to continue.
+          Enter your email and we&apos;ll send you a reset link.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -57,9 +76,9 @@ export function LoginForm() {
             )}
 
             <Field data-invalid={!!form.formState.errors.email}>
-              <FieldLabel htmlFor="login-email">Email</FieldLabel>
+              <FieldLabel htmlFor="forgot-password-email">Email</FieldLabel>
               <Input
-                id="login-email"
+                id="forgot-password-email"
                 type="email"
                 autoComplete="email"
                 aria-invalid={!!form.formState.errors.email}
@@ -68,38 +87,23 @@ export function LoginForm() {
               <FieldError errors={[form.formState.errors.email]} />
             </Field>
 
-            <Field data-invalid={!!form.formState.errors.password}>
-              <div className="flex items-center justify-between">
-                <FieldLabel htmlFor="login-password">Password</FieldLabel>
-                <Link
-                  to="/forgot-password"
-                  className="text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground"
-                >
-                  Forgot password?
-                </Link>
-              </div>
-              <PasswordInput
-                id="login-password"
-                autoComplete="current-password"
-                aria-invalid={!!form.formState.errors.password}
-                {...form.register('password')}
-              />
-              <FieldError errors={[form.formState.errors.password]} />
-            </Field>
-
-            <Button type="submit" className="w-full" disabled={login.isPending}>
-              {login.isPending ? 'Signing in…' : 'Log in'}
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={forgotPassword.isPending}
+            >
+              {forgotPassword.isPending ? 'Sending…' : 'Send reset link'}
             </Button>
           </FieldGroup>
         </form>
       </CardContent>
       <CardFooter className="justify-center text-sm text-muted-foreground">
-        Don&apos;t have an account?&nbsp;
+        Remembered your password?&nbsp;
         <Link
-          to="/register"
+          to="/login"
           className="font-medium text-foreground underline underline-offset-4"
         >
-          Sign up
+          Log in
         </Link>
       </CardFooter>
     </Card>

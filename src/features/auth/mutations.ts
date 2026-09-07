@@ -4,11 +4,26 @@ import {
   type QueryClient,
 } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
+import { toast } from 'sonner'
 import { ApiError } from '@/lib/api-client'
-import { loginRequest, logoutRequest, registerRequest } from './api'
+import {
+  forgotPasswordRequest,
+  loginRequest,
+  logoutRequest,
+  registerRequest,
+  resetPasswordRequest,
+  updatePasswordRequest,
+} from './api'
 import { authKeys } from './queries'
 import { useAuthStore } from './store'
-import type { LoginPayload, RegisterPayload, User } from './types'
+import type {
+  ForgotPasswordPayload,
+  LoginPayload,
+  RegisterPayload,
+  ResetPasswordPayload,
+  UpdatePasswordPayload,
+  User,
+} from './types'
 
 function onAuthSuccess(queryClient: QueryClient, user: User) {
   useAuthStore.getState().setUser(user)
@@ -58,6 +73,33 @@ export function useLogoutMutation() {
           error,
         )
       }
+    },
+  })
+}
+
+export function useForgotPasswordMutation() {
+  return useMutation<{ detail: string }, ApiError, ForgotPasswordPayload>({
+    mutationFn: forgotPasswordRequest,
+  })
+}
+
+export function useResetPasswordMutation() {
+  const navigate = useNavigate()
+
+  return useMutation<void, ApiError, ResetPasswordPayload>({
+    mutationFn: resetPasswordRequest,
+    onSuccess: () => {
+      toast.success('Password updated. Please log in again.')
+      navigate({ to: '/login' })
+    },
+  })
+}
+
+export function useUpdatePasswordMutation() {
+  return useMutation<void, ApiError, UpdatePasswordPayload>({
+    mutationFn: updatePasswordRequest,
+    onSuccess: () => {
+      toast.success('Password updated.')
     },
   })
 }

@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/field'
 import { Input } from '@/components/ui/input'
 import { PasswordInput } from '@/components/password-input'
-import { mapAuthErrorToForm } from '../map-error-to-form'
+import { mapApiErrorToForm } from '../map-error-to-form'
 import { useRegisterMutation } from '../mutations'
 import { registerSchema, type RegisterFormValues } from '../schemas'
 
@@ -32,7 +32,8 @@ export function RegisterForm() {
 
   function onSubmit(values: RegisterFormValues) {
     register.mutate(values, {
-      onError: (error) => mapAuthErrorToForm(error, form.setError),
+      onError: (error) =>
+        mapApiErrorToForm(error, form.setError, ['email', 'password']),
     })
   }
 
