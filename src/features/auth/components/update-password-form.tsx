@@ -37,11 +37,7 @@ export function UpdatePasswordForm() {
   }
 
   return (
-    <form
-      onSubmit={form.handleSubmit(onSubmit)}
-      noValidate
-      className="max-w-sm"
-    >
+    <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
       <FieldGroup>
         {form.formState.errors.root?.message && (
           <Alert variant="destructive">

@@ -1,10 +1,19 @@
 # Spec: Password reset & authenticated password update
 
-Status: draft — implementation not started.
+Status: implemented.
 Backend workflow is already shipped (`my-list-be`, branch `a2-password-reset-update`,
 merged) and documented in full in `../../../CONTRACTS.md` under "Password reset" /
 "Password update (authenticated)". This spec covers the frontend only and doesn't
 restate the backend contract beyond what's needed to justify a UI decision.
+
+**Amendment**: this spec originally called for a new standalone `/account` route
+(written before `h1-page-layout` — the nav bar / profile page work — was merged into
+`main`). Once merged, an authenticated `/profile` page already existed
+(`src/routes/_app/profile.tsx`), so the update-password form was folded into it as a
+second `Card` instead of living on its own route, to avoid two overlapping
+account-settings pages. References to `/account` below describe the original design
+intent (why an authenticated, in-app password form was needed at all) — the shipped
+location is `/profile`.
 
 ## Scope
 

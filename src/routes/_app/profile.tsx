@@ -9,6 +9,7 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
+import { UpdatePasswordForm } from '@/features/auth/components/update-password-form'
 import { useAuthStore } from '@/features/auth/store'
 
 export const Route = createFileRoute('/_app/profile')({
@@ -60,6 +61,18 @@ function ProfilePage() {
           <Row label="Theme">
             <ThemeToggle />
           </Row>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Password</CardTitle>
+          <CardDescription>
+            Update the password you use to log in.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <UpdatePasswordForm />
         </CardContent>
       </Card>
     </div>
