@@ -6,6 +6,7 @@ import {
 } from '@tanstack/react-router'
 import { ApiError } from '@/lib/api-client'
 import { Button } from '@/components/ui/button'
+import { Toaster } from '@/components/ui/sonner'
 import { meQueryOptions } from '@/features/auth/queries'
 import { useAuthStore } from '@/features/auth/store'
 
@@ -56,5 +57,10 @@ function RootError() {
 }
 
 function RootComponent() {
-  return <Outlet />
+  return (
+    <>
+      <Outlet />
+      <Toaster />
+    </>
+  )
 }

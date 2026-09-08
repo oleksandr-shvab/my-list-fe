@@ -72,4 +72,4 @@ not here, since they're only relevant while actively writing components — see
 
 ## Related
 
-Backend repo: `item-list-backend` (has its own `CLAUDE.md` with the corresponding backend-side decisions)
+Backend repo: `my-list-be` (has its own `CLAUDE.md` with the corresponding backend-side decisions). Cross-repo contract (auth cookie/session details, `/api` proxy convention, `field_schema` shape, image upload flow, OpenAPI/Orval sync) lives in `../CONTRACTS.md` — check it before changing anything that touches the backend boundary, and update it in the same pass if the contract shifts.

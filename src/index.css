@@ -169,3 +169,30 @@ body {
     @apply font-sans;
   }
 }
+
+/* Edge/IE render their own reveal/clear icons inside password inputs, overlapping
+   our custom PasswordInput toggle button and stealing clicks. */
+input[type='password']::-ms-reveal,
+input[type='password']::-ms-clear {
+  display: none;
+}
+
+/* Beats sonner's own injected [data-sonner-toast][data-styled='true'] rule (13px/16px),
+   which loads at Toaster mount time so source order alone can't be relied on. */
+[data-sonner-toast].cn-toast[data-styled='true'] {
+  font-size: 14px;
+  padding: 18px;
+}
+
+[data-sonner-toast].cn-toast[data-type='success'] [data-icon] {
+  color: var(--success-text);
+}
+[data-sonner-toast].cn-toast[data-type='error'] [data-icon] {
+  color: var(--error-text);
+}
+[data-sonner-toast].cn-toast[data-type='warning'] [data-icon] {
+  color: var(--warning-text);
+}
+[data-sonner-toast].cn-toast[data-type='info'] [data-icon] {
+  color: var(--info-text);
+}
