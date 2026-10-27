@@ -41,14 +41,21 @@ function RootPending() {
   )
 }
 
-function RootError() {
+function RootError({ error }: { error: Error }) {
   const router = useRouter()
+  const apiError = error instanceof ApiError ? error : null
+  const message = apiError?.isNetworkError
+    ? "Couldn't reach the server. Check your connection and try again."
+    : 'Something went wrong. Please try again.'
 
   return (
     <div className="flex min-h-svh flex-col items-center justify-center gap-3 px-6 text-center">
-      <p className="text-sm text-muted-foreground">
-        Couldn&apos;t reach the server. Check your connection and try again.
-      </p>
+      <p className="text-sm text-muted-foreground">{message}</p>
+      {apiError?.requestId && (
+        <p className="text-xs text-muted-foreground">
+          Reference: {apiError.requestId}
+        </p>
+      )}
       <Button type="button" onClick={() => router.invalidate()}>
         Try again
       </Button>
