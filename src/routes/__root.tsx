@@ -1,11 +1,6 @@
 import type { QueryClient } from '@tanstack/react-query'
-import {
-  createRootRouteWithContext,
-  Outlet,
-  useRouter,
-} from '@tanstack/react-router'
+import { createRootRouteWithContext, Outlet } from '@tanstack/react-router'
 import { ApiError } from '@/lib/api-client'
-import { Button } from '@/components/ui/button'
 import { Toaster } from '@/components/ui/sonner'
 import { meQueryOptions } from '@/features/auth/queries'
 import { useAuthStore } from '@/features/auth/store'
@@ -29,7 +24,6 @@ export const Route = createRootRouteWithContext<RouterContext>()({
     }
   },
   pendingComponent: RootPending,
-  errorComponent: RootError,
   component: RootComponent,
 })
 
@@ -37,28 +31,6 @@ function RootPending() {
   return (
     <div className="flex min-h-svh items-center justify-center">
       <div className="size-6 animate-spin rounded-full border-2 border-muted-foreground/30 border-t-foreground" />
-    </div>
-  )
-}
-
-function RootError({ error }: { error: Error }) {
-  const router = useRouter()
-  const apiError = error instanceof ApiError ? error : null
-  const message = apiError?.isNetworkError
-    ? "Couldn't reach the server. Check your connection and try again."
-    : 'Something went wrong. Please try again.'
-
-  return (
-    <div className="flex min-h-svh flex-col items-center justify-center gap-3 px-6 text-center">
-      <p className="text-sm text-muted-foreground">{message}</p>
-      {apiError?.requestId && (
-        <p className="text-xs text-muted-foreground">
-          Reference: {apiError.requestId}
-        </p>
-      )}
-      <Button type="button" onClick={() => router.invalidate()}>
-        Try again
-      </Button>
     </div>
   )
 }

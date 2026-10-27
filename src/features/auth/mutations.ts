@@ -4,8 +4,10 @@ import {
   type QueryClient,
 } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
+import i18n from '@/i18n'
 import { toast } from 'sonner'
 import type { AuthForgotPassword202 } from '@/api/generated/models'
+import { reportError } from '@/lib/report-error'
 import { ApiError } from '@/lib/api-client'
 import {
   forgotPasswordRequest,
@@ -69,9 +71,9 @@ export function useLogoutMutation() {
       queryClient.clear()
       navigate({ to: '/login' })
       if (error) {
-        console.error(
-          'Logout request failed; local session was cleared anyway.',
+        reportError(
           error,
+          'logout request failed; local session cleared anyway',
         )
       }
     },
@@ -90,7 +92,7 @@ export function useResetPasswordMutation() {
   return useMutation<void, ApiError, ResetPasswordPayload>({
     mutationFn: resetPasswordRequest,
     onSuccess: () => {
-      toast.success('Password updated. Please log in again.')
+      toast.success(i18n.t('toast.password_updated_relogin'))
       navigate({ to: '/login' })
     },
   })
@@ -100,7 +102,7 @@ export function useUpdatePasswordMutation() {
   return useMutation<void, ApiError, UpdatePasswordPayload>({
     mutationFn: updatePasswordRequest,
     onSuccess: () => {
-      toast.success('Password updated.')
+      toast.success(i18n.t('toast.password_updated'))
     },
   })
 }

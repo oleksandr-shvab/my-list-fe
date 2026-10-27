@@ -7,6 +7,8 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { ResetPasswordForm } from '@/features/auth/components/reset-password-form'
+import { useTranslation } from 'react-i18next'
+import { AuthPage } from '@/features/auth/components/auth-page'
 import { useAuthStore } from '@/features/auth/store'
 
 export const Route = createFileRoute('/reset-password')({
@@ -22,18 +24,19 @@ export const Route = createFileRoute('/reset-password')({
 })
 
 function ResetPasswordPage() {
+  const { t } = useTranslation()
   const { token } = Route.useSearch()
 
   return (
-    <div className="flex min-h-svh items-center justify-center px-6">
+    <AuthPage>
       {token ? (
         <ResetPasswordForm token={token} />
       ) : (
         <Card className="w-full max-w-sm">
           <CardHeader>
-            <CardTitle>Invalid reset link</CardTitle>
+            <CardTitle>{t('auth.reset.invalid_title')}</CardTitle>
             <CardDescription>
-              This password reset link is invalid or incomplete.
+              {t('auth.reset.invalid_description')}
             </CardDescription>
           </CardHeader>
           <CardContent className="text-center text-sm text-muted-foreground">
@@ -41,11 +44,11 @@ function ResetPasswordPage() {
               to="/forgot-password"
               className="font-medium text-foreground underline underline-offset-4"
             >
-              Request a new reset link
+              {t('auth.reset.request_new')}
             </Link>
           </CardContent>
         </Card>
       )}
-    </div>
+    </AuthPage>
   )
 }

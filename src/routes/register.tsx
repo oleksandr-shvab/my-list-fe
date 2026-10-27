@@ -1,5 +1,6 @@
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { RegisterForm } from '@/features/auth/components/register-form'
+import { AuthPage } from '@/features/auth/components/auth-page'
 import { useAuthStore } from '@/features/auth/store'
 
 export const Route = createFileRoute('/register')({
@@ -13,8 +14,8 @@ export const Route = createFileRoute('/register')({
 
 function RegisterPage() {
   return (
-    <div className="flex min-h-svh items-center justify-center px-6">
+    <AuthPage>
       <RegisterForm />
-    </div>
+    </AuthPage>
   )
 }

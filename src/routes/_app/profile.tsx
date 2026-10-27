@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { createFileRoute } from '@tanstack/react-router'
 
 import { ThemeToggle } from '@/components/theme-toggle'
@@ -32,33 +33,34 @@ function Row({
 }
 
 function ProfilePage() {
+  const { t, i18n } = useTranslation()
   const user = useAuthStore((state) => state.user)
 
   return (
     <div className="flex w-full max-w-xl flex-col gap-6">
-      <h1 className="text-2xl font-medium">Profile</h1>
+      <h1 className="text-2xl font-medium">{t('profile.title')}</h1>
 
       <Card>
         <CardHeader>
-          <CardTitle>Account</CardTitle>
-          <CardDescription>Your MyList account details.</CardDescription>
+          <CardTitle>{t('profile.account')}</CardTitle>
+          <CardDescription>{t('profile.account_description')}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
-          <Row label="Email">
+          <Row label={t('profile.email')}>
             <span className="truncate text-sm">{user?.email}</span>
           </Row>
           <Separator />
-          <Row label="Member since">
+          <Row label={t('profile.member_since')}>
             <span className="text-sm">
               {user
-                ? new Date(user.created_at).toLocaleDateString(undefined, {
+                ? new Date(user.created_at).toLocaleDateString(i18n.language, {
                     dateStyle: 'medium',
                   })
                 : '—'}
             </span>
           </Row>
           <Separator />
-          <Row label="Theme">
+          <Row label={t('theme.label')}>
             <ThemeToggle />
           </Row>
         </CardContent>
@@ -66,10 +68,8 @@ function ProfilePage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Password</CardTitle>
-          <CardDescription>
-            Update the password you use to log in.
-          </CardDescription>
+          <CardTitle>{t('profile.password')}</CardTitle>
+          <CardDescription>{t('profile.password_description')}</CardDescription>
         </CardHeader>
         <CardContent>
           <UpdatePasswordForm />

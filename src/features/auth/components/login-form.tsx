@@ -1,6 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Link } from '@tanstack/react-router'
+import { useMemo } from 'react'
 import { useForm } from 'react-hook-form'
+import { useTranslation } from 'react-i18next'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import {
@@ -21,11 +23,13 @@ import { Input } from '@/components/ui/input'
 import { PasswordInput } from '@/components/password-input'
 import { mapApiErrorToForm } from '../map-error-to-form'
 import { useLoginMutation } from '../mutations'
-import { loginSchema, type LoginFormValues } from '../schemas'
+import { createLoginSchema, type LoginFormValues } from '../schemas'
 
 export function LoginForm() {
+  const { t } = useTranslation()
+  const schema = useMemo(() => createLoginSchema(t), [t])
   const form = useForm<LoginFormValues>({
-    resolver: zodResolver(loginSchema),
+    resolver: zodResolver(schema),
     defaultValues: { email: '', password: '' },
   })
   const login = useLoginMutation()
@@ -33,17 +37,15 @@ export function LoginForm() {
   function onSubmit(values: LoginFormValues) {
     login.mutate(values, {
       onError: (error) =>
-        mapApiErrorToForm(error, form.setError, ['email', 'password']),
+        mapApiErrorToForm(error, form.setError, ['email', 'password'], t),
     })
   }
 
   return (
     <Card className="w-full max-w-sm">
       <CardHeader>
-        <CardTitle>Log in</CardTitle>
-        <CardDescription>
-          Enter your email and password to continue.
-        </CardDescription>
+        <CardTitle>{t('auth.login.title')}</CardTitle>
+        <CardDescription>{t('auth.login.description')}</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
@@ -57,7 +59,7 @@ export function LoginForm() {
             )}
 
             <Field data-invalid={!!form.formState.errors.email}>
-              <FieldLabel htmlFor="login-email">Email</FieldLabel>
+              <FieldLabel htmlFor="login-email">{t('auth.email')}</FieldLabel>
               <Input
                 id="login-email"
                 type="email"
@@ -70,12 +72,14 @@ export function LoginForm() {
 
             <Field data-invalid={!!form.formState.errors.password}>
               <div className="flex items-center justify-between">
-                <FieldLabel htmlFor="login-password">Password</FieldLabel>
+                <FieldLabel htmlFor="login-password">
+                  {t('auth.password')}
+                </FieldLabel>
                 <Link
                   to="/forgot-password"
                   className="text-xs text-muted-foreground underline underline-offset-4 hover:text-foreground"
                 >
-                  Forgot password?
+                  {t('auth.login.forgot_link')}
                 </Link>
               </div>
               <PasswordInput
@@ -88,18 +92,20 @@ export function LoginForm() {
             </Field>
 
             <Button type="submit" className="w-full" disabled={login.isPending}>
-              {login.isPending ? 'Signing in…' : 'Log in'}
+              {login.isPending
+                ? t('auth.login.submitting')
+                : t('auth.login.submit')}
             </Button>
           </FieldGroup>
         </form>
       </CardContent>
       <CardFooter className="justify-center text-sm text-muted-foreground">
-        Don&apos;t have an account?&nbsp;
+        {t('auth.login.no_account')}&nbsp;
         <Link
           to="/register"
           className="font-medium text-foreground underline underline-offset-4"
         >
-          Sign up
+          {t('auth.login.sign_up')}
         </Link>
       </CardFooter>
     </Card>

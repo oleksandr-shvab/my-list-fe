@@ -1,3 +1,4 @@
+import { LanguageSwitcher } from '@/components/language-switcher'
 import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
 
 import { AppSidebar } from '@/components/app-sidebar'
@@ -35,6 +36,7 @@ function AppLayout() {
         <SidebarInset>
           <header className="sticky top-0 z-10 flex h-14 shrink-0 items-center gap-2 border-b bg-background px-4">
             <SidebarTrigger className="-ms-1.5" />
+            <LanguageSwitcher className="ms-auto" />
           </header>
           <div className="flex flex-1 flex-col p-6">
             <Outlet />

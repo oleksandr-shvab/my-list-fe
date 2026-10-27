@@ -1,0 +1,140 @@
+{
+  "app": { "name": "MyList" },
+  "nav": {
+    "home": "Home",
+    "lists": "Lists",
+    "profile": "Profile",
+    "log_out": "Log out",
+    "logging_out": "Logging out…"
+  },
+  "theme": {
+    "switch_to_light": "Switch to light mode",
+    "switch_to_dark": "Switch to dark mode",
+    "label": "Theme"
+  },
+  "language": {
+    "label": "Language",
+    "en": "English",
+    "ru": "Русский"
+  },
+  "auth": {
+    "email": "Email",
+    "password": "Password",
+    "show_password": "Show password",
+    "hide_password": "Hide password",
+    "login": {
+      "title": "Log in",
+      "description": "Enter your email and password to continue.",
+      "submit": "Log in",
+      "submitting": "Signing in…",
+      "forgot_link": "Forgot password?",
+      "no_account": "Don't have an account?",
+      "sign_up": "Sign up"
+    },
+    "register": {
+      "title": "Create an account",
+      "description": "Sign up with your email and a password.",
+      "submit": "Create account",
+      "submitting": "Creating account…",
+      "have_account": "Already have an account?",
+      "log_in": "Log in"
+    },
+    "forgot": {
+      "title": "Forgot password",
+      "description": "Enter your email and we'll send you a reset link.",
+      "submit": "Send reset link",
+      "submitting": "Sending…",
+      "remembered": "Remembered your password?",
+      "log_in": "Log in",
+      "sent_title": "Check your email",
+      "sent_description": "If an account with that email exists, a reset link has been sent.",
+      "back_to_login": "Back to log in"
+    },
+    "reset": {
+      "title": "Reset password",
+      "description": "Choose a new password for your account.",
+      "new_password": "New password",
+      "confirm_password": "Confirm new password",
+      "submit": "Reset password",
+      "submitting": "Resetting…",
+      "invalid_title": "Invalid reset link",
+      "invalid_description": "This password reset link is invalid or incomplete.",
+      "request_new": "Request a new reset link"
+    },
+    "update": {
+      "current_password": "Current password",
+      "new_password": "New password",
+      "confirm_password": "Confirm new password",
+      "submit": "Update password",
+      "submitting": "Updating…"
+    }
+  },
+  "validation": {
+    "email_invalid": "Enter a valid email",
+    "password_required": "Password is required",
+    "current_password_required": "Current password is required",
+    "password_too_short_one": "Password must be at least {{count}} character",
+    "password_too_short_other": "Password must be at least {{count}} characters",
+    "password_too_long_one": "Password must be at most {{count}} character",
+    "password_too_long_other": "Password must be at most {{count}} characters",
+    "passwords_do_not_match": "Passwords do not match",
+    "new_password_same_as_old": "New password must be different from the current password"
+  },
+  "errors": {
+    "email_already_registered": "An account with this email already exists.",
+    "invalid_credentials": "Invalid email or password.",
+    "not_authenticated": "Please sign in to continue.",
+    "invalid_or_expired_reset_token": "This reset link is invalid or has expired. Request a new one.",
+    "incorrect_password": "The current password is incorrect.",
+    "passwords_do_not_match": "Passwords do not match.",
+    "new_password_same_as_old": "The new password must be different from the current one.",
+    "too_many_requests": "Too many attempts. Please wait a moment and try again.",
+    "service_unavailable": "The service is temporarily unavailable. Please try again soon.",
+    "internal_error": "Something went wrong on our side. Please try again.",
+    "network_error": "Network error. Check your connection and try again.",
+    "required": "This field is required.",
+    "too_short_one": "Must be at least {{count}} character.",
+    "too_short_other": "Must be at least {{count}} characters.",
+    "too_long_one": "Must be at most {{count}} character.",
+    "too_long_other": "Must be at most {{count}} characters.",
+    "invalid_value": "This value is not valid.",
+    "unknown": "Something went wrong. Please try again."
+  },
+  "toast": {
+    "password_updated": "Password updated.",
+    "password_updated_relogin": "Password updated. Please log in again."
+  },
+  "error_screen": {
+    "network": "Couldn't reach the server. Check your connection and try again.",
+    "generic": "Something went wrong. Please try again.",
+    "reference": "Reference: {{id}}",
+    "try_again": "Try again",
+    "not_found_title": "Page not found",
+    "not_found_text": "This page does not exist or was moved.",
+    "go_home": "Go to the home page"
+  },
+  "home": {
+    "welcome": "Welcome back",
+    "welcome_named": "Welcome back, {{email}}",
+    "intro": "Here's a quick jumping-off point for what you can do next.",
+    "lists_title": "Your lists",
+    "lists_description": "Browse and manage the lists you've created.",
+    "profile_title": "Profile",
+    "profile_description": "Update your account details and password.",
+    "new_title": "Start something new",
+    "new_description": "Create a new list to start tracking items."
+  },
+  "lists": {
+    "title": "Lists",
+    "empty": "Nothing here yet."
+  },
+  "profile": {
+    "title": "Profile",
+    "account": "Account",
+    "account_description": "Your MyList account details.",
+    "email": "Email",
+    "member_since": "Member since",
+    "password": "Password",
+    "password_description": "Update the password you use to log in."
+  }
+}
