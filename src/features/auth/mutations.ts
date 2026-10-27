@@ -5,6 +5,7 @@ import {
 } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import { toast } from 'sonner'
+import type { AuthForgotPassword202 } from '@/api/generated/models'
 import { ApiError } from '@/lib/api-client'
 import {
   forgotPasswordRequest,
@@ -78,7 +79,7 @@ export function useLogoutMutation() {
 }
 
 export function useForgotPasswordMutation() {
-  return useMutation<{ detail: string }, ApiError, ForgotPasswordPayload>({
+  return useMutation<AuthForgotPassword202, ApiError, ForgotPasswordPayload>({
     mutationFn: forgotPasswordRequest,
   })
 }

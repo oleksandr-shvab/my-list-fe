@@ -1,4 +1,13 @@
-import { apiClient } from '@/lib/api-client'
+import {
+  authForgotPassword,
+  authLogin,
+  authLogout,
+  authMe,
+  authRegister,
+  authResetPassword,
+  authUpdatePassword,
+} from '@/api/generated/api'
+import type { AuthForgotPassword202 } from '@/api/generated/models'
 import type {
   ForgotPasswordPayload,
   LoginPayload,
@@ -8,43 +17,38 @@ import type {
   User,
 } from './types'
 
-export async function registerRequest(payload: RegisterPayload): Promise<User> {
-  const { data } = await apiClient.post<User>('/auth/register', payload)
-  return data
+// Thin wrappers over the generated client, so queries and mutations keep their call sites.
+
+export function registerRequest(payload: RegisterPayload): Promise<User> {
+  return authRegister(payload)
 }
 
-export async function loginRequest(payload: LoginPayload): Promise<User> {
-  const { data } = await apiClient.post<User>('/auth/login', payload)
-  return data
+export function loginRequest(payload: LoginPayload): Promise<User> {
+  return authLogin(payload)
 }
 
 export async function logoutRequest(): Promise<void> {
-  await apiClient.post('/auth/logout')
+  await authLogout()
 }
 
-export async function getMe(): Promise<User> {
-  const { data } = await apiClient.get<User>('/auth/me')
-  return data
+export function getMe(): Promise<User> {
+  return authMe()
 }
 
-export async function forgotPasswordRequest(
+export function forgotPasswordRequest(
   payload: ForgotPasswordPayload,
-): Promise<{ detail: string }> {
-  const { data } = await apiClient.post<{ detail: string }>(
-    '/auth/forgot-password',
-    payload,
-  )
-  return data
+): Promise<AuthForgotPassword202> {
+  return authForgotPassword(payload)
 }
 
 export async function resetPasswordRequest(
   payload: ResetPasswordPayload,
 ): Promise<void> {
-  await apiClient.post('/auth/reset-password', payload)
+  await authResetPassword(payload)
 }
 
 export async function updatePasswordRequest(
   payload: UpdatePasswordPayload,
 ): Promise<void> {
-  await apiClient.post('/auth/update-password', payload)
+  await authUpdatePassword(payload)
 }
