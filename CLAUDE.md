@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project state
 
-This is the frontend for "MyList". Auth (register/login/logout) is the first real feature, built on TanStack Router + TanStack Query + Zustand + axios (see Stack below). There is still no test framework configured.
+This is the frontend for "MyList". Auth (register/login/logout) is the first real feature, built on TanStack Router + TanStack Query + Zustand + axios (see Stack below). Unit tests run on Vitest (`npm test`; config in `vitest.config.ts`, files named `*.test.ts` next to the code). CI (`.github/workflows/ci.yml`) runs lint, format check, type check and build, and the tests. No component or end-to-end tests yet.
 
 ## Commands
 
@@ -13,7 +13,7 @@ This is the frontend for "MyList". Auth (register/login/logout) is the first rea
 - `npm run lint` — run ESLint over the project
 - `npm run preview` — serve the production build locally
 
-There is no test script configured in [package.json](package.json).
+- `npm test` — run the Vitest unit tests once (`npm run test:watch` to watch)
 
 ## Architecture
 

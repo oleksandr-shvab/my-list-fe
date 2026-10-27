@@ -1,2 +1,4 @@
 dist
 node_modules
+# Vendored by the shadcn CLI; not hand-edited (see CLAUDE.md).
+src/components/ui
