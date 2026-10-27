@@ -1,32 +1,10 @@
-export type User = {
-  id: string
-  email: string
-  is_active: boolean
-  created_at: string
-}
-
-export type RegisterPayload = {
-  email: string
-  password: string
-}
-
-export type LoginPayload = {
-  email: string
-  password: string
-}
-
-export type ForgotPasswordPayload = {
-  email: string
-}
-
-export type ResetPasswordPayload = {
-  token: string
-  new_password: string
-  confirm_password: string
-}
-
-export type UpdatePasswordPayload = {
-  old_password: string
-  new_password: string
-  confirm_password: string
-}
+// The backend's models, generated from its OpenAPI snapshot (npm run api:generate). These names
+// are what the rest of the app imports; do not hand-write backend shapes here.
+export type {
+  UserRead as User,
+  UserRegister as RegisterPayload,
+  UserLogin as LoginPayload,
+  ForgotPasswordRequest as ForgotPasswordPayload,
+  ResetPasswordRequest as ResetPasswordPayload,
+  UpdatePasswordRequest as UpdatePasswordPayload,
+} from '@/api/generated/models'
