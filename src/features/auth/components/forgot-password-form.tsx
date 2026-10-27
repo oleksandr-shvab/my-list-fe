@@ -1,6 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Link } from '@tanstack/react-router'
+import { useMemo } from 'react'
 import { useForm } from 'react-hook-form'
+import { useTranslation } from 'react-i18next'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import {
@@ -20,18 +22,23 @@ import {
 import { Input } from '@/components/ui/input'
 import { mapApiErrorToForm } from '../map-error-to-form'
 import { useForgotPasswordMutation } from '../mutations'
-import { forgotPasswordSchema, type ForgotPasswordFormValues } from '../schemas'
+import {
+  createForgotPasswordSchema,
+  type ForgotPasswordFormValues,
+} from '../schemas'
 
 export function ForgotPasswordForm() {
+  const { t } = useTranslation()
+  const schema = useMemo(() => createForgotPasswordSchema(t), [t])
   const form = useForm<ForgotPasswordFormValues>({
-    resolver: zodResolver(forgotPasswordSchema),
+    resolver: zodResolver(schema),
     defaultValues: { email: '' },
   })
   const forgotPassword = useForgotPasswordMutation()
 
   function onSubmit(values: ForgotPasswordFormValues) {
     forgotPassword.mutate(values, {
-      onError: (error) => mapApiErrorToForm(error, form.setError, ['email']),
+      onError: (error) => mapApiErrorToForm(error, form.setError, ['email'], t),
     })
   }
 
@@ -39,17 +46,15 @@ export function ForgotPasswordForm() {
     return (
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle>Check your email</CardTitle>
-          <CardDescription>
-            If an account with that email exists, a reset link has been sent.
-          </CardDescription>
+          <CardTitle>{t('auth.forgot.sent_title')}</CardTitle>
+          <CardDescription>{t('auth.forgot.sent_description')}</CardDescription>
         </CardHeader>
         <CardFooter className="justify-center text-sm text-muted-foreground">
           <Link
             to="/login"
             className="font-medium text-foreground underline underline-offset-4"
           >
-            Back to log in
+            {t('auth.forgot.back_to_login')}
           </Link>
         </CardFooter>
       </Card>
@@ -59,10 +64,8 @@ export function ForgotPasswordForm() {
   return (
     <Card className="w-full max-w-sm">
       <CardHeader>
-        <CardTitle>Forgot password</CardTitle>
-        <CardDescription>
-          Enter your email and we&apos;ll send you a reset link.
-        </CardDescription>
+        <CardTitle>{t('auth.forgot.title')}</CardTitle>
+        <CardDescription>{t('auth.forgot.description')}</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
@@ -76,7 +79,9 @@ export function ForgotPasswordForm() {
             )}
 
             <Field data-invalid={!!form.formState.errors.email}>
-              <FieldLabel htmlFor="forgot-password-email">Email</FieldLabel>
+              <FieldLabel htmlFor="forgot-password-email">
+                {t('auth.email')}
+              </FieldLabel>
               <Input
                 id="forgot-password-email"
                 type="email"
@@ -92,18 +97,20 @@ export function ForgotPasswordForm() {
               className="w-full"
               disabled={forgotPassword.isPending}
             >
-              {forgotPassword.isPending ? 'Sending…' : 'Send reset link'}
+              {forgotPassword.isPending
+                ? t('auth.forgot.submitting')
+                : t('auth.forgot.submit')}
             </Button>
           </FieldGroup>
         </form>
       </CardContent>
       <CardFooter className="justify-center text-sm text-muted-foreground">
-        Remembered your password?&nbsp;
+        {t('auth.forgot.remembered')}&nbsp;
         <Link
           to="/login"
           className="font-medium text-foreground underline underline-offset-4"
         >
-          Log in
+          {t('auth.forgot.log_in')}
         </Link>
       </CardFooter>
     </Card>

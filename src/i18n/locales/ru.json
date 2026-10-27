@@ -1,0 +1,148 @@
+{
+  "app": { "name": "MyList" },
+  "nav": {
+    "home": "Главная",
+    "lists": "Списки",
+    "profile": "Профиль",
+    "log_out": "Выйти",
+    "logging_out": "Выходим…"
+  },
+  "theme": {
+    "switch_to_light": "Включить светлую тему",
+    "switch_to_dark": "Включить тёмную тему",
+    "label": "Тема"
+  },
+  "language": {
+    "label": "Язык",
+    "en": "English",
+    "ru": "Русский"
+  },
+  "auth": {
+    "email": "Электронная почта",
+    "password": "Пароль",
+    "show_password": "Показать пароль",
+    "hide_password": "Скрыть пароль",
+    "login": {
+      "title": "Вход",
+      "description": "Введите почту и пароль, чтобы продолжить.",
+      "submit": "Войти",
+      "submitting": "Входим…",
+      "forgot_link": "Забыли пароль?",
+      "no_account": "Нет аккаунта?",
+      "sign_up": "Зарегистрироваться"
+    },
+    "register": {
+      "title": "Создать аккаунт",
+      "description": "Зарегистрируйтесь с помощью почты и пароля.",
+      "submit": "Создать аккаунт",
+      "submitting": "Создаём аккаунт…",
+      "have_account": "Уже есть аккаунт?",
+      "log_in": "Войти"
+    },
+    "forgot": {
+      "title": "Восстановление пароля",
+      "description": "Введите почту, и мы отправим ссылку для сброса пароля.",
+      "submit": "Отправить ссылку",
+      "submitting": "Отправляем…",
+      "remembered": "Вспомнили пароль?",
+      "log_in": "Войти",
+      "sent_title": "Проверьте почту",
+      "sent_description": "Если аккаунт с такой почтой существует, мы отправили ссылку для сброса пароля.",
+      "back_to_login": "Вернуться ко входу"
+    },
+    "reset": {
+      "title": "Сброс пароля",
+      "description": "Придумайте новый пароль для аккаунта.",
+      "new_password": "Новый пароль",
+      "confirm_password": "Повторите новый пароль",
+      "submit": "Сбросить пароль",
+      "submitting": "Сбрасываем…",
+      "invalid_title": "Недействительная ссылка",
+      "invalid_description": "Эта ссылка для сброса пароля недействительна или неполная.",
+      "request_new": "Запросить новую ссылку"
+    },
+    "update": {
+      "current_password": "Текущий пароль",
+      "new_password": "Новый пароль",
+      "confirm_password": "Повторите новый пароль",
+      "submit": "Обновить пароль",
+      "submitting": "Обновляем…"
+    }
+  },
+  "validation": {
+    "email_invalid": "Введите корректный адрес почты",
+    "password_required": "Введите пароль",
+    "current_password_required": "Введите текущий пароль",
+    "password_too_short_one": "Пароль должен содержать не менее {{count}} символа",
+    "password_too_short_few": "Пароль должен содержать не менее {{count}} символов",
+    "password_too_short_many": "Пароль должен содержать не менее {{count}} символов",
+    "password_too_short_other": "Пароль должен содержать не менее {{count}} символа",
+    "password_too_long_one": "Пароль должен содержать не более {{count}} символа",
+    "password_too_long_few": "Пароль должен содержать не более {{count}} символов",
+    "password_too_long_many": "Пароль должен содержать не более {{count}} символов",
+    "password_too_long_other": "Пароль должен содержать не более {{count}} символа",
+    "passwords_do_not_match": "Пароли не совпадают",
+    "new_password_same_as_old": "Новый пароль должен отличаться от текущего"
+  },
+  "errors": {
+    "email_already_registered": "Аккаунт с такой почтой уже существует.",
+    "invalid_credentials": "Неверная почта или пароль.",
+    "not_authenticated": "Войдите, чтобы продолжить.",
+    "invalid_or_expired_reset_token": "Ссылка недействительна или устарела. Запросите новую.",
+    "incorrect_password": "Текущий пароль неверный.",
+    "passwords_do_not_match": "Пароли не совпадают.",
+    "new_password_same_as_old": "Новый пароль должен отличаться от текущего.",
+    "too_many_requests": "Слишком много попыток. Подождите немного и попробуйте снова.",
+    "service_unavailable": "Сервис временно недоступен. Попробуйте чуть позже.",
+    "internal_error": "На нашей стороне что-то пошло не так. Попробуйте ещё раз.",
+    "network_error": "Ошибка сети. Проверьте подключение и попробуйте снова.",
+    "required": "Это поле обязательно.",
+    "too_short_one": "Не менее {{count}} символа.",
+    "too_short_few": "Не менее {{count}} символов.",
+    "too_short_many": "Не менее {{count}} символов.",
+    "too_short_other": "Не менее {{count}} символа.",
+    "too_long_one": "Не более {{count}} символа.",
+    "too_long_few": "Не более {{count}} символов.",
+    "too_long_many": "Не более {{count}} символов.",
+    "too_long_other": "Не более {{count}} символа.",
+    "invalid_value": "Некорректное значение.",
+    "unknown": "Что-то пошло не так. Попробуйте ещё раз."
+  },
+  "toast": {
+    "password_updated": "Пароль обновлён.",
+    "password_updated_relogin": "Пароль обновлён. Войдите снова."
+  },
+  "error_screen": {
+    "network": "Не удалось связаться с сервером. Проверьте подключение и попробуйте снова.",
+    "generic": "Что-то пошло не так. Попробуйте ещё раз.",
+    "reference": "Код обращения: {{id}}",
+    "try_again": "Попробовать снова",
+    "not_found_title": "Страница не найдена",
+    "not_found_text": "Такой страницы нет или она была перенесена.",
+    "go_home": "На главную"
+  },
+  "home": {
+    "welcome": "С возвращением",
+    "welcome_named": "С возвращением, {{email}}",
+    "intro": "Вот с чего можно начать.",
+    "lists_title": "Ваши списки",
+    "lists_description": "Просматривайте списки, которые вы создали, и управляйте ими.",
+    "profile_title": "Профиль",
+    "profile_description": "Измените данные аккаунта и пароль.",
+    "new_title": "Начать новое",
+    "new_description": "Создайте новый список, чтобы начать вести учёт."
+  },
+  "lists": {
+    "title": "Списки",
+    "empty": "Пока ничего нет."
+  },
+  "profile": {
+    "title": "Профиль",
+    "account": "Аккаунт",
+    "account_description": "Данные вашего аккаунта MyList.",
+    "email": "Электронная почта",
+    "member_since": "С нами с",
+    "password": "Пароль",
+    "password_description": "Измените пароль, который вы используете для входа."
+  }
+}

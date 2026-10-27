@@ -1,5 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useMemo } from 'react'
 import { useForm } from 'react-hook-form'
+import { useTranslation } from 'react-i18next'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import {
@@ -18,11 +20,16 @@ import {
 import { PasswordInput } from '@/components/password-input'
 import { mapApiErrorToForm } from '../map-error-to-form'
 import { useResetPasswordMutation } from '../mutations'
-import { resetPasswordSchema, type ResetPasswordFormValues } from '../schemas'
+import {
+  createResetPasswordSchema,
+  type ResetPasswordFormValues,
+} from '../schemas'
 
 export function ResetPasswordForm({ token }: { token: string }) {
+  const { t } = useTranslation()
+  const schema = useMemo(() => createResetPasswordSchema(t), [t])
   const form = useForm<ResetPasswordFormValues>({
-    resolver: zodResolver(resetPasswordSchema),
+    resolver: zodResolver(schema),
     defaultValues: { new_password: '', confirm_password: '' },
   })
   const resetPassword = useResetPasswordMutation()
@@ -32,10 +39,12 @@ export function ResetPasswordForm({ token }: { token: string }) {
       { token, ...values },
       {
         onError: (error) =>
-          mapApiErrorToForm(error, form.setError, [
-            'new_password',
-            'confirm_password',
-          ]),
+          mapApiErrorToForm(
+            error,
+            form.setError,
+            ['new_password', 'confirm_password'],
+            t,
+          ),
       },
     )
   }
@@ -43,10 +52,8 @@ export function ResetPasswordForm({ token }: { token: string }) {
   return (
     <Card className="w-full max-w-sm">
       <CardHeader>
-        <CardTitle>Reset password</CardTitle>
-        <CardDescription>
-          Choose a new password for your account.
-        </CardDescription>
+        <CardTitle>{t('auth.reset.title')}</CardTitle>
+        <CardDescription>{t('auth.reset.description')}</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
@@ -60,7 +67,9 @@ export function ResetPasswordForm({ token }: { token: string }) {
             )}
 
             <Field data-invalid={!!form.formState.errors.new_password}>
-              <FieldLabel htmlFor="reset-password-new">New password</FieldLabel>
+              <FieldLabel htmlFor="reset-password-new">
+                {t('auth.reset.new_password')}
+              </FieldLabel>
               <PasswordInput
                 id="reset-password-new"
                 autoComplete="new-password"
@@ -72,7 +81,7 @@ export function ResetPasswordForm({ token }: { token: string }) {
 
             <Field data-invalid={!!form.formState.errors.confirm_password}>
               <FieldLabel htmlFor="reset-password-confirm">
-                Confirm new password
+                {t('auth.reset.confirm_password')}
               </FieldLabel>
               <PasswordInput
                 id="reset-password-confirm"
@@ -88,7 +97,9 @@ export function ResetPasswordForm({ token }: { token: string }) {
               className="w-full"
               disabled={resetPassword.isPending}
             >
-              {resetPassword.isPending ? 'Resetting…' : 'Reset password'}
+              {resetPassword.isPending
+                ? t('auth.reset.submitting')
+                : t('auth.reset.submit')}
             </Button>
           </FieldGroup>
         </form>

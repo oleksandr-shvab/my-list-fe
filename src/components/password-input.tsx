@@ -1,5 +1,6 @@
 import { Eye, EyeOff } from 'lucide-react'
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/utils'
@@ -7,6 +8,7 @@ import { cn } from '@/lib/utils'
 type PasswordInputProps = Omit<React.ComponentProps<typeof Input>, 'type'>
 
 export function PasswordInput({ className, ...props }: PasswordInputProps) {
+  const { t } = useTranslation()
   const [visible, setVisible] = useState(false)
 
   return (
@@ -21,7 +23,7 @@ export function PasswordInput({ className, ...props }: PasswordInputProps) {
         variant="ghost"
         size="icon-sm"
         className="absolute inset-y-0 right-1 my-auto text-muted-foreground hover:text-foreground"
-        aria-label={visible ? 'Hide password' : 'Show password'}
+        aria-label={visible ? t('auth.hide_password') : t('auth.show_password')}
         aria-pressed={visible}
         onClick={() => setVisible((value) => !value)}
       >

@@ -1,6 +1,8 @@
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Link } from '@tanstack/react-router'
+import { useMemo } from 'react'
 import { useForm } from 'react-hook-form'
+import { useTranslation } from 'react-i18next'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import {
@@ -21,11 +23,13 @@ import { Input } from '@/components/ui/input'
 import { PasswordInput } from '@/components/password-input'
 import { mapApiErrorToForm } from '../map-error-to-form'
 import { useRegisterMutation } from '../mutations'
-import { registerSchema, type RegisterFormValues } from '../schemas'
+import { createRegisterSchema, type RegisterFormValues } from '../schemas'
 
 export function RegisterForm() {
+  const { t } = useTranslation()
+  const schema = useMemo(() => createRegisterSchema(t), [t])
   const form = useForm<RegisterFormValues>({
-    resolver: zodResolver(registerSchema),
+    resolver: zodResolver(schema),
     defaultValues: { email: '', password: '' },
   })
   const register = useRegisterMutation()
@@ -33,17 +37,15 @@ export function RegisterForm() {
   function onSubmit(values: RegisterFormValues) {
     register.mutate(values, {
       onError: (error) =>
-        mapApiErrorToForm(error, form.setError, ['email', 'password']),
+        mapApiErrorToForm(error, form.setError, ['email', 'password'], t),
     })
   }
 
   return (
     <Card className="w-full max-w-sm">
       <CardHeader>
-        <CardTitle>Create an account</CardTitle>
-        <CardDescription>
-          Sign up with your email and a password.
-        </CardDescription>
+        <CardTitle>{t('auth.register.title')}</CardTitle>
+        <CardDescription>{t('auth.register.description')}</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={form.handleSubmit(onSubmit)} noValidate>
@@ -57,7 +59,9 @@ export function RegisterForm() {
             )}
 
             <Field data-invalid={!!form.formState.errors.email}>
-              <FieldLabel htmlFor="register-email">Email</FieldLabel>
+              <FieldLabel htmlFor="register-email">
+                {t('auth.email')}
+              </FieldLabel>
               <Input
                 id="register-email"
                 type="email"
@@ -69,7 +73,9 @@ export function RegisterForm() {
             </Field>
 
             <Field data-invalid={!!form.formState.errors.password}>
-              <FieldLabel htmlFor="register-password">Password</FieldLabel>
+              <FieldLabel htmlFor="register-password">
+                {t('auth.password')}
+              </FieldLabel>
               <PasswordInput
                 id="register-password"
                 autoComplete="new-password"
@@ -84,18 +90,20 @@ export function RegisterForm() {
               className="w-full"
               disabled={register.isPending}
             >
-              {register.isPending ? 'Creating account…' : 'Create account'}
+              {register.isPending
+                ? t('auth.register.submitting')
+                : t('auth.register.submit')}
             </Button>
           </FieldGroup>
         </form>
       </CardContent>
       <CardFooter className="justify-center text-sm text-muted-foreground">
-        Already have an account?&nbsp;
+        {t('auth.register.have_account')}&nbsp;
         <Link
           to="/login"
           className="font-medium text-foreground underline underline-offset-4"
         >
-          Log in
+          {t('auth.register.log_in')}
         </Link>
       </CardFooter>
     </Card>

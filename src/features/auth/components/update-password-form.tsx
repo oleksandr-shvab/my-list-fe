@@ -1,5 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useMemo } from 'react'
 import { useForm } from 'react-hook-form'
+import { useTranslation } from 'react-i18next'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import {
@@ -11,11 +13,16 @@ import {
 import { PasswordInput } from '@/components/password-input'
 import { mapApiErrorToForm } from '../map-error-to-form'
 import { useUpdatePasswordMutation } from '../mutations'
-import { updatePasswordSchema, type UpdatePasswordFormValues } from '../schemas'
+import {
+  createUpdatePasswordSchema,
+  type UpdatePasswordFormValues,
+} from '../schemas'
 
 export function UpdatePasswordForm() {
+  const { t } = useTranslation()
+  const schema = useMemo(() => createUpdatePasswordSchema(t), [t])
   const form = useForm<UpdatePasswordFormValues>({
-    resolver: zodResolver(updatePasswordSchema),
+    resolver: zodResolver(schema),
     defaultValues: {
       old_password: '',
       new_password: '',
@@ -28,11 +35,12 @@ export function UpdatePasswordForm() {
     updatePassword.mutate(values, {
       onSuccess: () => form.reset(),
       onError: (error) =>
-        mapApiErrorToForm(error, form.setError, [
-          'old_password',
-          'new_password',
-          'confirm_password',
-        ]),
+        mapApiErrorToForm(
+          error,
+          form.setError,
+          ['old_password', 'new_password', 'confirm_password'],
+          t,
+        ),
     })
   }
 
@@ -49,7 +57,7 @@ export function UpdatePasswordForm() {
 
         <Field data-invalid={!!form.formState.errors.old_password}>
           <FieldLabel htmlFor="update-password-old">
-            Current password
+            {t('auth.update.current_password')}
           </FieldLabel>
           <PasswordInput
             id="update-password-old"
@@ -61,7 +69,9 @@ export function UpdatePasswordForm() {
         </Field>
 
         <Field data-invalid={!!form.formState.errors.new_password}>
-          <FieldLabel htmlFor="update-password-new">New password</FieldLabel>
+          <FieldLabel htmlFor="update-password-new">
+            {t('auth.update.new_password')}
+          </FieldLabel>
           <PasswordInput
             id="update-password-new"
             autoComplete="new-password"
@@ -73,7 +83,7 @@ export function UpdatePasswordForm() {
 
         <Field data-invalid={!!form.formState.errors.confirm_password}>
           <FieldLabel htmlFor="update-password-confirm">
-            Confirm new password
+            {t('auth.update.confirm_password')}
           </FieldLabel>
           <PasswordInput
             id="update-password-confirm"
@@ -89,7 +99,9 @@ export function UpdatePasswordForm() {
           className="w-full"
           disabled={updatePassword.isPending}
         >
-          {updatePassword.isPending ? 'Updating…' : 'Update password'}
+          {updatePassword.isPending
+            ? t('auth.update.submitting')
+            : t('auth.update.submit')}
         </Button>
       </FieldGroup>
     </form>

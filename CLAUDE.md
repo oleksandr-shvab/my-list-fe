@@ -66,6 +66,14 @@ not here, since they're only relevant while actively writing components — see
 `react-state-patterns`, `react-hooks-and-effects`, `react-component-api`, and
 `react-rendering-and-perf` under `.claude/skills/`.
 
+## Translations (English and Russian)
+
+- react-i18next, set up in `src/i18n/` (imported first in `main.tsx`). Texts live in `src/i18n/locales/en.json` and `ru.json`; keys are typed from the English file, so `t('auth.login.title')` is checked by `tsc`. A Vitest test fails when the two files have different keys (plural suffixes aside).
+- Never write user-visible text in a component: add a key to both catalogues. Russian plurals need `_one`, `_few`, `_many`, `_other` forms and a `count` param.
+- The language is chosen by: the saved choice (`localStorage` key `language`), else the browser's language if it is English or Russian, else English (`src/i18n/language.ts`). `<html lang>` follows. The language switcher is `src/components/language-switcher.tsx`. Saving it on the account comes with a backend field later.
+- Backend errors are translated by `code`: `errors.<code>` in the catalogues (`src/lib/error-messages.ts`); an unknown code shows `errors.unknown`, never the backend's English. Zod schemas are built with the current `t` (`createLoginSchema(t)` in `useMemo`).
+- Errors: unexpected errors go through `src/lib/report-error.ts` (the future error tracker hook); Query retries only network errors, 5xx, 408 and 429, at most twice (`src/lib/query-retry.ts`); an old tab that fails to load a lazy chunk after a deploy reloads once (`src/lib/version-skew.ts`).
+
 ## Known cleanup item
 
 `src/index.css` still carries the original template's CSS custom properties (`--border`, `--accent`, etc.) alongside the CSS variables `shadcn init` added for its own theme — a few names collide (e.g. `--border`, `--accent` now hold shadcn's oklch values, not the template's original hex/rgba ones). Real UI has now landed (auth pages, `src/routes/index.tsx`), so this collision is live, not just latent — worth cleaning up the next time this file is touched.

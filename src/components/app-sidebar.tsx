@@ -1,4 +1,5 @@
 import { Link, useMatchRoute } from '@tanstack/react-router'
+import { useTranslation } from 'react-i18next'
 import { House, ListChecks, LogOut, User } from 'lucide-react'
 
 import { ThemeToggle } from '@/components/theme-toggle'
@@ -19,11 +20,12 @@ import { useLogoutMutation } from '@/features/auth/mutations'
 import { useAuthStore } from '@/features/auth/store'
 
 const navItems = [
-  { to: '/', label: 'Home', icon: House, exact: true },
-  { to: '/lists', label: 'Lists', icon: ListChecks, exact: false },
+  { to: '/', labelKey: 'nav.home', icon: House, exact: true },
+  { to: '/lists', labelKey: 'nav.lists', icon: ListChecks, exact: false },
 ] as const
 
 export function AppSidebar() {
+  const { t } = useTranslation()
   const matchRoute = useMatchRoute()
   const { isMobile, setOpenMobile } = useSidebar()
   const email = useAuthStore((state) => state.user?.email)
@@ -43,7 +45,7 @@ export function AppSidebar() {
               <span className="flex aspect-square size-8 shrink-0 items-center justify-center rounded-lg bg-primary font-medium text-primary-foreground">
                 M
               </span>
-              <span className="truncate font-medium">MyList</span>
+              <span className="truncate font-medium">{t('app.name')}</span>
             </Link>
           </SidebarMenuButton>
           <ThemeToggle className="shrink-0 group-data-[collapsible=icon]:hidden" />
@@ -58,12 +60,12 @@ export function AppSidebar() {
                 <SidebarMenuItem key={item.to}>
                   <SidebarMenuButton
                     asChild
-                    tooltip={item.label}
+                    tooltip={t(item.labelKey)}
                     isActive={!!matchRoute({ to: item.to, fuzzy: !item.exact })}
                   >
                     <Link to={item.to} onClick={closeMobileSidebar}>
                       <item.icon />
-                      <span>{item.label}</span>
+                      <span>{t(item.labelKey)}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -79,7 +81,7 @@ export function AppSidebar() {
             <SidebarMenuButton
               size="lg"
               asChild
-              tooltip="Profile"
+              tooltip={t('nav.profile')}
               isActive={!!matchRoute({ to: '/profile', fuzzy: true })}
             >
               <Link to="/profile" onClick={closeMobileSidebar}>
@@ -87,7 +89,9 @@ export function AppSidebar() {
                   <User />
                 </span>
                 <span className="grid flex-1 leading-tight">
-                  <span className="truncate font-medium">Profile</span>
+                  <span className="truncate font-medium">
+                    {t('nav.profile')}
+                  </span>
                   <span className="truncate text-xs text-sidebar-foreground/70">
                     {email}
                   </span>
@@ -97,12 +101,14 @@ export function AppSidebar() {
           </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButton
-              tooltip="Log out"
+              tooltip={t('nav.log_out')}
               onClick={() => logout.mutate()}
               disabled={logout.isPending}
             >
               <LogOut />
-              <span>{logout.isPending ? 'Logging out…' : 'Log out'}</span>
+              <span>
+                {logout.isPending ? t('nav.logging_out') : t('nav.log_out')}
+              </span>
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
