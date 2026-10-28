@@ -24,5 +24,8 @@ Object.defineProperty(window, 'matchMedia', {
   }),
 })
 
+// The router scrolls to the top after a navigation; jsdom only prints "not implemented".
+window.scrollTo = noop
+
 // Testing Library only cleans up by itself when the test globals are on, and they are not.
 afterEach(cleanup)
