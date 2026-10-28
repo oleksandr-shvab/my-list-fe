@@ -24,6 +24,18 @@ Object.defineProperty(window, 'matchMedia', {
   }),
 })
 
+// Radix measures its popups (the sidebar tooltips) with ResizeObserver. jsdom has none, so a
+// tooltip that opens during a test would crash the page it is on.
+class ResizeObserverStub {
+  observe = noop
+  unobserve = noop
+  disconnect = noop
+}
+Object.defineProperty(window, 'ResizeObserver', {
+  writable: true,
+  value: ResizeObserverStub,
+})
+
 // The router scrolls to the top after a navigation; jsdom only prints "not implemented".
 window.scrollTo = noop
 
