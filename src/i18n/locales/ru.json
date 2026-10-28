@@ -18,7 +18,9 @@
       "name": "Game Guesser"
     },
     "coming_soon": "Эта игра скоро появится.",
-    "puzzle_date": "Загадка на {{date}}"
+    "puzzle_date": "Загадка на {{date}}",
+    "error": "В игре произошла ошибка.",
+    "loading": "Загружаем игру…"
   },
   "theme": {
     "switch_to_light": "Включить светлую тему",

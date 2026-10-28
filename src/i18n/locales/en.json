@@ -18,7 +18,9 @@
       "name": "Game Guesser"
     },
     "coming_soon": "This game is coming soon.",
-    "puzzle_date": "Puzzle for {{date}}"
+    "puzzle_date": "Puzzle for {{date}}",
+    "error": "This game ran into a problem.",
+    "loading": "Loading the game…"
   },
   "theme": {
     "switch_to_light": "Switch to light mode",
