@@ -1,17 +1,14 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { formatPuzzleDate, parsePuzzleDate, todayUtc } from './utc-date'
 
-const originalTimeZone = process.env.TZ
-
 afterEach(() => {
   vi.useRealTimers()
-  if (originalTimeZone === undefined) delete process.env.TZ
-  else process.env.TZ = originalTimeZone
+  vi.unstubAllEnvs()
 })
 
 // Runs `todayUtc()` with the device clock at `instant`, on a device in `timeZone`.
 function todayOnDevice(instant: string, timeZone: string) {
-  process.env.TZ = timeZone
+  vi.stubEnv('TZ', timeZone)
   vi.useFakeTimers({ toFake: ['Date'] })
   vi.setSystemTime(new Date(instant))
   return { today: todayUtc(), localHour: new Date().getHours() }
@@ -89,9 +86,9 @@ describe('formatPuzzleDate', () => {
   })
 
   it('does not move the day with the device time zone', () => {
-    process.env.TZ = 'Etc/GMT+5'
+    vi.stubEnv('TZ', 'Etc/GMT+5')
     expect(formatPuzzleDate('2026-10-28', 'en')).toBe('October 28, 2026')
-    process.env.TZ = 'Pacific/Kiritimati'
+    vi.stubEnv('TZ', 'Pacific/Kiritimati')
     expect(formatPuzzleDate('2026-10-28', 'en')).toBe('October 28, 2026')
   })
 })

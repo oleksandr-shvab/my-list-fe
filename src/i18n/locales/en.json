@@ -13,6 +13,13 @@
     "retry": "Retry",
     "account_check_failed": "Couldn't check your sign-in."
   },
+  "games": {
+    "game_guesser": {
+      "name": "Game Guesser"
+    },
+    "coming_soon": "This game is coming soon.",
+    "puzzle_date": "Puzzle for {{date}}"
+  },
   "theme": {
     "switch_to_light": "Switch to light mode",
     "switch_to_dark": "Switch to dark mode",
