@@ -331,4 +331,23 @@ describe('an `/auth/me` answer that arrives after the session changed (AC-19b)',
 
     expect(app.queryClient.getQueryData(ME_KEY)).toEqual(USER)
   })
+
+  it('does not sign out the user who just logged in when the replaced request answers 401', async () => {
+    // The login cancels the `/auth/me` request that was still running. Cancelling the query does
+    // not stop the HTTP request unless the query passes its signal on, so its 401 would reach the
+    // session guard while the new user is shown.
+    const late = slowReply()
+    const app = await open('/', late.reply)
+
+    onAuthSuccess(app.queryClient, USER)
+    app.queryClient.setQueryData(['games', 'progress'], { solved: 3 })
+    late.answer(GUEST)
+    await settle()
+
+    expect(app.queryClient.getQueryData(ME_KEY)).toEqual(USER)
+    expect(app.queryClient.getQueryData(['games', 'progress'])).toEqual({
+      solved: 3,
+    })
+    expect(where(app)).toBe('/')
+  })
 })

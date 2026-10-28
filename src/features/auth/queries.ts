@@ -8,7 +8,7 @@ export const authKeys = {
 export function meQueryOptions() {
   return queryOptions({
     queryKey: authKeys.me,
-    queryFn: getMe,
+    queryFn: ({ signal }) => getMe(signal),
     retry: false,
     staleTime: 'static',
   })
