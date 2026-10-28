@@ -33,6 +33,17 @@ describe('resolveRedirect', () => {
     ['http://localhost:5174/profile'],
     ['http://evil.com:5173/profile'],
     ['data:text/html,<script>alert(1)</script>'],
+    ['data:text/plain,/profile'],
+    ['file:///profile'],
+    ['file:///etc/passwd'],
+    // A blob: URL takes the origin of the URL inside it, but its path is that whole URL, so it
+    // would be returned as an absolute URL. It also skips the auth-page rule and can hide a
+    // second host behind `//`.
+    ['blob:http://localhost:5173/profile'],
+    ['blob:http://localhost:5173/login'],
+    ['blob:http://localhost:5173//evil.com'],
+    ['BLOB:http://localhost:5173/profile'],
+    ['blob:https://evil.com/profile'],
     // Same origin after resolving, but the path starts with two slashes, which
     // history.push would read as another host.
     ['/.//evil.com'],

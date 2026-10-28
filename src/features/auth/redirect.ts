@@ -34,11 +34,16 @@ export function resolveRedirect(
     return undefined
   }
 
+  // Only web pages. A `blob:http://localhost:5173/login` URL has this origin, but its path is the
+  // whole inner URL, which would skip the auth-page rule and be returned as an absolute URL.
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') return undefined
   if (url.origin !== origin) return undefined
-  // Dot segments can leave a path that starts with `//` (`/.//evil.com`): same origin here,
-  // but history.push would read it as another host.
-  if (url.pathname.startsWith('//')) return undefined
   if (isAuthPath(url.pathname)) return undefined
 
-  return url.pathname + url.search + url.hash
+  const target = url.pathname + url.search + url.hash
+  // Exactly one leading slash. Dot segments can leave a path that starts with `//`
+  // (`/.//evil.com`): same origin here, but history.push would read it as another host.
+  if (!/^\/(?!\/)/.test(target)) return undefined
+
+  return target
 }
