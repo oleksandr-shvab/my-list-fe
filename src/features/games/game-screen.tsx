@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { GameErrorBoundary } from './game-error-boundary'
 import type { GameEntry } from './types'
 
-type GameScreenProps = {
+type GameScreenHostProps = {
   game: GameEntry
   // The puzzle day as YYYY-MM-DD, in UTC.
   date: string
@@ -12,7 +12,7 @@ type GameScreenProps = {
 
 // Shows a game's own screen. The screen's code downloads when this first renders (AC-53), and a
 // failure inside it stays inside the boundary (AC-54).
-export function GameScreen({ game, date, isToday }: GameScreenProps) {
+export function GameScreen({ game, date, isToday }: GameScreenHostProps) {
   const { t } = useTranslation()
 
   // The key restarts the boundary and the screen for another game or day. It never includes the
