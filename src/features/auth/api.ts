@@ -8,6 +8,7 @@ import {
   authUpdatePassword,
 } from '@/api/generated/api'
 import type { AuthForgotPassword202 } from '@/api/generated/models'
+import { ApiError } from '@/lib/api-client'
 import type {
   ForgotPasswordPayload,
   LoginPayload,
@@ -31,8 +32,15 @@ export async function logoutRequest(): Promise<void> {
   await authLogout()
 }
 
-export function getMe(): Promise<User> {
-  return authMe()
+// A visitor with no session is normal, not an error: a 401 here means "guest" (null). Any other
+// failure (network, 5xx) is thrown, because then the sign-in state is unknown.
+export async function getMe(): Promise<User | null> {
+  try {
+    return await authMe()
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 401) return null
+    throw error
+  }
 }
 
 export function forgotPasswordRequest(

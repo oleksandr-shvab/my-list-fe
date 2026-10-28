@@ -1,5 +1,5 @@
 import { LanguageSwitcher } from '@/components/language-switcher'
-import { createFileRoute, Outlet, redirect } from '@tanstack/react-router'
+import { createFileRoute, Outlet } from '@tanstack/react-router'
 
 import { AppSidebar } from '@/components/app-sidebar'
 import {
@@ -9,14 +9,8 @@ import {
   SidebarTrigger,
 } from '@/components/ui/sidebar'
 import { TooltipProvider } from '@/components/ui/tooltip'
-import { useAuthStore } from '@/features/auth/store'
 
 export const Route = createFileRoute('/_app')({
-  beforeLoad: () => {
-    if (useAuthStore.getState().status !== 'authenticated') {
-      throw redirect({ to: '/login' })
-    }
-  },
   component: AppLayout,
 })
 

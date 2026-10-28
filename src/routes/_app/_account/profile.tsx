@@ -11,9 +11,9 @@ import {
 } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { UpdatePasswordForm } from '@/features/auth/components/update-password-form'
-import { useAuthStore } from '@/features/auth/store'
+import { useSession } from '@/features/auth/session'
 
-export const Route = createFileRoute('/_app/profile')({
+export const Route = createFileRoute('/_app/_account/profile')({
   staticData: { pageTitle: 'profile.title' },
   component: ProfilePage,
 })
@@ -35,7 +35,7 @@ function Row({
 
 function ProfilePage() {
   const { t, i18n } = useTranslation()
-  const user = useAuthStore((state) => state.user)
+  const { user } = useSession()
 
   return (
     <div className="flex w-full max-w-xl flex-col gap-6">

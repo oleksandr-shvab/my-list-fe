@@ -4,7 +4,7 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import './i18n'
 import './index.css'
-import './features/auth/session-guard'
+import { installSessionGuard } from './features/auth/session-guard'
 import { createQueryClient } from './lib/query-client'
 import { reportError } from './lib/report-error'
 import { reloadOnceAfterFailedChunk } from './lib/version-skew'
@@ -12,6 +12,7 @@ import { createAppRouter } from './router'
 
 const queryClient = createQueryClient()
 const router = createAppRouter(queryClient)
+installSessionGuard({ queryClient, router })
 
 reloadOnceAfterFailedChunk()
 

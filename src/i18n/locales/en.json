@@ -7,7 +7,11 @@
     "home": "Home",
     "profile": "Profile",
     "log_out": "Log out",
-    "logging_out": "Logging out…"
+    "logging_out": "Logging out…",
+    "log_in": "Log in",
+    "sign_up": "Sign up",
+    "retry": "Retry",
+    "account_check_failed": "Couldn't check your sign-in."
   },
   "theme": {
     "switch_to_light": "Switch to light mode",
@@ -24,6 +28,7 @@
     "password": "Password",
     "show_password": "Show password",
     "hide_password": "Hide password",
+    "session_expired": "Your session has ended. Please log in again.",
     "login": {
       "title": "Log in",
       "description": "Enter your email and password to continue.",

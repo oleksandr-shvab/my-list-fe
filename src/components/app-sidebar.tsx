@@ -1,6 +1,6 @@
 import { Link, useMatchRoute } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
-import { House, LogOut, User } from 'lucide-react'
+import { House } from 'lucide-react'
 
 import { BrandLink } from '@/components/brand-link'
 import { ThemeToggle } from '@/components/theme-toggle'
@@ -17,8 +17,7 @@ import {
   SidebarRail,
   useSidebar,
 } from '@/components/ui/sidebar'
-import { useLogoutMutation } from '@/features/auth/mutations'
-import { useAuthStore } from '@/features/auth/store'
+import { AccountArea } from '@/features/auth/components/account-area'
 
 const navItems = [
   { to: '/', labelKey: 'nav.home', icon: House, exact: true },
@@ -28,8 +27,6 @@ export function AppSidebar() {
   const { t } = useTranslation()
   const matchRoute = useMatchRoute()
   const { isMobile, setOpenMobile } = useSidebar()
-  const email = useAuthStore((state) => state.user?.email)
-  const logout = useLogoutMutation()
 
   // The mobile sidebar is an overlay — navigating behind it would leave it open.
   function closeMobileSidebar() {
@@ -71,42 +68,7 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter>
-        <SidebarMenu className="gap-2">
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              size="lg"
-              asChild
-              tooltip={t('nav.profile')}
-              isActive={!!matchRoute({ to: '/profile', fuzzy: true })}
-            >
-              <Link to="/profile" onClick={closeMobileSidebar}>
-                <span className="flex aspect-square size-8 shrink-0 items-center justify-center rounded-lg bg-sidebar-accent text-sidebar-accent-foreground">
-                  <User />
-                </span>
-                <span className="grid flex-1 leading-tight">
-                  <span className="truncate font-medium">
-                    {t('nav.profile')}
-                  </span>
-                  <span className="truncate text-xs text-sidebar-foreground/70">
-                    {email}
-                  </span>
-                </span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              tooltip={t('nav.log_out')}
-              onClick={() => logout.mutate()}
-              disabled={logout.isPending}
-            >
-              <LogOut />
-              <span>
-                {logout.isPending ? t('nav.logging_out') : t('nav.log_out')}
-              </span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+        <AccountArea onNavigate={closeMobileSidebar} />
       </SidebarFooter>
 
       <SidebarRail />

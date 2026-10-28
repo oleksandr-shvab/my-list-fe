@@ -1,15 +1,13 @@
-import { createFileRoute, redirect } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
+import { PendingScreen } from '@/components/pending-screen'
 import { ForgotPasswordForm } from '@/features/auth/components/forgot-password-form'
 import { AuthPage } from '@/features/auth/components/auth-page'
-import { useAuthStore } from '@/features/auth/store'
+import { redirectIfSignedIn } from '@/features/auth/session'
 
 export const Route = createFileRoute('/forgot-password')({
   staticData: { pageTitle: 'auth.forgot.title' },
-  beforeLoad: () => {
-    if (useAuthStore.getState().status === 'authenticated') {
-      throw redirect({ to: '/' })
-    }
-  },
+  beforeLoad: ({ context }) => redirectIfSignedIn(context.queryClient),
+  pendingComponent: PendingScreen,
   component: ForgotPasswordPage,
 })
 

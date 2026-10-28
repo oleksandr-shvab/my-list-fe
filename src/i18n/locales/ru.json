@@ -7,7 +7,11 @@
     "home": "Главная",
     "profile": "Профиль",
     "log_out": "Выйти",
-    "logging_out": "Выходим…"
+    "logging_out": "Выходим…",
+    "log_in": "Войти",
+    "sign_up": "Зарегистрироваться",
+    "retry": "Повторить",
+    "account_check_failed": "Не удалось проверить вход."
   },
   "theme": {
     "switch_to_light": "Включить светлую тему",
@@ -24,6 +28,7 @@
     "password": "Пароль",
     "show_password": "Показать пароль",
     "hide_password": "Скрыть пароль",
+    "session_expired": "Сеанс завершён. Войдите снова.",
     "login": {
       "title": "Вход",
       "description": "Введите почту и пароль, чтобы продолжить.",
