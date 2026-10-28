@@ -5,9 +5,23 @@ type Theme = 'light' | 'dark'
 const STORAGE_KEY = 'theme'
 const media = window.matchMedia('(prefers-color-scheme: dark)')
 
+// Storage can throw (private windows, blocked site data): the theme then works for this tab
+// only, as the language does (src/i18n/language.ts).
 function getStoredTheme(): Theme | null {
-  const stored = localStorage.getItem(STORAGE_KEY)
-  return stored === 'light' || stored === 'dark' ? stored : null
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY)
+    return stored === 'light' || stored === 'dark' ? stored : null
+  } catch {
+    return null
+  }
+}
+
+function storeTheme(theme: Theme) {
+  try {
+    localStorage.setItem(STORAGE_KEY, theme)
+  } catch {
+    // ignore
+  }
 }
 
 function getSystemTheme(): Theme {
@@ -29,7 +43,7 @@ type ThemeState = {
 export const useTheme = create<ThemeState>((set, get) => ({
   theme: getStoredTheme() ?? getSystemTheme(),
   setTheme: (theme) => {
-    localStorage.setItem(STORAGE_KEY, theme)
+    storeTheme(theme)
     applyTheme(theme)
     set({ theme })
   },

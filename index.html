@@ -7,7 +7,11 @@
     <title>Daily Game Challenge</title>
     <script>
       ;(function () {
-        var stored = localStorage.getItem('theme')
+        // Blocked storage must not stop the page: fall back to the system theme.
+        var stored = null
+        try {
+          stored = localStorage.getItem('theme')
+        } catch (e) {}
         var dark =
           stored === 'dark' ||
           (stored !== 'light' &&
