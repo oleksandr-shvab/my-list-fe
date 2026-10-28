@@ -1,4 +1,4 @@
-import { createFileRoute, Link, redirect } from '@tanstack/react-router'
+import { createFileRoute, Link } from '@tanstack/react-router'
 import {
   Card,
   CardContent,
@@ -9,18 +9,12 @@ import {
 import { ResetPasswordForm } from '@/features/auth/components/reset-password-form'
 import { useTranslation } from 'react-i18next'
 import { AuthPage } from '@/features/auth/components/auth-page'
-import { useAuthStore } from '@/features/auth/store'
 
 export const Route = createFileRoute('/reset-password')({
   staticData: { pageTitle: 'auth.reset.title' },
   validateSearch: (search: Record<string, unknown>) => ({
     token: typeof search.token === 'string' ? search.token : undefined,
   }),
-  beforeLoad: () => {
-    if (useAuthStore.getState().status === 'authenticated') {
-      throw redirect({ to: '/' })
-    }
-  },
   component: ResetPasswordPage,
 })
 

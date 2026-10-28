@@ -16,7 +16,8 @@ import { Route as RegisterRouteImport } from './routes/register'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AppSplatRouteImport } from './routes/_app/$'
-import { Route as AppProfileRouteImport } from './routes/_app/profile'
+import { Route as AppAccountRouteImport } from './routes/_app/_account'
+import { Route as AppAccountProfileRouteImport } from './routes/_app/_account/profile'
 
 const AppRoute = AppRouteImport.update({
   id: '/_app',
@@ -52,10 +53,14 @@ const AppSplatRoute = AppSplatRouteImport.update({
   path: '/$',
   getParentRoute: () => AppRoute,
 } as any)
-const AppProfileRoute = AppProfileRouteImport.update({
+const AppAccountRoute = AppAccountRouteImport.update({
+  id: '/_account',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppAccountProfileRoute = AppAccountProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
-  getParentRoute: () => AppRoute,
+  getParentRoute: () => AppAccountRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
@@ -65,7 +70,7 @@ export interface FileRoutesByFullPath {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/$': typeof AppSplatRoute
-  '/profile': typeof AppProfileRoute
+  '/profile': typeof AppAccountProfileRoute
 }
 export interface FileRoutesByTo {
   '/forgot-password': typeof ForgotPasswordRoute
@@ -73,8 +78,8 @@ export interface FileRoutesByTo {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/$': typeof AppSplatRoute
-  '/profile': typeof AppProfileRoute
   '/': typeof AppIndexRoute
+  '/profile': typeof AppAccountProfileRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -84,8 +89,9 @@ export interface FileRoutesById {
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
   '/_app/$': typeof AppSplatRoute
-  '/_app/profile': typeof AppProfileRoute
+  '/_app/_account': typeof AppAccountRouteWithChildren
   '/_app/': typeof AppIndexRoute
+  '/_app/_account/profile': typeof AppAccountProfileRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -104,8 +110,8 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/$'
-    | '/profile'
     | '/'
+    | '/profile'
   id:
     | '__root__'
     | '/_app'
@@ -114,8 +120,9 @@ export interface FileRouteTypes {
     | '/register'
     | '/reset-password'
     | '/_app/$'
-    | '/_app/profile'
+    | '/_app/_account'
     | '/_app/'
+    | '/_app/_account/profile'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -177,25 +184,44 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSplatRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/profile': {
-      id: '/_app/profile'
+    '/_app/_account': {
+      id: '/_app/_account'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AppAccountRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/_account/profile': {
+      id: '/_app/_account/profile'
       path: '/profile'
       fullPath: '/profile'
-      preLoaderRoute: typeof AppProfileRouteImport
-      parentRoute: typeof AppRoute
+      preLoaderRoute: typeof AppAccountProfileRouteImport
+      parentRoute: typeof AppAccountRoute
     }
   }
 }
 
+interface AppAccountRouteChildren {
+  AppAccountProfileRoute: typeof AppAccountProfileRoute
+}
+
+const AppAccountRouteChildren: AppAccountRouteChildren = {
+  AppAccountProfileRoute: AppAccountProfileRoute,
+}
+
+const AppAccountRouteWithChildren = AppAccountRoute._addFileChildren(
+  AppAccountRouteChildren,
+)
+
 interface AppRouteChildren {
   AppSplatRoute: typeof AppSplatRoute
-  AppProfileRoute: typeof AppProfileRoute
+  AppAccountRoute: typeof AppAccountRouteWithChildren
   AppIndexRoute: typeof AppIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppSplatRoute: AppSplatRoute,
-  AppProfileRoute: AppProfileRoute,
+  AppAccountRoute: AppAccountRouteWithChildren,
   AppIndexRoute: AppIndexRoute,
 }
 

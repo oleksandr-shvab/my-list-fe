@@ -3,7 +3,7 @@ import {
   useQueryClient,
   type QueryClient,
 } from '@tanstack/react-query'
-import { useNavigate } from '@tanstack/react-router'
+import { useRouter } from '@tanstack/react-router'
 import i18n from '@/i18n'
 import { toast } from 'sonner'
 import type { AuthForgotPassword202 } from '@/api/generated/models'
@@ -17,8 +17,8 @@ import {
   resetPasswordRequest,
   updatePasswordRequest,
 } from './api'
-import { authKeys } from './queries'
-import { useAuthStore } from './store'
+import { meQueryOptions } from './queries'
+import { finishLogout, finishPasswordReset } from './session'
 import type {
   ForgotPasswordPayload,
   LoginPayload,
@@ -28,48 +28,52 @@ import type {
   User,
 } from './types'
 
-function onAuthSuccess(queryClient: QueryClient, user: User) {
-  useAuthStore.getState().setUser(user)
-  queryClient.setQueryData(authKeys.me, user)
+export function onAuthSuccess(queryClient: QueryClient, user: User) {
+  const meKey = meQueryOptions().queryKey
+  // An `/auth/me` request still in flight started before this login: cancel it, so its late
+  // answer cannot replace the user who just logged in.
+  void queryClient.cancelQueries({ queryKey: meKey })
+  queryClient.setQueryData(meKey, user)
 }
 
-export function useLoginMutation() {
+// `redirectTo` comes from the login or sign-up page's search, already checked by
+// `resolveRedirect`, so it is a path on this site. It goes through history.push, as in
+// TanStack Router's "Authenticated Routes" guide, because it can hold a query and a hash.
+export function useLoginMutation(redirectTo?: string) {
   const queryClient = useQueryClient()
-  const navigate = useNavigate()
+  const router = useRouter()
 
   return useMutation<User, ApiError, LoginPayload>({
     mutationFn: loginRequest,
     onSuccess: (user) => {
       onAuthSuccess(queryClient, user)
-      navigate({ to: '/' })
+      router.history.push(redirectTo ?? '/')
     },
   })
 }
 
-export function useRegisterMutation() {
+export function useRegisterMutation(redirectTo?: string) {
   const queryClient = useQueryClient()
-  const navigate = useNavigate()
+  const router = useRouter()
 
   return useMutation<User, ApiError, RegisterPayload>({
     mutationFn: registerRequest,
     onSuccess: (user) => {
       onAuthSuccess(queryClient, user)
-      navigate({ to: '/' })
+      router.history.push(redirectTo ?? '/')
     },
   })
 }
 
 export function useLogoutMutation() {
   const queryClient = useQueryClient()
-  const navigate = useNavigate()
+  const router = useRouter()
 
   return useMutation<void, ApiError>({
     mutationFn: logoutRequest,
     onSettled: (_data, error) => {
-      // Clear locally regardless — a stale server session gets re-synced by getMe().
-      useAuthStore.getState().clearUser()
-      queryClient.clear()
-      navigate({ to: '/login' })
+      // Clear locally regardless of the answer. The user stays on a public page.
+      void finishLogout(queryClient, router)
       if (error) {
         reportError(
           error,
@@ -87,13 +91,14 @@ export function useForgotPasswordMutation() {
 }
 
 export function useResetPasswordMutation() {
-  const navigate = useNavigate()
+  const queryClient = useQueryClient()
+  const router = useRouter()
 
   return useMutation<void, ApiError, ResetPasswordPayload>({
     mutationFn: resetPasswordRequest,
     onSuccess: () => {
       toast.success(i18n.t('toast.password_updated_relogin'))
-      navigate({ to: '/login' })
+      void finishPasswordReset(queryClient, router)
     },
   })
 }

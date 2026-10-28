@@ -25,14 +25,15 @@ import { mapApiErrorToForm } from '../map-error-to-form'
 import { useRegisterMutation } from '../mutations'
 import { createRegisterSchema, type RegisterFormValues } from '../schemas'
 
-export function RegisterForm() {
+// `redirectTo` is the validated page to return to after sign-up; it is kept on the link to login.
+export function RegisterForm({ redirectTo }: { redirectTo?: string }) {
   const { t } = useTranslation()
   const schema = useMemo(() => createRegisterSchema(t), [t])
   const form = useForm<RegisterFormValues>({
     resolver: zodResolver(schema),
     defaultValues: { email: '', password: '' },
   })
-  const register = useRegisterMutation()
+  const register = useRegisterMutation(redirectTo)
 
   function onSubmit(values: RegisterFormValues) {
     register.mutate(values, {
@@ -101,6 +102,7 @@ export function RegisterForm() {
         {t('auth.register.have_account')}&nbsp;
         <Link
           to="/login"
+          search={{ redirect: redirectTo }}
           className="font-medium text-foreground underline underline-offset-4"
         >
           {t('auth.register.log_in')}
