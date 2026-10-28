@@ -28,8 +28,12 @@ import type {
   User,
 } from './types'
 
-function onAuthSuccess(queryClient: QueryClient, user: User) {
-  queryClient.setQueryData(meQueryOptions().queryKey, user)
+export function onAuthSuccess(queryClient: QueryClient, user: User) {
+  const meKey = meQueryOptions().queryKey
+  // An `/auth/me` request still in flight started before this login: cancel it, so its late
+  // answer cannot replace the user who just logged in.
+  void queryClient.cancelQueries({ queryKey: meKey })
+  queryClient.setQueryData(meKey, user)
 }
 
 // `redirectTo` comes from the login or sign-up page's search, already checked by

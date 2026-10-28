@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { toast } from 'sonner'
 import i18n from '@/i18n'
 import { meQueryOptions } from '@/features/auth/queries'
+import { onAuthSuccess } from '@/features/auth/mutations'
 import { finishLogout, finishPasswordReset } from '@/features/auth/session'
 import { updatePasswordRequest } from '@/features/auth/api'
 import { ApiError } from '@/lib/api-client'
@@ -11,6 +12,7 @@ import {
   matchOf,
   SERVER_ERROR,
   SIGNED_IN,
+  slowReply,
   startApp,
   USER,
   type Reply,
@@ -43,6 +45,9 @@ function callAnEndpoint() {
   }
   return updatePasswordRequest(payload).catch(() => {})
 }
+
+// Lets a settled promise run its handlers: the late answer reaches the query before this returns.
+const settle = () => new Promise((resolve) => setTimeout(resolve, 0))
 
 beforeEach(async () => {
   await i18n.changeLanguage('en')
@@ -296,5 +301,34 @@ describe('a password reset while signed in (AC-19b)', () => {
 
     expect(app.queryClient.getQueryData(ME_KEY)).toBeNull()
     expect(where(app)).toBe('/login')
+  })
+})
+
+describe('an `/auth/me` answer that arrives after the session changed (AC-19b)', () => {
+  it('does not bring the user back after a password reset', async () => {
+    // The reset page does not wait for `/auth/me`, so the reset can finish before the answer.
+    const late = slowReply()
+    const app = await open('/reset-password?token=abc', late.reply)
+
+    await finishPasswordReset(app.queryClient, app.router)
+    late.answer(SIGNED_IN)
+    await settle()
+
+    expect(app.queryClient.getQueryData(ME_KEY)).toBeNull()
+    expect(where(app)).toBe('/login')
+  })
+
+  it('does not replace the user who just logged in', async () => {
+    const late = slowReply()
+    const app = await open('/', late.reply)
+
+    onAuthSuccess(app.queryClient, USER)
+    late.answer({
+      status: 200,
+      data: { ...USER, id: 'user-0', email: 'older-answer@example.com' },
+    })
+    await settle()
+
+    expect(app.queryClient.getQueryData(ME_KEY)).toEqual(USER)
   })
 })

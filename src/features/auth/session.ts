@@ -63,10 +63,12 @@ export function getSignedInUser(queryClient: QueryClient): User | undefined {
 
 // Sets the answer to "guest" and drops every other cached query (they belong to the old user).
 // `me` is set to null instead of removed: a mounted `useQuery` keeps reading a removed query
-// object, and would go on showing the old user.
+// object, and would go on showing the old user. An `/auth/me` request still in flight is
+// cancelled first, so its late answer cannot write the old user back.
 export function signOutLocally(queryClient: QueryClient) {
   const meKey = meQueryOptions().queryKey
   const meHash = hashKey(meKey)
+  void queryClient.cancelQueries({ queryKey: meKey })
   queryClient.setQueryData(meKey, null)
   queryClient.removeQueries({
     predicate: (query) => query.queryHash !== meHash,
