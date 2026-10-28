@@ -18,6 +18,12 @@ function baseKeys(tree: Tree, prefix = ''): Set<string> {
   return keys
 }
 
+function allValues(tree: Tree): string[] {
+  return Object.values(tree).flatMap((value) =>
+    typeof value === 'string' ? [value] : allValues(value),
+  )
+}
+
 describe('translation catalogues', () => {
   it('have the same keys in English and Russian', () => {
     const english = baseKeys(en)
@@ -36,6 +42,19 @@ describe('translation catalogues', () => {
       for (const form of ['one', 'few', 'many', 'other']) {
         expect(ru.errors).toHaveProperty(`${base}_${form}`)
       }
+    }
+  })
+
+  it('never name the old product', () => {
+    expect(allValues(en).filter((text) => /mylist/i.test(text))).toEqual([])
+    expect(allValues(ru).filter((text) => /mylist/i.test(text))).toEqual([])
+  })
+
+  it('have no texts of the removed Lists and old home pages', () => {
+    for (const catalogue of [en, ru]) {
+      expect(catalogue).not.toHaveProperty('lists')
+      expect(catalogue).not.toHaveProperty('home')
+      expect(catalogue.nav).not.toHaveProperty('lists')
     }
   })
 })

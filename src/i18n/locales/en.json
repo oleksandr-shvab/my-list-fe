@@ -1,8 +1,10 @@
 {
-  "app": { "name": "MyList" },
+  "app": {
+    "name": "Daily Game Challenge",
+    "tagline": "Daily puzzle games"
+  },
   "nav": {
     "home": "Home",
-    "lists": "Lists",
     "profile": "Profile",
     "log_out": "Log out",
     "logging_out": "Logging out…"
@@ -113,25 +115,10 @@
     "not_found_text": "This page does not exist or was moved.",
     "go_home": "Go to the home page"
   },
-  "home": {
-    "welcome": "Welcome back",
-    "welcome_named": "Welcome back, {{email}}",
-    "intro": "Here's a quick jumping-off point for what you can do next.",
-    "lists_title": "Your lists",
-    "lists_description": "Browse and manage the lists you've created.",
-    "profile_title": "Profile",
-    "profile_description": "Update your account details and password.",
-    "new_title": "Start something new",
-    "new_description": "Create a new list to start tracking items."
-  },
-  "lists": {
-    "title": "Lists",
-    "empty": "Nothing here yet."
-  },
   "profile": {
     "title": "Profile",
     "account": "Account",
-    "account_description": "Your MyList account details.",
+    "account_description": "Your account details.",
     "email": "Email",
     "member_since": "Member since",
     "password": "Password",

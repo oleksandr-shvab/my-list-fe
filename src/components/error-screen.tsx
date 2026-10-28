@@ -9,7 +9,7 @@ export function ErrorScreen({ error }: { error: Error }) {
   const apiError = error instanceof ApiError ? error : null
 
   return (
-    <div className="flex min-h-svh flex-col items-center justify-center gap-3 px-6 text-center">
+    <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 py-6 text-center">
       <p className="text-sm text-muted-foreground">
         {apiError?.isNetworkError
           ? t('error_screen.network')
@@ -31,7 +31,7 @@ export function NotFoundScreen() {
   const { t } = useTranslation()
 
   return (
-    <div className="flex min-h-svh flex-col items-center justify-center gap-3 px-6 text-center">
+    <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 py-6 text-center">
       <h1 className="text-2xl font-medium">
         {t('error_screen.not_found_title')}
       </h1>
