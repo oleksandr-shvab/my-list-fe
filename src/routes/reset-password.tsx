@@ -12,6 +12,7 @@ import { AuthPage } from '@/features/auth/components/auth-page'
 import { useAuthStore } from '@/features/auth/store'
 
 export const Route = createFileRoute('/reset-password')({
+  staticData: { pageTitle: 'auth.reset.title' },
   validateSearch: (search: Record<string, unknown>) => ({
     token: typeof search.token === 'string' ? search.token : undefined,
   }),

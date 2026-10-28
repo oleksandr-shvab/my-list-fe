@@ -4,6 +4,7 @@ import { AuthPage } from '@/features/auth/components/auth-page'
 import { useAuthStore } from '@/features/auth/store'
 
 export const Route = createFileRoute('/register')({
+  staticData: { pageTitle: 'auth.register.title' },
   beforeLoad: () => {
     if (useAuthStore.getState().status === 'authenticated') {
       throw redirect({ to: '/' })

@@ -4,13 +4,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project state
 
-This is the frontend for "MyList". Auth (register/login/logout) is the first real feature, built on TanStack Router + TanStack Query + Zustand + axios (see Stack below). Unit tests run on Vitest (`npm test`; config in `vitest.config.ts`, files named `*.test.ts` next to the code). CI (`.github/workflows/ci.yml`) runs lint, format check, type check and build, and the tests. No component or end-to-end tests yet.
+This is the frontend of Daily Game Challenge. Auth (register/login/logout) is the first real feature, built on TanStack Router + TanStack Query + Zustand + axios (see Stack below). Unit tests run on Vitest (`npm test`; config in `vitest.config.ts`, files named `*.test.ts` next to the code). CI (`.github/workflows/ci.yml`) runs lint, format check, type check and build, and the tests. No component or end-to-end tests yet.
 
 ## Commands
 
 - `npm run dev` — start the Vite dev server with HMR
 - `npm run build` — type-check via `tsc -b` then produce a production build with `vite build`
 - `npm run lint` — run ESLint over the project
+- `npm run format` — format the project with Prettier (`npm run format:check` only checks)
+- `npm run api:generate` — regenerate the API client in `src/api/generated/` from the backend OpenAPI snapshot
 - `npm run preview` — serve the production build locally
 
 - `npm test` — run the Vitest unit tests once (`npm run test:watch` to watch)
@@ -18,21 +20,15 @@ This is the frontend for "MyList". Auth (register/login/logout) is the first rea
 ## Architecture
 
 - Entry point [src/main.tsx](src/main.tsx) creates the TanStack Router router and a `QueryClient`, then mounts `RouterProvider` (wrapped in `QueryClientProvider`) into `#root` in [index.html](index.html). There is no top-level `App.tsx` — routes under `src/routes/` own what renders.
-- Static assets served as-is live in [public/](public/) (e.g. `icons.svg`, referenced via `<use href="/icons.svg#...">`); imported/bundled assets live in [src/assets/](src/assets/).
+- Static assets served as-is live in [public/](public/) (today only the favicon).
 - TypeScript project uses solution-style config: [tsconfig.json](tsconfig.json) references [tsconfig.app.json](tsconfig.app.json) (app source, `src/`) and [tsconfig.node.json](tsconfig.node.json) (Vite config itself). `tsc -b` builds both as part of `npm run build`.
 - ESLint config ([eslint.config.js](eslint.config.js)) is flat-config style, composing `@eslint/js`, `typescript-eslint`, `eslint-plugin-react-hooks`, and `eslint-plugin-react-refresh`. It currently uses non-type-aware TS linting (`tseslint.configs.recommended`), not the stricter type-checked variants.
 
-# item-list-frontend
-
-## What this is
-
-A React SPA for a flexible item/list tracker: users create lists of "things they want" — a shopping list with prices, a personal collection without prices, etc. Each item belongs to a category, has tags and images, plus a set of fields that vary by category (price, size, condition, description, ...).
-
-This is a learning/practice project built deliberately with production-grade patterns — the goal is real-world architecture, not shortcuts.
-
 ## This repo
 
-Frontend only. Talks to a separate FastAPI backend (own repo: `item-list-backend`) over REST — `http://localhost:8000` in dev. The backend's own routes have no `/api` prefix (e.g. `/auth/login`, not `/api/auth/login`); the frontend calls `/api/...` and Vite's dev proxy (see `vite.config.ts`) strips the `/api` prefix and forwards to the backend, both to avoid CORS and to keep a stable frontend-facing path independent of how the backend is mounted.
+Frontend only. It talks to the FastAPI backend in the `my-list-be` repo, on `http://localhost:8000` in dev.
+The app calls `/api/v1/...`; Vite's dev proxy (`vite.config.ts`) strips `/api` and forwards `/v1/...` to the backend.
+Open the app at `http://localhost:5173`, not `127.0.0.1`, because the session cookie is host-scoped.
 
 ## Stack
 
@@ -46,14 +42,13 @@ Frontend only. Talks to a separate FastAPI backend (own repo: `item-list-backend
 
 ## Key architectural decisions
 
-- **Variable fields per category**: each Category defines its own field schema (a JSON list of `{key, type, required}`) on the backend. Fixed fields (title, tags, images) are the only ones hardcoded anywhere in this codebase. Custom fields are rendered and validated dynamically — build the Zod schema for a category's custom fields at runtime from that JSON. Don't hand-write per-category schemas.
 - **API types and client**: generated from the backend's OpenAPI snapshot with Orval (`npm run api:generate`, config in `orval.config.ts`; locally it reads `../my-list-be/openapi/openapi.json`, CI reads the snapshot on the backend's `main`). The output is committed in `src/api/generated/` (never hand-edit it) and every request goes through `apiClient` via `src/lib/orval-mutator.ts`, so errors become `ApiError`. `src/features/auth/types.ts` only aliases the generated models. CI's `api-types` job fails when the committed code differs from the backend contract. Backend paths are under `/v1`, so the app calls `/api/v1/...`.
 - **Auth**: Session-cookie auth (Django-auth style), not JWT — the backend sets an httpOnly `session_id` cookie directly on `POST /api/auth/login` and `POST /api/auth/register` (register auto-logs-in, no separate login call needed). The frontend never handles a token; all requests go through the shared axios instance with `withCredentials: true`. Client-side auth status lives in a minimal Zustand store (`src/features/auth/store.ts`: `user`, `status`), never persisted to localStorage — it's seeded directly from the login/register response body, and rehydrated on every fresh page load via a `GET /api/auth/me` query run in the root route's (`src/routes/__root.tsx`) `beforeLoad`, which every other route's `beforeLoad` can then read synchronously. The backend currently implements no CSRF protection — a backend gap, not something the frontend compensates for.
-- **Image uploads**: presigned-URL flow. Request a presigned URL from the backend, upload the file straight to S3/MinIO from the browser, then send the backend the resulting object key. Image bytes never pass through the API server.
 
 ## Conventions
 
-- Routes: one file per route under `src/routes/`, file-based. `routeTree.gen.ts` is auto-generated on `npm run dev` — never hand-edit it.
+- Routes: one file per route under `src/routes/`, file-based. `routeTree.gen.ts` is auto-generated on `npm run dev` — never hand-edit it. After you add, move or delete a route file, run `npx vite build` first: `tsc -b` fails on a stale tree.
+- Page titles: a page route sets `staticData: { pageTitle: '<catalogue key>' }`. `useDocumentTitle` (`src/lib/page-title.ts`) shows it as "{page} | {app name}" and follows the language. An unknown path falls to `src/routes/_app/$.tsx`, so the "not found" screen stays inside the layout.
 - Path alias `@/` → `src/` (configured in `vite.config.ts` and the `paths` field of both `tsconfig.json` and `tsconfig.app.json`; no `baseUrl` — deprecated in the TS version this project pins)
 - Anything that touches the API goes through TanStack Query; Zustand only for state with no server counterpart
 - Client-side validation (Zod) is a UX convenience, not a security boundary — the backend re-validates everything regardless
@@ -74,10 +69,6 @@ not here, since they're only relevant while actively writing components — see
 - Backend errors are translated by `code`: `errors.<code>` in the catalogues (`src/lib/error-messages.ts`); an unknown code shows `errors.unknown`, never the backend's English. Zod schemas are built with the current `t` (`createLoginSchema(t)` in `useMemo`).
 - Errors: unexpected errors go through `src/lib/report-error.ts` (the future error tracker hook); Query retries only network errors, 5xx, 408 and 429, at most twice (`src/lib/query-retry.ts`); an old tab that fails to load a lazy chunk after a deploy reloads once (`src/lib/version-skew.ts`).
 
-## Known cleanup item
-
-`src/index.css` still carries the original template's CSS custom properties (`--border`, `--accent`, etc.) alongside the CSS variables `shadcn init` added for its own theme — a few names collide (e.g. `--border`, `--accent` now hold shadcn's oklch values, not the template's original hex/rgba ones). Real UI has now landed (auth pages, `src/routes/index.tsx`), so this collision is live, not just latent — worth cleaning up the next time this file is touched.
-
 ## Related
 
-Backend repo: `my-list-be` (has its own `CLAUDE.md` with the corresponding backend-side decisions). Cross-repo contract (auth cookie/session details, `/api` proxy convention, `field_schema` shape, image upload flow, OpenAPI/Orval sync) lives in `../CONTRACTS.md` — check it before changing anything that touches the backend boundary, and update it in the same pass if the contract shifts.
+Backend repo: `my-list-be` (has its own `CLAUDE.md` with the corresponding backend-side decisions). Cross-repo contract (auth cookie/session details, `/api` proxy convention, OpenAPI/Orval sync) lives in `../CONTRACTS.md` — check it before changing anything that touches the backend boundary, and update it in the same pass if the contract shifts.

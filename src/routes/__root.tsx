@@ -2,6 +2,7 @@ import type { QueryClient } from '@tanstack/react-query'
 import { createRootRouteWithContext, Outlet } from '@tanstack/react-router'
 import { ApiError } from '@/lib/api-client'
 import { Toaster } from '@/components/ui/sonner'
+import { useDocumentTitle } from '@/lib/page-title'
 import { meQueryOptions } from '@/features/auth/queries'
 import { useAuthStore } from '@/features/auth/store'
 
@@ -36,6 +37,8 @@ function RootPending() {
 }
 
 function RootComponent() {
+  useDocumentTitle()
+
   return (
     <>
       <Outlet />

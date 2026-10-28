@@ -1,7 +1,8 @@
 import { Link, useMatchRoute } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
-import { House, ListChecks, LogOut, User } from 'lucide-react'
+import { House, LogOut, User } from 'lucide-react'
 
+import { BrandLink } from '@/components/brand-link'
 import { ThemeToggle } from '@/components/theme-toggle'
 import {
   Sidebar,
@@ -21,7 +22,6 @@ import { useAuthStore } from '@/features/auth/store'
 
 const navItems = [
   { to: '/', labelKey: 'nav.home', icon: House, exact: true },
-  { to: '/lists', labelKey: 'nav.lists', icon: ListChecks, exact: false },
 ] as const
 
 export function AppSidebar() {
@@ -41,12 +41,7 @@ export function AppSidebar() {
       <SidebarHeader>
         <div className="flex items-center justify-between gap-2">
           <SidebarMenuButton size="lg" asChild className="w-auto">
-            <Link to="/" onClick={closeMobileSidebar}>
-              <span className="flex aspect-square size-8 shrink-0 items-center justify-center rounded-lg bg-primary font-medium text-primary-foreground">
-                M
-              </span>
-              <span className="truncate font-medium">{t('app.name')}</span>
-            </Link>
+            <BrandLink onClick={closeMobileSidebar} />
           </SidebarMenuButton>
           <ThemeToggle className="shrink-0 group-data-[collapsible=icon]:hidden" />
         </div>

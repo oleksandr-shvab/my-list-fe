@@ -1,8 +1,10 @@
 {
-  "app": { "name": "MyList" },
+  "app": {
+    "name": "Daily Game Challenge",
+    "tagline": "Ежедневные игры-загадки"
+  },
   "nav": {
     "home": "Главная",
-    "lists": "Списки",
     "profile": "Профиль",
     "log_out": "Выйти",
     "logging_out": "Выходим…"
@@ -121,25 +123,10 @@
     "not_found_text": "Такой страницы нет или она была перенесена.",
     "go_home": "На главную"
   },
-  "home": {
-    "welcome": "С возвращением",
-    "welcome_named": "С возвращением, {{email}}",
-    "intro": "Вот с чего можно начать.",
-    "lists_title": "Ваши списки",
-    "lists_description": "Просматривайте списки, которые вы создали, и управляйте ими.",
-    "profile_title": "Профиль",
-    "profile_description": "Измените данные аккаунта и пароль.",
-    "new_title": "Начать новое",
-    "new_description": "Создайте новый список, чтобы начать вести учёт."
-  },
-  "lists": {
-    "title": "Списки",
-    "empty": "Пока ничего нет."
-  },
   "profile": {
     "title": "Профиль",
     "account": "Аккаунт",
-    "account_description": "Данные вашего аккаунта MyList.",
+    "account_description": "Данные вашего аккаунта.",
     "email": "Электронная почта",
     "member_since": "С нами с",
     "password": "Пароль",

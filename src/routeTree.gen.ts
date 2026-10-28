@@ -15,7 +15,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as RegisterRouteImport } from './routes/register'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
-import { Route as AppListsRouteImport } from './routes/_app/lists'
+import { Route as AppSplatRouteImport } from './routes/_app/$'
 import { Route as AppProfileRouteImport } from './routes/_app/profile'
 
 const AppRoute = AppRouteImport.update({
@@ -47,9 +47,9 @@ const AppIndexRoute = AppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppRoute,
 } as any)
-const AppListsRoute = AppListsRouteImport.update({
-  id: '/lists',
-  path: '/lists',
+const AppSplatRoute = AppSplatRouteImport.update({
+  id: '/$',
+  path: '/$',
   getParentRoute: () => AppRoute,
 } as any)
 const AppProfileRoute = AppProfileRouteImport.update({
@@ -64,7 +64,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/lists': typeof AppListsRoute
+  '/$': typeof AppSplatRoute
   '/profile': typeof AppProfileRoute
 }
 export interface FileRoutesByTo {
@@ -72,7 +72,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/lists': typeof AppListsRoute
+  '/$': typeof AppSplatRoute
   '/profile': typeof AppProfileRoute
   '/': typeof AppIndexRoute
 }
@@ -83,7 +83,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/register': typeof RegisterRoute
   '/reset-password': typeof ResetPasswordRoute
-  '/_app/lists': typeof AppListsRoute
+  '/_app/$': typeof AppSplatRoute
   '/_app/profile': typeof AppProfileRoute
   '/_app/': typeof AppIndexRoute
 }
@@ -95,7 +95,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/reset-password'
-    | '/lists'
+    | '/$'
     | '/profile'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -103,7 +103,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/reset-password'
-    | '/lists'
+    | '/$'
     | '/profile'
     | '/'
   id:
@@ -113,7 +113,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/register'
     | '/reset-password'
-    | '/_app/lists'
+    | '/_app/$'
     | '/_app/profile'
     | '/_app/'
   fileRoutesById: FileRoutesById
@@ -170,11 +170,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
     }
-    '/_app/lists': {
-      id: '/_app/lists'
-      path: '/lists'
-      fullPath: '/lists'
-      preLoaderRoute: typeof AppListsRouteImport
+    '/_app/$': {
+      id: '/_app/$'
+      path: '/$'
+      fullPath: '/$'
+      preLoaderRoute: typeof AppSplatRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/profile': {
@@ -188,13 +188,13 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppRouteChildren {
-  AppListsRoute: typeof AppListsRoute
+  AppSplatRoute: typeof AppSplatRoute
   AppProfileRoute: typeof AppProfileRoute
   AppIndexRoute: typeof AppIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
-  AppListsRoute: AppListsRoute,
+  AppSplatRoute: AppSplatRoute,
   AppProfileRoute: AppProfileRoute,
   AppIndexRoute: AppIndexRoute,
 }
