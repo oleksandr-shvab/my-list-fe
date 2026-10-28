@@ -89,6 +89,8 @@ rather than rendering the form.
     `navigate({ to: '/login' })`. Does **not** call `useAuthStore.getState().clearUser()`
     /`queryClient.clear()` itself — the user was never authenticated in this flow (no
     session existed client-side to begin with, since this is the logged-out flow).
+    SPEC-01 changed this: a reset can start while signed in, so on success it now also
+    calls `signOutLocally` (through `finishPasswordReset`).
   - `useUpdatePasswordMutation`: on success, `toast.success(...)` only — no
     navigation, no store/cache changes (current session stays valid per the
     contract), the form resets itself via RHF's `reset()` after success.
