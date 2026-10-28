@@ -24,6 +24,10 @@ function storeTheme(theme: Theme) {
   }
 }
 
+// With storage blocked nothing is stored, and "nothing stored" would read as "never chosen". The
+// choice is kept here too, so it lasts for the open tab.
+let chosenInThisTab = false
+
 function getSystemTheme(): Theme {
   return media.matches ? 'dark' : 'light'
 }
@@ -43,6 +47,7 @@ type ThemeState = {
 export const useTheme = create<ThemeState>((set, get) => ({
   theme: getStoredTheme() ?? getSystemTheme(),
   setTheme: (theme) => {
+    chosenInThisTab = true
     storeTheme(theme)
     applyTheme(theme)
     set({ theme })
@@ -54,7 +59,7 @@ applyTheme(useTheme.getState().theme)
 
 // Follow the OS only until the user makes an explicit choice.
 media.addEventListener('change', () => {
-  if (getStoredTheme()) return
+  if (chosenInThisTab || getStoredTheme()) return
   const theme = getSystemTheme()
   applyTheme(theme)
   useTheme.setState({ theme })
