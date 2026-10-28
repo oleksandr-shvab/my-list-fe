@@ -1,5 +1,9 @@
 # Spec: Password reset & authenticated password update
 
+> **Changed by SPEC-01 (Phase 0):** the profile page moved to `src/routes/_app/_account/profile.tsx`.
+> A password reset now also clears the signed-in state, because the backend ends all sessions.
+> The auth store was replaced by the `/auth/me` query (`src/features/auth/session.ts`).
+
 Status: implemented.
 Backend workflow is already shipped (`my-list-be`, branch `a2-password-reset-update`,
 merged) and documented in full in `../../../CONTRACTS.md` under "Password reset" /
