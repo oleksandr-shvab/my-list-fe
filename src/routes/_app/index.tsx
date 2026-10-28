@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { createFileRoute } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/_app/')({
+  staticData: { pageTitle: 'app.tagline' },
   component: HomePage,
 })
 

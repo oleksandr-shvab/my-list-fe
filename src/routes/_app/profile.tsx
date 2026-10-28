@@ -14,6 +14,7 @@ import { UpdatePasswordForm } from '@/features/auth/components/update-password-f
 import { useAuthStore } from '@/features/auth/store'
 
 export const Route = createFileRoute('/_app/profile')({
+  staticData: { pageTitle: 'profile.title' },
   component: ProfilePage,
 })
 
