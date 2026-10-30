@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router'
 import { Archive, Gamepad2 } from 'lucide-react'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, type RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { BrandLink } from '@/components/brand-link'
@@ -25,7 +25,12 @@ import { getDefaultGame, getGamesInOrder } from '@/features/games/registry'
 import type { GameEntry } from '@/features/games/types'
 import { useCurrentGame } from '@/features/games/use-current-game'
 
-export function AppSidebar() {
+export function AppSidebar({
+  linkFollowedRef,
+}: {
+  // Told when a link closes the phone panel, so `PhoneHeader` puts the focus on the page.
+  linkFollowedRef: RefObject<boolean>
+}) {
   const { t } = useTranslation()
   const { isMobile, setOpenMobile } = useSidebar()
   const { game: currentGame, archiveOpen } = useCurrentGame()
@@ -33,7 +38,9 @@ export function AppSidebar() {
 
   // The mobile sidebar is an overlay — navigating behind it would leave it open.
   function closeMobileSidebar() {
-    if (isMobile) setOpenMobile(false)
+    if (!isMobile) return
+    linkFollowedRef.current = true
+    setOpenMobile(false)
   }
 
   return (

@@ -1,4 +1,5 @@
 import { createFileRoute, Outlet } from '@tanstack/react-router'
+import { useRef } from 'react'
 
 import { AppSidebar } from '@/components/app-sidebar'
 import { PhoneHeader } from '@/components/phone-header'
@@ -19,14 +20,17 @@ function getStoredSidebarOpen() {
 }
 
 function AppLayout() {
+  // Shared by the sidebar's links and the phone header: see `PhoneHeader`.
+  const linkFollowedRef = useRef(false)
+
   return (
     <TooltipProvider>
       <SidebarProvider defaultOpen={getStoredSidebarOpen()}>
         <SkipLink />
-        <AppSidebar />
+        <AppSidebar linkFollowedRef={linkFollowedRef} />
         {/* `min-w-0` lets long content shrink instead of scrolling the page sideways. */}
         <div className="relative flex w-full min-w-0 flex-1 flex-col bg-background">
-          <PhoneHeader />
+          <PhoneHeader linkFollowedRef={linkFollowedRef} />
           <main
             id={MAIN_ID}
             tabIndex={-1}

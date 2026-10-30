@@ -298,6 +298,36 @@ describe('the phone header and panel (AC-32, AC-35, AC-66)', () => {
     expect(document.activeElement).toBe(toggle)
   })
 
+  it('puts the focus on the main area when a link in the panel closes it, and back on the button when Escape does', async () => {
+    const user = userEvent.setup()
+    usePhoneScreen()
+    const app = renderApp('/games/game-guesser', GUEST)
+
+    const banner = await screen.findByRole('banner')
+    const toggle = within(banner).getByRole('button', {
+      name: 'Show or hide the sidebar',
+    })
+
+    await user.click(toggle)
+    const panel = await screen.findByRole('dialog', { name: 'Site menu' })
+    await user.click(within(panel).getByRole('link', { name: 'Archive' }))
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    await waitFor(() =>
+      expect(app.router.state.location.pathname).toBe(
+        '/games/game-guesser/archive',
+      ),
+    )
+    expect(document.activeElement).toBe(screen.getByRole('main'))
+
+    await user.click(toggle)
+    await screen.findByRole('dialog', { name: 'Site menu' })
+    await user.keyboard('{Escape}')
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull())
+    expect(document.activeElement).toBe(toggle)
+  })
+
   it('shows the account menu button in the header instead of Log in when signed in', async () => {
     usePhoneScreen()
     renderApp('/', SIGNED_IN)
