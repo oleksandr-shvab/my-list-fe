@@ -21,8 +21,21 @@ export default defineConfig([
     rules: {
       'react-refresh/only-export-components': [
         'warn',
-        { allowConstantExport: true },
+        {
+          allowConstantExport: true,
+          // TanStack Router's autoCodeSplitting (vite.config.ts) moves route components into their own modules.
+          extraHOCs: [
+            'createFileRoute',
+            'createRootRoute',
+            'createRootRouteWithContext',
+          ],
+        },
       ],
     },
+  },
+  {
+    // Vendored shadcn files export helpers (buttonVariants, useSidebar) by design.
+    files: ['src/components/ui/**'],
+    rules: { 'react-refresh/only-export-components': 'off' },
   },
 ])
