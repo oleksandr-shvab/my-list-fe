@@ -42,7 +42,7 @@ describe('resolvePageTitleKey', () => {
     expect(
       resolvePageTitleKey([
         match(),
-        match({ staticData: { pageTitle: 'nav.home' } }),
+        match({ staticData: { pageTitle: 'app.tagline' } }),
         match({ staticData: { pageTitle: 'profile.title' } }),
       ]),
     ).toBe('profile.title')

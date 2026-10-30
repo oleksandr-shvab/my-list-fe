@@ -1,24 +1,45 @@
-import { Link, useLocation, useMatchRoute } from '@tanstack/react-router'
+import { Link, useLocation } from '@tanstack/react-router'
 import { LogIn, LogOut, RotateCw, User, UserPlus } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 
+import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  useSidebar,
 } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useLogoutMutation } from '../mutations'
 import { useSession } from '../session'
 
 type AccountAreaProps = {
+  // `sidebar`: the bottom of the sidebar. `compact`: one control for the phone header.
+  variant?: 'sidebar' | 'compact'
   // Called when a link is followed, so the phone sidebar can close behind it.
   onNavigate?: () => void
 }
 
-// The bottom of the sidebar: what the visitor can do about their account. One component
-// per session state; the state itself is derived from the `/auth/me` query.
-export function AccountArea({ onNavigate }: AccountAreaProps) {
+// What the visitor can do about their account. One component per session state; the state itself
+// is derived from the `/auth/me` query.
+export function AccountArea({
+  variant = 'sidebar',
+  onNavigate,
+}: AccountAreaProps) {
+  return variant === 'compact' ? (
+    <CompactAccount />
+  ) : (
+    <SidebarAccount onNavigate={onNavigate} />
+  )
+}
+
+function SidebarAccount({ onNavigate }: Pick<AccountAreaProps, 'onNavigate'>) {
   const { status, user, retry } = useSession()
 
   return (
@@ -26,8 +47,10 @@ export function AccountArea({ onNavigate }: AccountAreaProps) {
       {status === 'pending' && <AccountPlaceholder />}
       {status === 'error' && <AccountCheckFailed onRetry={retry} />}
       {status === 'guest' && <GuestActions onNavigate={onNavigate} />}
-      {status === 'signed_in' && (
-        <SignedInActions email={user?.email} onNavigate={onNavigate} />
+      {status === 'signed_in' && user && (
+        <SidebarMenuItem>
+          <AccountMenu email={user.email} onNavigate={onNavigate} />
+        </SidebarMenuItem>
       )}
     </SidebarMenu>
   )
@@ -38,10 +61,10 @@ function AccountPlaceholder() {
   return (
     <>
       <SidebarMenuItem aria-hidden>
-        <Skeleton className="h-8 w-full" />
+        <Skeleton className="h-8 w-full max-md:h-11" />
       </SidebarMenuItem>
       <SidebarMenuItem aria-hidden>
-        <Skeleton className="h-8 w-full" />
+        <Skeleton className="h-8 w-full max-md:h-11" />
       </SidebarMenuItem>
     </>
   )
@@ -55,7 +78,11 @@ function AccountCheckFailed({ onRetry }: { onRetry: () => void }) {
       <p className="px-2 pb-1 text-xs text-sidebar-foreground/70 group-data-[collapsible=icon]:sr-only">
         {t('nav.account_check_failed')}
       </p>
-      <SidebarMenuButton tooltip={t('nav.retry')} onClick={onRetry}>
+      <SidebarMenuButton
+        tooltip={t('nav.retry')}
+        onClick={onRetry}
+        className="max-md:h-11"
+      >
         <RotateCw />
         <span>{t('nav.retry')}</span>
       </SidebarMenuButton>
@@ -63,15 +90,23 @@ function AccountCheckFailed({ onRetry }: { onRetry: () => void }) {
   )
 }
 
-function GuestActions({ onNavigate }: AccountAreaProps) {
+// Both links carry the current page, so login or sign-up brings the visitor back to it.
+function useCurrentHref() {
+  return useLocation({ select: (location) => location.href })
+}
+
+function GuestActions({ onNavigate }: Pick<AccountAreaProps, 'onNavigate'>) {
   const { t } = useTranslation()
-  // Both links carry the current page, so login or sign-up brings the visitor back to it.
-  const href = useLocation({ select: (location) => location.href })
+  const href = useCurrentHref()
 
   return (
     <>
       <SidebarMenuItem>
-        <SidebarMenuButton asChild tooltip={t('nav.log_in')}>
+        <SidebarMenuButton
+          asChild
+          tooltip={t('nav.log_in')}
+          className="max-md:h-11"
+        >
           <Link to="/login" search={{ redirect: href }} onClick={onNavigate}>
             <LogIn />
             <span>{t('nav.log_in')}</span>
@@ -79,7 +114,11 @@ function GuestActions({ onNavigate }: AccountAreaProps) {
         </SidebarMenuButton>
       </SidebarMenuItem>
       <SidebarMenuItem>
-        <SidebarMenuButton asChild tooltip={t('nav.sign_up')}>
+        <SidebarMenuButton
+          asChild
+          tooltip={t('nav.sign_up')}
+          className="max-md:h-11"
+        >
           <Link to="/register" search={{ redirect: href }} onClick={onNavigate}>
             <UserPlus />
             <span>{t('nav.sign_up')}</span>
@@ -90,48 +129,110 @@ function GuestActions({ onNavigate }: AccountAreaProps) {
   )
 }
 
-function SignedInActions({
-  email,
-  onNavigate,
-}: AccountAreaProps & { email: string | undefined }) {
+// The slim phone header has room for one control: "Log in", or the account menu (AC-32, AC-33).
+function CompactAccount() {
   const { t } = useTranslation()
-  const matchRoute = useMatchRoute()
-  const logout = useLogoutMutation()
+  const { status, user, retry } = useSession()
+
+  if (status === 'pending') {
+    return <Skeleton aria-hidden className="h-11 w-20 shrink-0" />
+  }
+  if (status === 'error') {
+    return (
+      <Button
+        type="button"
+        variant="outline"
+        className="h-11 shrink-0"
+        title={t('nav.account_check_failed')}
+        onClick={retry}
+      >
+        <RotateCw />
+        {t('nav.retry')}
+      </Button>
+    )
+  }
+  if (status === 'signed_in' && user)
+    return <AccountMenu compact email={user.email} />
+  return <CompactGuest />
+}
+
+function CompactGuest() {
+  const { t } = useTranslation()
+  const href = useCurrentHref()
 
   return (
-    <>
-      <SidebarMenuItem>
-        <SidebarMenuButton
-          size="lg"
-          asChild
-          tooltip={t('nav.profile')}
-          isActive={!!matchRoute({ to: '/profile', fuzzy: true })}
-        >
+    <Button asChild variant="outline" className="h-11 shrink-0">
+      <Link to="/login" search={{ redirect: href }}>
+        <LogIn />
+        {t('nav.log_in')}
+      </Link>
+    </Button>
+  )
+}
+
+type AccountMenuProps = {
+  email: string
+  compact?: boolean
+  onNavigate?: () => void
+}
+
+// The signed-in account: a menu button named with the email, offering "Profile" and "Log out".
+// Radix gives Enter, Space and Arrow Down to open, Escape to close and focus back to the button.
+function AccountMenu({ email, compact = false, onNavigate }: AccountMenuProps) {
+  const { t } = useTranslation()
+  const { isMobile } = useSidebar()
+  const logout = useLogoutMutation()
+  const label = t('nav.account_menu', { email })
+  const initial = Array.from(email)[0]?.toUpperCase()
+
+  const avatar = (
+    <span
+      aria-hidden
+      className="flex aspect-square size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-sm font-medium text-foreground"
+    >
+      {initial}
+    </span>
+  )
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        {compact ? (
+          <Button
+            type="button"
+            variant="ghost"
+            className="size-11 shrink-0 p-0"
+            aria-label={label}
+          >
+            {avatar}
+          </Button>
+        ) : (
+          <SidebarMenuButton size="lg" aria-label={label}>
+            {avatar}
+            <span className="min-w-0 flex-1 truncate">{email}</span>
+          </SidebarMenuButton>
+        )}
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        side={compact ? 'bottom' : isMobile ? 'top' : 'right'}
+        align="end"
+        className="min-w-48"
+      >
+        <DropdownMenuItem asChild className="max-md:min-h-11">
           <Link to="/profile" onClick={onNavigate}>
-            <span className="flex aspect-square size-8 shrink-0 items-center justify-center rounded-lg bg-sidebar-accent text-sidebar-accent-foreground">
-              <User />
-            </span>
-            <span className="grid flex-1 leading-tight">
-              <span className="truncate font-medium">{t('nav.profile')}</span>
-              <span className="truncate text-xs text-sidebar-foreground/70">
-                {email}
-              </span>
-            </span>
+            <User />
+            {t('nav.profile')}
           </Link>
-        </SidebarMenuButton>
-      </SidebarMenuItem>
-      <SidebarMenuItem>
-        <SidebarMenuButton
-          tooltip={t('nav.log_out')}
-          onClick={() => logout.mutate()}
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          className="max-md:min-h-11"
           disabled={logout.isPending}
+          onSelect={() => logout.mutate()}
         >
           <LogOut />
-          <span>
-            {logout.isPending ? t('nav.logging_out') : t('nav.log_out')}
-          </span>
-        </SidebarMenuButton>
-      </SidebarMenuItem>
-    </>
+          {logout.isPending ? t('nav.logging_out') : t('nav.log_out')}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   )
 }

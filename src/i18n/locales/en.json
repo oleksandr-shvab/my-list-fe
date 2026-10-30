@@ -4,14 +4,19 @@
     "tagline": "Daily puzzle games"
   },
   "nav": {
-    "home": "Home",
     "profile": "Profile",
     "log_out": "Log out",
     "logging_out": "Logging out…",
     "log_in": "Log in",
     "sign_up": "Sign up",
     "retry": "Retry",
-    "account_check_failed": "Couldn't check your sign-in."
+    "account_check_failed": "Couldn't check your sign-in.",
+    "games": "Games",
+    "skip_to_content": "Skip to content",
+    "toggle_sidebar": "Show or hide the sidebar",
+    "sidebar_title": "Site menu",
+    "sidebar_description": "Games, archive, language, theme and account.",
+    "account_menu": "Account: {{email}}"
   },
   "games": {
     "game_guesser": {

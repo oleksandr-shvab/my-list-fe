@@ -170,6 +170,14 @@ body {
   }
 }
 
+/* The phone header (56 px, `h-14`) sticks to the top on screens at least 500 px tall. Keep the
+   element that has keyboard focus from sliding under it. */
+@media (max-width: 767px) and (min-height: 500px) {
+  html {
+    scroll-padding-top: 3.5rem;
+  }
+}
+
 /* Edge/IE render their own reveal/clear icons inside password inputs, overlapping
    our custom PasswordInput toggle button and stealing clicks. */
 input[type='password']::-ms-reveal,

@@ -4,14 +4,19 @@
     "tagline": "Ежедневные игры-загадки"
   },
   "nav": {
-    "home": "Главная",
     "profile": "Профиль",
     "log_out": "Выйти",
     "logging_out": "Выходим…",
     "log_in": "Войти",
     "sign_up": "Зарегистрироваться",
     "retry": "Повторить",
-    "account_check_failed": "Не удалось проверить вход."
+    "account_check_failed": "Не удалось проверить вход.",
+    "games": "Игры",
+    "skip_to_content": "Перейти к содержимому",
+    "toggle_sidebar": "Показать или скрыть боковую панель",
+    "sidebar_title": "Меню сайта",
+    "sidebar_description": "Игры, архив, язык, тема и аккаунт.",
+    "account_menu": "Аккаунт: {{email}}"
   },
   "games": {
     "game_guesser": {
