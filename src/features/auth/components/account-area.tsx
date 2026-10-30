@@ -1,7 +1,9 @@
 import { Link, useLocation } from '@tanstack/react-router'
 import { LogIn, LogOut, RotateCw, User, UserPlus } from 'lucide-react'
+import { useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 
+import { MAIN_ID } from '@/components/skip-link'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -182,6 +184,8 @@ function AccountMenu({ email, compact = false, onNavigate }: AccountMenuProps) {
   const { t } = useTranslation()
   const { isMobile } = useSidebar()
   const logout = useLogoutMutation()
+  // Set when "Profile" is followed from the phone panel, which closes behind the link.
+  const panelIsClosing = useRef(false)
   const label = t('nav.account_menu', { email })
   const initial = Array.from(email)[0]?.toUpperCase()
 
@@ -217,9 +221,25 @@ function AccountMenu({ email, compact = false, onNavigate }: AccountMenuProps) {
         side={compact ? 'bottom' : isMobile ? 'top' : 'right'}
         align="end"
         className="min-w-48"
+        // Radix gives the focus back to the button when the menu closes. When the button is in the
+        // panel that a followed link is closing, that would pull the focus off the page. The
+        // panel's own move to `main` (`PhoneHeader`) cannot do it: it runs while this menu still
+        // traps the focus. So do it here, once the menu is gone.
+        onCloseAutoFocus={(event) => {
+          if (!panelIsClosing.current) return
+          panelIsClosing.current = false
+          event.preventDefault()
+          document.getElementById(MAIN_ID)?.focus()
+        }}
       >
         <DropdownMenuItem asChild className="max-md:min-h-11">
-          <Link to="/profile" onClick={onNavigate}>
+          <Link
+            to="/profile"
+            onClick={() => {
+              if (onNavigate && isMobile) panelIsClosing.current = true
+              onNavigate?.()
+            }}
+          >
             <User />
             {t('nav.profile')}
           </Link>

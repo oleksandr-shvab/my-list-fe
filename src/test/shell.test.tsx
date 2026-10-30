@@ -328,6 +328,65 @@ describe('the phone header and panel (AC-32, AC-35, AC-66)', () => {
     expect(document.activeElement).toBe(toggle)
   })
 
+  it('keeps the focus on the main area after Profile is chosen from the account menu inside the closing panel', async () => {
+    const user = userEvent.setup()
+    usePhoneScreen()
+    // jsdom has no animations, so the panel would vanish at once and take its menu button with
+    // it. The real panel plays an exit animation first and stays in the page while it runs, so
+    // give it one, and end it by hand.
+    const realGetComputedStyle = window.getComputedStyle
+    vi.stubGlobal('CSS', { escape: (value: string) => value })
+    vi.stubGlobal('getComputedStyle', (element: Element) => {
+      const styles = realGetComputedStyle(element)
+      if (element.getAttribute('role') !== 'dialog') return styles
+      return new Proxy(styles, {
+        get(target, property) {
+          if (property === 'animationName') {
+            return element.getAttribute('data-state') === 'closed'
+              ? 'sheet-out'
+              : 'none'
+          }
+          const value = Reflect.get(target, property, target)
+          return typeof value === 'function' ? value.bind(target) : value
+        },
+      })
+    })
+    const app = renderApp('/', SIGNED_IN)
+
+    await user.click(
+      await screen.findByRole('button', { name: 'Show or hide the sidebar' }),
+    )
+    const panel = await screen.findByRole('dialog', { name: 'Site menu' })
+    await user.click(
+      await within(panel).findByRole('button', {
+        name: `Account: ${USER.email}`,
+      }),
+    )
+    await user.click(await screen.findByRole('menuitem', { name: 'Profile' }))
+
+    await waitFor(() =>
+      expect(app.router.state.location.pathname).toBe('/profile'),
+    )
+    // The panel is closing but still in the page, with the button that had the menu.
+    expect(panel.getAttribute('data-state')).toBe('closed')
+    expect(panel.isConnected).toBe(true)
+    // Let the menu's own focus return (a timer) run.
+    await act(() => new Promise((resolve) => setTimeout(resolve, 20)))
+    expect(document.activeElement).toBe(
+      screen.getByRole('main', { hidden: true }),
+    )
+
+    const animationEnd = new Event('animationend', { bubbles: true })
+    Object.assign(animationEnd, { animationName: 'sheet-out' })
+    act(() => {
+      panel.dispatchEvent(animationEnd)
+    })
+    await waitFor(() => expect(panel.isConnected).toBe(false))
+    expect(document.activeElement).toBe(
+      screen.getByRole('main', { hidden: true }),
+    )
+  })
+
   it('shows the account menu button in the header instead of Log in when signed in', async () => {
     usePhoneScreen()
     renderApp('/', SIGNED_IN)
