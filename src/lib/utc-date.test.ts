@@ -1,5 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { formatPuzzleDate, parsePuzzleDate, todayUtc } from './utc-date'
+import {
+  FIRST_PUZZLE_DATE,
+  formatPuzzleDate,
+  parsePuzzleDate,
+  todayUtc,
+} from './utc-date'
 
 afterEach(() => {
   vi.useRealTimers()
@@ -55,8 +60,16 @@ describe('parsePuzzleDate (AC-44, AC-45)', () => {
       date: '2026-10-28',
       isToday: true,
     })
-    expect(parsePuzzleDate('2024-02-29', today)).toEqual({
-      date: '2024-02-29',
+    expect(parsePuzzleDate('2028-02-29', '2028-03-01')).toEqual({
+      date: '2028-02-29',
+      isToday: false,
+    })
+  })
+
+  it('accepts the first puzzle day when today is later', () => {
+    expect(FIRST_PUZZLE_DATE).toBe('2026-01-01')
+    expect(parsePuzzleDate('2026-01-01', today)).toEqual({
+      date: '2026-01-01',
       isToday: false,
     })
   })
@@ -74,6 +87,11 @@ describe('parsePuzzleDate (AC-44, AC-45)', () => {
     ['an empty value', ''],
     ['tomorrow', '2026-10-29'],
     ['a far future day', '2099-01-01'],
+    // `Date.UTC` maps the years 0 to 99 to 1900 to 1999, so the round trip alone lets some pass.
+    ['year 0000', '0000-01-01'],
+    ['year 0050', '0050-06-01'],
+    ['year 0100', '0100-01-01'],
+    ['the day before the first puzzle', '2025-12-31'],
   ])('rejects %s', (_case, value) => {
     expect(parsePuzzleDate(value, today)).toBeNull()
   })

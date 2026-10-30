@@ -201,10 +201,10 @@ describe('the game pages (AC-12, AC-39 to AC-45, AC-48)', () => {
   })
 
   it('shows an earlier day as not today, and the archive page as the archive', async () => {
-    const past = await open('/games/game-guesser/2024-02-29', GUEST)
+    const past = await open('/games/game-guesser/2026-02-28', GUEST)
     expect(shownPuzzle(past)).toMatchObject({
       slug: 'game-guesser',
-      date: '2024-02-29',
+      date: '2026-02-28',
       isToday: false,
     })
     stop?.()
