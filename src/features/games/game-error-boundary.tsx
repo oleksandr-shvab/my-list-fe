@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button'
 
 type GameErrorBoundaryProps = {
   children: ReactNode
+  // The game's name, for the page's h1: the screen's own h1 is not there while it has failed.
+  heading: string
   // Called on "Try again", before the screen renders again.
   onRetry?: () => void
 }
@@ -28,6 +30,7 @@ export class GameErrorBoundary extends Component<
 
     return (
       <GameErrorFallback
+        heading={this.props.heading}
         onRetry={() => {
           this.props.onRetry?.()
           this.setState({ failed: false })
@@ -40,18 +43,27 @@ export class GameErrorBoundary extends Component<
 // "Try again" renders the screen again. If the screen's code failed to download, `lazy` keeps
 // that failure, so the screen is built with `lazyWithRetry` and `onRetry` makes it download
 // again. (src/lib/version-skew.ts only reloads the page for the deploy case.)
-function GameErrorFallback({ onRetry }: { onRetry: () => void }) {
+function GameErrorFallback({
+  heading,
+  onRetry,
+}: {
+  heading: string
+  onRetry: () => void
+}) {
   const { t } = useTranslation()
 
   return (
-    <div
-      role="alert"
-      className="flex flex-1 flex-col items-center justify-center gap-3 px-6 py-6 text-center"
-    >
-      <p className="text-sm text-muted-foreground">{t('games.error')}</p>
-      <Button type="button" onClick={onRetry}>
-        {t('error_screen.try_again')}
-      </Button>
-    </div>
+    <>
+      <h1 className="sr-only">{heading}</h1>
+      <div
+        role="alert"
+        className="flex flex-1 flex-col items-center justify-center gap-3 px-6 py-6 text-center"
+      >
+        <p className="text-sm text-muted-foreground">{t('games.error')}</p>
+        <Button type="button" onClick={onRetry}>
+          {t('error_screen.try_again')}
+        </Button>
+      </div>
+    </>
   )
 }

@@ -27,10 +27,10 @@ describe('the placeholder screen (AC-47, AC-55a)', () => {
 
     // The screen's code loads first (AC-53).
     expect(screen.getByRole('status').textContent).toBe('Loading the game…')
-    const heading = await screen.findByRole('heading', { level: 1 })
+    expect(await screen.findByText('This game is coming soon.')).toBeTruthy()
+    const heading = screen.getByRole('heading', { level: 1 })
     expect(heading.textContent).toBe('Game Guesser')
     expect(screen.getByText('Puzzle for October 28, 2026')).toBeTruthy()
-    expect(screen.getByText('This game is coming soon.')).toBeTruthy()
 
     await act(() => i18n.changeLanguage('ru'))
 
@@ -156,5 +156,64 @@ describe('a screen whose code fails to download (AC-53, AC-54)', () => {
     expect(await screen.findByText('Playing 2026-10-28')).toBeTruthy()
     expect(screen.queryByRole('alert')).toBeNull()
     expect(load).toHaveBeenCalledTimes(2)
+  })
+})
+
+describe('the page heading and the loading status (AC-53, AC-54)', () => {
+  const headings = () => screen.getAllByRole('heading', { level: 1 })
+
+  it('has one h1 while the code loads, after it loaded, and when the screen failed; the status region stays mounted', async () => {
+    let finishLoading!: () => void
+    const game: GameEntry = {
+      slug: 'slow',
+      nameKey: 'games.game_guesser.name',
+      order: 1,
+      isDefault: false,
+      screen: lazyWithRetry(
+        () =>
+          new Promise((resolve) => {
+            finishLoading = () =>
+              resolve({
+                default: function SlowScreen() {
+                  return <h1>The real heading</h1>
+                },
+              })
+          }),
+      ),
+    }
+    render(<GameScreen game={game} date="2026-10-28" isToday />)
+
+    // Loading: the hidden h1 with the game's name, and the text in the status region.
+    const status = screen.getByRole('status')
+    expect(status.textContent).toBe('Loading the game…')
+    expect(headings().map((h) => h.textContent)).toEqual(['Game Guesser'])
+
+    finishLoading()
+    await screen.findByText('The real heading')
+
+    // Loaded: only the screen's own h1, and the same status element, now empty.
+    expect(headings().map((h) => h.textContent)).toEqual(['The real heading'])
+    expect(screen.getByRole('status')).toBe(status)
+    expect(status.textContent).toBe('')
+  })
+
+  it('has one h1 when the screen failed', async () => {
+    const game: GameEntry = {
+      slug: 'crashing',
+      nameKey: 'games.game_guesser.name',
+      order: 1,
+      isDefault: false,
+      screen: lazyWithRetry(async () => ({
+        default: function CrashingScreen(): never {
+          throw new Error('the game crashed')
+        },
+      })),
+    }
+    render(<GameScreen game={game} date="2026-10-28" isToday />)
+
+    await screen.findByRole('alert')
+
+    expect(headings().map((h) => h.textContent)).toEqual(['Game Guesser'])
+    expect(screen.getByRole('status').textContent).toBe('')
   })
 })
