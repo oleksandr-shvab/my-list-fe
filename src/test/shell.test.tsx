@@ -6,7 +6,14 @@ import { act, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import i18n from '@/i18n'
-import { GUEST, SIGNED_IN, startApp, USER, type Reply } from './router-harness'
+import {
+  GUEST,
+  SIGNED_IN,
+  slowReply,
+  startApp,
+  USER,
+  type Reply,
+} from './router-harness'
 
 // The navigation shell in jsdom: the sidebar, the phone header and panel, the skip link and the
 // account menu, on the real route tree with the fake backend. The fixed day makes "today"
@@ -171,6 +178,59 @@ describe('the account menu (AC-33, AC-66)', () => {
 
       await waitFor(() => expect(screen.queryByRole('menu')).toBeNull())
       await waitFor(() => expect(document.activeElement).toBe(button))
+    },
+  )
+})
+
+describe('logging out from the account menu (AC-33, AC-66)', () => {
+  const LOGOUT_URL = '/v1/auth/logout'
+
+  // Starts signed in with a logout that does not answer until the test says so.
+  function renderWithHeldLogout(path = '/') {
+    const held = slowReply()
+    const app = renderApp(path, SIGNED_IN)
+    app.backend.replies.set(LOGOUT_URL, held.reply)
+    return { held, app }
+  }
+
+  it.each(['the sidebar', 'the phone header', 'the phone panel'] as const)(
+    'shows the pending state on the menu button of %s, then puts the focus on Log in',
+    async (place) => {
+      const user = userEvent.setup()
+      if (place !== 'the sidebar') usePhoneScreen()
+      const { held, app } = renderWithHeldLogout()
+      let area: Pick<typeof screen, 'findByRole'> = screen
+      if (place === 'the phone header') {
+        area = within(await screen.findByRole('banner'))
+      } else if (place === 'the phone panel') {
+        await user.click(
+          await screen.findByRole('button', {
+            name: 'Show or hide the sidebar',
+          }),
+        )
+        area = within(await screen.findByRole('dialog', { name: 'Site menu' }))
+      }
+
+      await user.click(
+        await area.findByRole('button', {
+          name: `Account: ${USER.email}`,
+        }),
+      )
+      await user.click(await screen.findByRole('menuitem', { name: 'Log out' }))
+
+      // The menu closes on select, so the pending state is on the button that opened it.
+      const pending = await area.findByRole('button', {
+        name: 'Logging out…',
+      })
+      expect((pending as HTMLButtonElement).disabled).toBe(true)
+      expect(pending.getAttribute('aria-busy')).toBe('true')
+      expect(screen.queryByRole('menu')).toBeNull()
+      expect(app.backend.count(LOGOUT_URL)).toBe(1)
+
+      await act(async () => held.answer({ status: 204 }))
+
+      const logIn = await area.findByRole('link', { name: 'Log in' })
+      await waitFor(() => expect(document.activeElement).toBe(logIn))
     },
   )
 })

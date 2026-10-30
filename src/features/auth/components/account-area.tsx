@@ -1,6 +1,6 @@
 import { Link, useLocation } from '@tanstack/react-router'
 import { LogIn, LogOut, RotateCw, User, UserPlus } from 'lucide-react'
-import { useRef } from 'react'
+import { useEffect, useRef, type Ref } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { MAIN_ID } from '@/components/skip-link'
@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useLogoutMutation } from '../mutations'
-import { useSession } from '../session'
+import { useSession, type SessionStatus } from '../session'
 
 type AccountAreaProps = {
   // `sidebar`: the bottom of the sidebar. `compact`: one control for the phone header.
@@ -43,15 +43,22 @@ export function AccountArea({
 
 function SidebarAccount({ onNavigate }: Pick<AccountAreaProps, 'onNavigate'>) {
   const { status, user, retry } = useSession()
+  const { logout, logInRef } = useLogout(status)
 
   return (
     <SidebarMenu className="gap-2">
       {status === 'pending' && <AccountPlaceholder />}
       {status === 'error' && <AccountCheckFailed onRetry={retry} />}
-      {status === 'guest' && <GuestActions onNavigate={onNavigate} />}
+      {status === 'guest' && (
+        <GuestActions onNavigate={onNavigate} logInRef={logInRef} />
+      )}
       {status === 'signed_in' && user && (
         <SidebarMenuItem>
-          <AccountMenu email={user.email} onNavigate={onNavigate} />
+          <AccountMenu
+            email={user.email}
+            logout={logout}
+            onNavigate={onNavigate}
+          />
         </SidebarMenuItem>
       )}
     </SidebarMenu>
@@ -97,7 +104,11 @@ function useCurrentHref() {
   return useLocation({ select: (location) => location.href })
 }
 
-function GuestActions({ onNavigate }: Pick<AccountAreaProps, 'onNavigate'>) {
+type GuestActionsProps = Pick<AccountAreaProps, 'onNavigate'> & {
+  logInRef: Ref<HTMLAnchorElement>
+}
+
+function GuestActions({ onNavigate, logInRef }: GuestActionsProps) {
   const { t } = useTranslation()
   const href = useCurrentHref()
 
@@ -109,7 +120,12 @@ function GuestActions({ onNavigate }: Pick<AccountAreaProps, 'onNavigate'>) {
           tooltip={t('nav.log_in')}
           className="max-md:h-11"
         >
-          <Link to="/login" search={{ redirect: href }} onClick={onNavigate}>
+          <Link
+            ref={logInRef}
+            to="/login"
+            search={{ redirect: href }}
+            onClick={onNavigate}
+          >
             <LogIn />
             <span>{t('nav.log_in')}</span>
           </Link>
@@ -135,6 +151,7 @@ function GuestActions({ onNavigate }: Pick<AccountAreaProps, 'onNavigate'>) {
 function CompactAccount() {
   const { t } = useTranslation()
   const { status, user, retry } = useSession()
+  const { logout, logInRef } = useLogout(status)
 
   if (status === 'pending') {
     return <Skeleton aria-hidden className="h-11 w-20 shrink-0" />
@@ -154,17 +171,17 @@ function CompactAccount() {
     )
   }
   if (status === 'signed_in' && user)
-    return <AccountMenu compact email={user.email} />
-  return <CompactGuest />
+    return <AccountMenu compact email={user.email} logout={logout} />
+  return <CompactGuest logInRef={logInRef} />
 }
 
-function CompactGuest() {
+function CompactGuest({ logInRef }: { logInRef: Ref<HTMLAnchorElement> }) {
   const { t } = useTranslation()
   const href = useCurrentHref()
 
   return (
     <Button asChild variant="outline" className="h-11 shrink-0">
-      <Link to="/login" search={{ redirect: href }}>
+      <Link ref={logInRef} to="/login" search={{ redirect: href }}>
         <LogIn />
         {t('nav.log_in')}
       </Link>
@@ -172,21 +189,57 @@ function CompactGuest() {
   )
 }
 
+type Logout = { start: () => void; isPending: boolean }
+
+// The logout lives here, not in the menu: the menu goes when the visitor becomes a guest, and
+// takes the focus with it. Once "Log in" has taken its place, the focus goes there, unless the
+// visitor moved it somewhere else while the request ran.
+function useLogout(status: SessionStatus) {
+  const mutation = useLogoutMutation()
+  const logInRef = useRef<HTMLAnchorElement>(null)
+  const loggedOut = status === 'guest' && !mutation.isIdle
+
+  useEffect(() => {
+    if (!loggedOut) return
+    // Nothing has the focus: the page, or the phone panel that caught it when the menu went.
+    const focused = document.activeElement
+    const focusIsLost =
+      !focused ||
+      focused === document.body ||
+      focused.getAttribute('role') === 'dialog'
+    if (focusIsLost) logInRef.current?.focus()
+  }, [loggedOut])
+
+  const logout: Logout = {
+    start: () => mutation.mutate(),
+    isPending: mutation.isPending,
+  }
+  return { logout, logInRef }
+}
+
 type AccountMenuProps = {
   email: string
+  logout: Logout
   compact?: boolean
   onNavigate?: () => void
 }
 
 // The signed-in account: a menu button named with the email, offering "Profile" and "Log out".
 // Radix gives Enter, Space and Arrow Down to open, Escape to close and focus back to the button.
-function AccountMenu({ email, compact = false, onNavigate }: AccountMenuProps) {
+function AccountMenu({
+  email,
+  logout,
+  compact = false,
+  onNavigate,
+}: AccountMenuProps) {
   const { t } = useTranslation()
   const { isMobile } = useSidebar()
-  const logout = useLogoutMutation()
   // Set when "Profile" is followed from the phone panel, which closes behind the link.
   const panelIsClosing = useRef(false)
-  const label = t('nav.account_menu', { email })
+  // Radix closes the menu on select, so the button shows that the logout is running.
+  const label = logout.isPending
+    ? t('nav.logging_out')
+    : t('nav.account_menu', { email })
   const initial = Array.from(email)[0]?.toUpperCase()
 
   const avatar = (
@@ -207,13 +260,22 @@ function AccountMenu({ email, compact = false, onNavigate }: AccountMenuProps) {
             variant="ghost"
             className="size-11 shrink-0 p-0"
             aria-label={label}
+            aria-busy={logout.isPending}
+            disabled={logout.isPending}
           >
             {avatar}
           </Button>
         ) : (
-          <SidebarMenuButton size="lg" aria-label={label}>
+          <SidebarMenuButton
+            size="lg"
+            aria-label={label}
+            aria-busy={logout.isPending}
+            disabled={logout.isPending}
+          >
             {avatar}
-            <span className="min-w-0 flex-1 truncate">{email}</span>
+            <span className="min-w-0 flex-1 truncate">
+              {logout.isPending ? t('nav.logging_out') : email}
+            </span>
           </SidebarMenuButton>
         )}
       </DropdownMenuTrigger>
@@ -244,13 +306,9 @@ function AccountMenu({ email, compact = false, onNavigate }: AccountMenuProps) {
             {t('nav.profile')}
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuItem
-          className="max-md:min-h-11"
-          disabled={logout.isPending}
-          onSelect={() => logout.mutate()}
-        >
+        <DropdownMenuItem className="max-md:min-h-11" onSelect={logout.start}>
           <LogOut />
-          {logout.isPending ? t('nav.logging_out') : t('nav.log_out')}
+          {t('nav.log_out')}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
