@@ -1,4 +1,4 @@
-import { Suspense } from 'react'
+import { Suspense, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { GameErrorBoundary } from './game-error-boundary'
 import type { GameEntry } from './types'
@@ -14,26 +14,37 @@ type GameScreenHostProps = {
 // failure inside it stays inside the boundary (AC-54).
 export function GameScreen({ game, date, isToday }: GameScreenHostProps) {
   const { t } = useTranslation()
+  const areaRef = useRef<HTMLDivElement>(null)
+
+  // "Try again" removes the button that has the focus. Moving the focus to the game area first
+  // keeps it there instead of letting it fall to the page. Only a retry does this.
+  function handleRetry() {
+    game.screen.reload?.()
+    areaRef.current?.focus()
+  }
 
   // The key restarts the boundary and the screen for another game or day. It never includes the
   // language: a language switch must keep the screen and its state (AC-55a).
   return (
-    <GameErrorBoundary
-      key={`${game.slug}/${date}`}
-      onRetry={game.screen.reload}
+    <div
+      ref={areaRef}
+      tabIndex={-1}
+      className="flex flex-1 flex-col outline-none"
     >
-      <Suspense
-        fallback={
-          <p
-            role="status"
-            className="flex flex-1 items-center justify-center text-sm text-muted-foreground"
-          >
-            {t('games.loading')}
-          </p>
-        }
-      >
-        <game.screen slug={game.slug} date={date} isToday={isToday} />
-      </Suspense>
-    </GameErrorBoundary>
+      <GameErrorBoundary key={`${game.slug}/${date}`} onRetry={handleRetry}>
+        <Suspense
+          fallback={
+            <p
+              role="status"
+              className="flex flex-1 items-center justify-center text-sm text-muted-foreground"
+            >
+              {t('games.loading')}
+            </p>
+          }
+        >
+          <game.screen slug={game.slug} date={date} isToday={isToday} />
+        </Suspense>
+      </GameErrorBoundary>
+    </div>
   )
 }

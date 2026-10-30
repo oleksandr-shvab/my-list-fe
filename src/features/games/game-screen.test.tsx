@@ -83,6 +83,30 @@ describe('the game error boundary (AC-54)', () => {
     expect(screen.queryByRole('alert')).toBeNull()
   })
 
+  it('keeps the focus in the game area after "Try again", and does not take it on first load', async () => {
+    const user = userEvent.setup()
+    render(
+      <>
+        <button type="button">Outside</button>
+        <div data-testid="area">
+          <GameScreen game={brokenGame} date="2026-10-28" isToday />
+        </div>
+      </>,
+    )
+    const area = screen.getByTestId('area')
+    await screen.findByRole('alert')
+    // First load: the focus stays where it was.
+    expect(document.body.contains(document.activeElement)).toBe(true)
+    expect(area.contains(document.activeElement)).toBe(false)
+
+    broken.now = false
+    await user.click(screen.getByRole('button', { name: 'Try again' }))
+    await screen.findByText('Playing 2026-10-28')
+
+    expect(document.activeElement).not.toBe(document.body)
+    expect(area.contains(document.activeElement)).toBe(true)
+  })
+
   it('starts clean for another day, and shows the error text in the current language', async () => {
     const { rerender } = render(
       <GameScreen game={brokenGame} date="2026-10-28" isToday />,
