@@ -55,6 +55,7 @@ describe('translation catalogues', () => {
       expect(catalogue).not.toHaveProperty('lists')
       expect(catalogue).not.toHaveProperty('home')
       expect(catalogue.nav).not.toHaveProperty('lists')
+      expect(catalogue.nav).not.toHaveProperty('home')
     }
   })
 })

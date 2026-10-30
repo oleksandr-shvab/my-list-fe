@@ -152,7 +152,10 @@ describe('the account area (AC-21, AC-24, AC-32, AC-33)', () => {
     expect(screen.queryByRole('button', { name: 'Retry' })).toBeNull()
 
     app.backend.replies.set('/v1/auth/logout', { status: 204 })
-    await user.click(screen.getByRole('button', { name: 'Log out' }))
+    await user.click(
+      screen.getByRole('button', { name: `Account: ${USER.email}` }),
+    )
+    await user.click(await screen.findByRole('menuitem', { name: 'Log out' }))
 
     expect(await screen.findByRole('link', { name: 'Log in' })).toBeTruthy()
     expect(screen.queryByText(USER.email)).toBeNull()
