@@ -7,6 +7,7 @@ import { onAuthSuccess } from '@/features/auth/mutations'
 import { finishLogout, finishPasswordReset } from '@/features/auth/session'
 import { updatePasswordRequest } from '@/features/auth/api'
 import { ApiError } from '@/lib/api-client'
+import { resolvePageTitleKey } from '@/lib/page-title'
 import {
   GUEST,
   matchOf,
@@ -134,6 +135,141 @@ describe('unknown paths (AC-10)', () => {
     expect(where(app)).toBe('/lists')
     expect(matchOf(app.router, '/_app')?.status).toBe('success')
     expect(matchOf(app.router, '/_app/$')?.status).toBe('notFound')
+  })
+})
+
+describe('the game pages (AC-12, AC-39 to AC-45, AC-48)', () => {
+  // Fixed, so "today" is 2026-10-28 in UTC. Only the date is faked: the router needs real timers.
+  beforeEach(() => {
+    vi.useFakeTimers({ toFake: ['Date'] })
+    vi.setSystemTime(new Date('2026-10-28T12:00:00Z'))
+  })
+
+  afterEach(() => {
+    vi.useRealTimers()
+  })
+
+  // What the game screen is given: the game, the day and whether it is today.
+  function shownPuzzle(app: Awaited<ReturnType<typeof open>>) {
+    const leaf = app.router.state.matches.at(-1)
+    // The router types a match's context for any route, so say which part this test reads.
+    const { game, date, isToday } = (leaf?.context ?? {}) as {
+      game?: { slug: string }
+      date?: string
+      isToday?: boolean
+    }
+    return { routeId: leaf?.routeId, slug: game?.slug, date, isToday }
+  }
+
+  function titleKey(app: Awaited<ReturnType<typeof open>>) {
+    return resolvePageTitleKey(app.router.state.matches)
+  }
+
+  it.each([
+    '/games/game-guesser',
+    '/games/game-guesser/2026-10-01',
+    '/games/game-guesser/archive',
+  ])('show %s to a guest inside the layout, with no redirect', async (path) => {
+    const app = await open(path, GUEST)
+
+    expect(where(app)).toBe(path)
+    expect(matchOf(app.router, '/_app')?.status).toBe('success')
+    expect(app.router.state.matches.at(-1)?.status).toBe('success')
+  })
+
+  it('shows the same puzzle on the home page, on the game page and on the date of today', async () => {
+    const expected = { slug: 'game-guesser', date: '2026-10-28', isToday: true }
+
+    const home = await open('/', GUEST)
+    expect(shownPuzzle(home)).toMatchObject({ ...expected, routeId: '/_app/' })
+    stop?.()
+
+    const game = await open('/games/game-guesser', GUEST)
+    expect(shownPuzzle(game)).toMatchObject({
+      ...expected,
+      routeId: '/_app/games/$slug/',
+    })
+    stop?.()
+
+    // No redirect to the page without a date.
+    const today = await open('/games/game-guesser/2026-10-28', GUEST)
+    expect(where(today)).toBe('/games/game-guesser/2026-10-28')
+    expect(shownPuzzle(today)).toMatchObject({
+      ...expected,
+      routeId: '/_app/games/$slug/$date',
+    })
+  })
+
+  it('shows an earlier day as not today, and the archive page as the archive', async () => {
+    const past = await open('/games/game-guesser/2026-02-28', GUEST)
+    expect(shownPuzzle(past)).toMatchObject({
+      slug: 'game-guesser',
+      date: '2026-02-28',
+      isToday: false,
+    })
+    stop?.()
+
+    const archive = await open('/games/game-guesser/archive', GUEST)
+    expect(archive.router.state.matches.at(-1)?.routeId).toBe(
+      '/_app/games/$slug/archive',
+    )
+  })
+
+  it.each(['/games/nope', '/games/Game-Guesser', '/games/nope/2026-10-01'])(
+    'gives %s the "unknown game" screen inside the layout',
+    async (path) => {
+      const app = await open(path, GUEST)
+
+      expect(matchOf(app.router, '/_app/games/$slug')?.status).toBe('notFound')
+      expect(matchOf(app.router, '/_app')?.status).toBe('success')
+    },
+  )
+
+  it.each([
+    '/games/game-guesser/2026-02-30',
+    '/games/game-guesser/2026-1-5',
+    '/games/game-guesser/today',
+    '/games/game-guesser/2026-10-29',
+    '/games/game-guesser/2099-01-01',
+  ])('gives %s the "no puzzle" screen inside the layout', async (path) => {
+    const app = await open(path, GUEST)
+
+    expect(matchOf(app.router, '/_app/games/$slug/$date')?.status).toBe(
+      'notFound',
+    )
+    expect(matchOf(app.router, '/_app/games/$slug')?.status).toBe('success')
+    expect(matchOf(app.router, '/_app')?.status).toBe('success')
+  })
+
+  it('keeps a path without a slug in the layout as an unknown page', async () => {
+    const app = await open('/games', GUEST)
+
+    expect(matchOf(app.router, '/_app/$')?.status).toBe('notFound')
+    expect(matchOf(app.router, '/_app')?.status).toBe('success')
+  })
+
+  it('names the tab after the game, the archive, or "not found" (AC-3)', async () => {
+    const titles = new Map<string, string | undefined>()
+    for (const path of [
+      '/',
+      '/games/game-guesser',
+      '/games/game-guesser/2026-10-01',
+      '/games/game-guesser/archive',
+      '/games/nope',
+      '/games/game-guesser/2026-02-30',
+    ]) {
+      titles.set(path, titleKey(await open(path, GUEST)))
+      stop?.()
+    }
+
+    expect(Object.fromEntries(titles)).toEqual({
+      '/': 'games.game_guesser.name',
+      '/games/game-guesser': 'games.game_guesser.name',
+      '/games/game-guesser/2026-10-01': 'games.game_guesser.name',
+      '/games/game-guesser/archive': 'games.archive_title',
+      '/games/nope': 'error_screen.not_found_title',
+      '/games/game-guesser/2026-02-30': 'error_screen.not_found_title',
+    })
   })
 })
 
@@ -330,5 +466,24 @@ describe('an `/auth/me` answer that arrives after the session changed (AC-19b)',
     await settle()
 
     expect(app.queryClient.getQueryData(ME_KEY)).toEqual(USER)
+  })
+
+  it('does not sign out the user who just logged in when the replaced request answers 401', async () => {
+    // The login cancels the `/auth/me` request that was still running. Cancelling the query does
+    // not stop the HTTP request unless the query passes its signal on, so its 401 would reach the
+    // session guard while the new user is shown.
+    const late = slowReply()
+    const app = await open('/', late.reply)
+
+    onAuthSuccess(app.queryClient, USER)
+    app.queryClient.setQueryData(['games', 'progress'], { solved: 3 })
+    late.answer(GUEST)
+    await settle()
+
+    expect(app.queryClient.getQueryData(ME_KEY)).toEqual(USER)
+    expect(app.queryClient.getQueryData(['games', 'progress'])).toEqual({
+      solved: 3,
+    })
+    expect(where(app)).toBe('/')
   })
 })

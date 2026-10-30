@@ -33,10 +33,12 @@ export async function logoutRequest(): Promise<void> {
 }
 
 // A visitor with no session is normal, not an error: a 401 here means "guest" (null). Any other
-// failure (network, 5xx) is thrown, because then the sign-in state is unknown.
-export async function getMe(): Promise<User | null> {
+// failure (network, 5xx) is thrown, because then the sign-in state is unknown. The query's signal
+// is passed on, so a request that login or logout replaced is aborted and its late 401 never
+// reaches the session guard.
+export async function getMe(signal?: AbortSignal): Promise<User | null> {
   try {
-    return await authMe()
+    return await authMe({ signal })
   } catch (error) {
     if (error instanceof ApiError && error.status === 401) return null
     throw error

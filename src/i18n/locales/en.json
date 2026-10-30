@@ -13,6 +13,21 @@
     "retry": "Retry",
     "account_check_failed": "Couldn't check your sign-in."
   },
+  "games": {
+    "game_guesser": {
+      "name": "Game Guesser"
+    },
+    "coming_soon": "This game is coming soon.",
+    "puzzle_date": "Puzzle for {{date}}",
+    "archive_title": "Archive",
+    "archive_coming_soon": "The archive is coming soon.",
+    "unknown_game": "Unknown game",
+    "unknown_game_text": "There is no game at this address.",
+    "no_puzzle": "No puzzle for this date",
+    "no_puzzle_text": "Check the date in the address, or play today's puzzle.",
+    "error": "This game ran into a problem.",
+    "loading": "Loading the game…"
+  },
   "theme": {
     "switch_to_light": "Switch to light mode",
     "switch_to_dark": "Switch to dark mode",
@@ -118,7 +133,7 @@
     "try_again": "Try again",
     "not_found_title": "Page not found",
     "not_found_text": "This page does not exist or was moved.",
-    "go_home": "Go to the home page"
+    "go_home": "Go to today's puzzle"
   },
   "profile": {
     "title": "Profile",

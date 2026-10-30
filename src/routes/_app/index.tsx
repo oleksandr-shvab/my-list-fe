@@ -1,19 +1,22 @@
-import { useTranslation } from 'react-i18next'
 import { createFileRoute } from '@tanstack/react-router'
+import { GameScreen } from '@/features/games/game-screen'
+import { getDefaultGame } from '@/features/games/registry'
+import { GAME_NAME_TITLE } from '@/lib/page-title'
+import { todayUtc } from '@/lib/utc-date'
 
+// The home page is the default game's screen for today, with no redirect (AC-39, AC-42).
 export const Route = createFileRoute('/_app/')({
-  staticData: { pageTitle: 'app.tagline' },
+  staticData: { pageTitle: GAME_NAME_TITLE },
+  beforeLoad: () => ({
+    game: getDefaultGame(),
+    date: todayUtc(),
+    isToday: true,
+  }),
   component: HomePage,
 })
 
-// A neutral placeholder until the game screen replaces it.
 function HomePage() {
-  const { t } = useTranslation()
+  const { game, date, isToday } = Route.useRouteContext()
 
-  return (
-    <div className="flex flex-1 flex-col gap-1">
-      <h1 className="text-2xl font-medium">{t('app.name')}</h1>
-      <p className="text-muted-foreground">{t('app.tagline')}</p>
-    </div>
-  )
+  return <GameScreen game={game} date={date} isToday={isToday} />
 }

@@ -18,6 +18,10 @@ import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AppSplatRouteImport } from './routes/_app/$'
 import { Route as AppAccountRouteImport } from './routes/_app/_account'
 import { Route as AppAccountProfileRouteImport } from './routes/_app/_account/profile'
+import { Route as AppGamesSlugRouteImport } from './routes/_app/games/$slug'
+import { Route as AppGamesSlugIndexRouteImport } from './routes/_app/games/$slug/index'
+import { Route as AppGamesSlugDateRouteImport } from './routes/_app/games/$slug/$date'
+import { Route as AppGamesSlugArchiveRouteImport } from './routes/_app/games/$slug/archive'
 
 const AppRoute = AppRouteImport.update({
   id: '/_app',
@@ -62,6 +66,26 @@ const AppAccountProfileRoute = AppAccountProfileRouteImport.update({
   path: '/profile',
   getParentRoute: () => AppAccountRoute,
 } as any)
+const AppGamesSlugRoute = AppGamesSlugRouteImport.update({
+  id: '/games/$slug',
+  path: '/games/$slug',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppGamesSlugIndexRoute = AppGamesSlugIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppGamesSlugRoute,
+} as any)
+const AppGamesSlugDateRoute = AppGamesSlugDateRouteImport.update({
+  id: '/$date',
+  path: '/$date',
+  getParentRoute: () => AppGamesSlugRoute,
+} as any)
+const AppGamesSlugArchiveRoute = AppGamesSlugArchiveRouteImport.update({
+  id: '/archive',
+  path: '/archive',
+  getParentRoute: () => AppGamesSlugRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
@@ -71,6 +95,10 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/$': typeof AppSplatRoute
   '/profile': typeof AppAccountProfileRoute
+  '/games/$slug': typeof AppGamesSlugRouteWithChildren
+  '/games/$slug/$date': typeof AppGamesSlugDateRoute
+  '/games/$slug/archive': typeof AppGamesSlugArchiveRoute
+  '/games/$slug/': typeof AppGamesSlugIndexRoute
 }
 export interface FileRoutesByTo {
   '/forgot-password': typeof ForgotPasswordRoute
@@ -80,6 +108,9 @@ export interface FileRoutesByTo {
   '/$': typeof AppSplatRoute
   '/': typeof AppIndexRoute
   '/profile': typeof AppAccountProfileRoute
+  '/games/$slug/$date': typeof AppGamesSlugDateRoute
+  '/games/$slug/archive': typeof AppGamesSlugArchiveRoute
+  '/games/$slug': typeof AppGamesSlugIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -92,6 +123,10 @@ export interface FileRoutesById {
   '/_app/_account': typeof AppAccountRouteWithChildren
   '/_app/': typeof AppIndexRoute
   '/_app/_account/profile': typeof AppAccountProfileRoute
+  '/_app/games/$slug': typeof AppGamesSlugRouteWithChildren
+  '/_app/games/$slug/$date': typeof AppGamesSlugDateRoute
+  '/_app/games/$slug/archive': typeof AppGamesSlugArchiveRoute
+  '/_app/games/$slug/': typeof AppGamesSlugIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -103,6 +138,10 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/$'
     | '/profile'
+    | '/games/$slug'
+    | '/games/$slug/$date'
+    | '/games/$slug/archive'
+    | '/games/$slug/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/forgot-password'
@@ -112,6 +151,9 @@ export interface FileRouteTypes {
     | '/$'
     | '/'
     | '/profile'
+    | '/games/$slug/$date'
+    | '/games/$slug/archive'
+    | '/games/$slug'
   id:
     | '__root__'
     | '/_app'
@@ -123,6 +165,10 @@ export interface FileRouteTypes {
     | '/_app/_account'
     | '/_app/'
     | '/_app/_account/profile'
+    | '/_app/games/$slug'
+    | '/_app/games/$slug/$date'
+    | '/_app/games/$slug/archive'
+    | '/_app/games/$slug/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -198,6 +244,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppAccountProfileRouteImport
       parentRoute: typeof AppAccountRoute
     }
+    '/_app/games/$slug': {
+      id: '/_app/games/$slug'
+      path: '/games/$slug'
+      fullPath: '/games/$slug'
+      preLoaderRoute: typeof AppGamesSlugRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/games/$slug/': {
+      id: '/_app/games/$slug/'
+      path: '/'
+      fullPath: '/games/$slug/'
+      preLoaderRoute: typeof AppGamesSlugIndexRouteImport
+      parentRoute: typeof AppGamesSlugRoute
+    }
+    '/_app/games/$slug/$date': {
+      id: '/_app/games/$slug/$date'
+      path: '/$date'
+      fullPath: '/games/$slug/$date'
+      preLoaderRoute: typeof AppGamesSlugDateRouteImport
+      parentRoute: typeof AppGamesSlugRoute
+    }
+    '/_app/games/$slug/archive': {
+      id: '/_app/games/$slug/archive'
+      path: '/archive'
+      fullPath: '/games/$slug/archive'
+      preLoaderRoute: typeof AppGamesSlugArchiveRouteImport
+      parentRoute: typeof AppGamesSlugRoute
+    }
   }
 }
 
@@ -213,16 +287,34 @@ const AppAccountRouteWithChildren = AppAccountRoute._addFileChildren(
   AppAccountRouteChildren,
 )
 
+interface AppGamesSlugRouteChildren {
+  AppGamesSlugDateRoute: typeof AppGamesSlugDateRoute
+  AppGamesSlugArchiveRoute: typeof AppGamesSlugArchiveRoute
+  AppGamesSlugIndexRoute: typeof AppGamesSlugIndexRoute
+}
+
+const AppGamesSlugRouteChildren: AppGamesSlugRouteChildren = {
+  AppGamesSlugDateRoute: AppGamesSlugDateRoute,
+  AppGamesSlugArchiveRoute: AppGamesSlugArchiveRoute,
+  AppGamesSlugIndexRoute: AppGamesSlugIndexRoute,
+}
+
+const AppGamesSlugRouteWithChildren = AppGamesSlugRoute._addFileChildren(
+  AppGamesSlugRouteChildren,
+)
+
 interface AppRouteChildren {
   AppSplatRoute: typeof AppSplatRoute
   AppAccountRoute: typeof AppAccountRouteWithChildren
   AppIndexRoute: typeof AppIndexRoute
+  AppGamesSlugRoute: typeof AppGamesSlugRouteWithChildren
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppSplatRoute: AppSplatRoute,
   AppAccountRoute: AppAccountRouteWithChildren,
   AppIndexRoute: AppIndexRoute,
+  AppGamesSlugRoute: AppGamesSlugRouteWithChildren,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
