@@ -1,6 +1,6 @@
 import { Link, useLocation } from '@tanstack/react-router'
 import { LogIn, LogOut, RotateCw, User, UserPlus } from 'lucide-react'
-import { useEffect, useRef, type Ref } from 'react'
+import { useEffect, useRef, type MouseEvent, type Ref } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { MAIN_ID } from '@/components/skip-link'
@@ -18,6 +18,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar'
 import { Skeleton } from '@/components/ui/skeleton'
+import { isPlainClick } from '@/lib/plain-click'
 import { useLogoutMutation } from '../mutations'
 import { useSession, type SessionStatus } from '../session'
 
@@ -25,7 +26,7 @@ type AccountAreaProps = {
   // `sidebar`: the bottom of the sidebar. `compact`: one control for the phone header.
   variant?: 'sidebar' | 'compact'
   // Called when a link is followed, so the phone sidebar can close behind it.
-  onNavigate?: () => void
+  onNavigate?: (event: MouseEvent) => void
 }
 
 // What the visitor can do about their account. One component per session state; the state itself
@@ -221,7 +222,7 @@ type AccountMenuProps = {
   email: string
   logout: Logout
   compact?: boolean
-  onNavigate?: () => void
+  onNavigate?: (event: MouseEvent) => void
 }
 
 // The signed-in account: a menu button named with the email, offering "Profile" and "Log out".
@@ -297,9 +298,10 @@ function AccountMenu({
         <DropdownMenuItem asChild className="max-md:min-h-11">
           <Link
             to="/profile"
-            onClick={() => {
+            onClick={(event) => {
+              if (!isPlainClick(event)) return
               if (onNavigate && isMobile) panelIsClosing.current = true
-              onNavigate?.()
+              onNavigate?.(event)
             }}
           >
             <User />

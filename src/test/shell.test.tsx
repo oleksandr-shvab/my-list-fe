@@ -388,6 +388,46 @@ describe('the phone header and panel (AC-32, AC-35, AC-66)', () => {
     expect(document.activeElement).toBe(toggle)
   })
 
+  it('leaves the panel open and the focus where it was when a link is opened with a modifier key', async () => {
+    const user = userEvent.setup()
+    usePhoneScreen()
+    const app = renderApp('/', SIGNED_IN)
+    // The browser opens a modified click in a new tab; jsdom would only print "not implemented".
+    const keepPage = (event: Event) => event.preventDefault()
+    document.addEventListener('click', keepPage)
+
+    try {
+      await user.click(
+        await screen.findByRole('button', { name: 'Show or hide the sidebar' }),
+      )
+      const panel = await screen.findByRole('dialog', { name: 'Site menu' })
+
+      await user.keyboard('{Control>}')
+      await user.click(within(panel).getByRole('link', { name: 'Archive' }))
+      await user.keyboard('{/Control}')
+
+      expect(screen.queryByRole('dialog')).toBe(panel)
+      expect(panel.getAttribute('data-state')).toBe('open')
+      expect(app.router.state.location.pathname).toBe('/')
+
+      // The same goes for Profile in the account menu: the menu closes, the panel stays.
+      const accountButton = within(panel).getByRole('button', {
+        name: `Account: ${USER.email}`,
+      })
+      await user.click(accountButton)
+      await user.keyboard('{Control>}')
+      await user.click(await screen.findByRole('menuitem', { name: 'Profile' }))
+      await user.keyboard('{/Control}')
+
+      await waitFor(() => expect(screen.queryByRole('menu')).toBeNull())
+      expect(panel.getAttribute('data-state')).toBe('open')
+      await waitFor(() => expect(document.activeElement).toBe(accountButton))
+      expect(app.router.state.location.pathname).toBe('/')
+    } finally {
+      document.removeEventListener('click', keepPage)
+    }
+  })
+
   it('keeps the focus on the main area after Profile is chosen from the account menu inside the closing panel', async () => {
     const user = userEvent.setup()
     usePhoneScreen()

@@ -1,6 +1,6 @@
 import { Link } from '@tanstack/react-router'
 import { Archive, Gamepad2 } from 'lucide-react'
-import { useEffect, useRef, type RefObject } from 'react'
+import { useEffect, useRef, type MouseEvent, type RefObject } from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { BrandLink } from '@/components/brand-link'
@@ -24,6 +24,7 @@ import { AccountArea } from '@/features/auth/components/account-area'
 import { getDefaultGame, getGamesInOrder } from '@/features/games/registry'
 import type { GameEntry } from '@/features/games/types'
 import { useCurrentGame } from '@/features/games/use-current-game'
+import { isPlainClick } from '@/lib/plain-click'
 
 export function AppSidebar({
   linkFollowedRef,
@@ -37,8 +38,8 @@ export function AppSidebar({
   const toggleLabel = t('nav.toggle_sidebar')
 
   // The mobile sidebar is an overlay — navigating behind it would leave it open.
-  function closeMobileSidebar() {
-    if (!isMobile) return
+  function closeMobileSidebar(event: MouseEvent) {
+    if (!isMobile || !isPlainClick(event)) return
     linkFollowedRef.current = true
     setOpenMobile(false)
   }
@@ -132,7 +133,7 @@ type GameNavItemProps = {
   game: GameEntry
   // This entry is the game being shown, and its archive is not open (AC-30).
   isCurrent: boolean
-  onNavigate: () => void
+  onNavigate: (event: MouseEvent) => void
 }
 
 function GameNavItem({ game, isCurrent, onNavigate }: GameNavItemProps) {
