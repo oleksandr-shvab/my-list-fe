@@ -107,6 +107,20 @@ export function AppSidebar() {
   )
 }
 
+// Scrolls the sidebar's list and nothing else. `scrollIntoView` would also scroll the page and
+// every other scrollable ancestor.
+function revealInList(item: HTMLElement) {
+  const list = item.closest<HTMLElement>('[data-slot="sidebar-content"]')
+  if (!list) return
+  const listBox = list.getBoundingClientRect()
+  const itemBox = item.getBoundingClientRect()
+  if (itemBox.top < listBox.top) {
+    list.scrollTop -= listBox.top - itemBox.top
+  } else if (itemBox.bottom > listBox.bottom) {
+    list.scrollTop += itemBox.bottom - listBox.bottom
+  }
+}
+
 type GameNavItemProps = {
   game: GameEntry
   // This entry is the game being shown, and its archive is not open (AC-30).
@@ -121,7 +135,7 @@ function GameNavItem({ game, isCurrent, onNavigate }: GameNavItemProps) {
 
   // A long list scrolls inside the sidebar, so bring the current entry into view.
   useEffect(() => {
-    if (isCurrent) itemRef.current?.scrollIntoView({ block: 'nearest' })
+    if (isCurrent && itemRef.current) revealInList(itemRef.current)
   }, [isCurrent])
 
   return (

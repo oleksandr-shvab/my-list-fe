@@ -101,6 +101,46 @@ describe('the current game in the sidebar (AC-30)', () => {
   })
 })
 
+describe('the game list in the sidebar (AC-30)', () => {
+  it('scrolls its own list to the current game and never scrolls the page', async () => {
+    // jsdom has no layout: the list is 100 px high and the current entry sticks out 34 px below.
+    const box = (top: number, bottom: number) =>
+      ({
+        top,
+        bottom,
+        left: 0,
+        right: 0,
+        width: 0,
+        height: bottom - top,
+      }) as DOMRect
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(
+      function (this: HTMLElement) {
+        if (this.dataset.slot === 'sidebar-content') return box(0, 100)
+        if (this.dataset.slot === 'sidebar-menu-item') return box(90, 134)
+        return box(0, 0)
+      },
+    )
+    const scrollIntoView = vi.fn()
+    Object.defineProperty(Element.prototype, 'scrollIntoView', {
+      configurable: true,
+      value: scrollIntoView,
+    })
+
+    try {
+      renderApp('/', GUEST)
+
+      const nav = await screen.findByRole('navigation', GAMES_NAV)
+      const list = nav.querySelector<HTMLElement>(
+        '[data-slot="sidebar-content"]',
+      )
+      expect(list?.scrollTop).toBe(34)
+      expect(scrollIntoView).not.toHaveBeenCalled()
+    } finally {
+      Reflect.deleteProperty(Element.prototype, 'scrollIntoView')
+    }
+  })
+})
+
 describe('the account menu (AC-33, AC-66)', () => {
   it.each([
     ['Enter', '{Enter}'],

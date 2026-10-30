@@ -42,8 +42,5 @@ Object.defineProperty(window, 'ResizeObserver', {
 // The router scrolls to the top after a navigation; jsdom only prints "not implemented".
 window.scrollTo = noop
 
-// The sidebar scrolls the current game into view; jsdom has no `scrollIntoView`.
-Element.prototype.scrollIntoView = noop
-
 // Testing Library only cleans up by itself when the test globals are on, and they are not.
 afterEach(cleanup)
