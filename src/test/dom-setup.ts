@@ -9,8 +9,10 @@ import { afterEach } from 'vitest'
 
 const noop = () => {}
 
-// jsdom has no `matchMedia`, and the theme store reads it as soon as it is imported.
+// jsdom has no `matchMedia`, and the theme store reads it as soon as it is imported. The stubs
+// are `configurable`, so a test can replace them with `vi.stubGlobal`.
 Object.defineProperty(window, 'matchMedia', {
+  configurable: true,
   writable: true,
   value: (query: string) => ({
     matches: false,
@@ -32,6 +34,7 @@ class ResizeObserverStub {
   disconnect = noop
 }
 Object.defineProperty(window, 'ResizeObserver', {
+  configurable: true,
   writable: true,
   value: ResizeObserverStub,
 })
