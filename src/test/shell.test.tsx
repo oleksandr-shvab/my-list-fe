@@ -182,6 +182,26 @@ describe('the account menu (AC-33, AC-66)', () => {
   )
 })
 
+describe('the account menu button with the sidebar collapsed to icons', () => {
+  afterEach(() => {
+    document.cookie = 'sidebar_state=; path=/; max-age=0'
+  })
+
+  it('shows its name as a tooltip on hover, like the other entries', async () => {
+    const user = userEvent.setup()
+    document.cookie = 'sidebar_state=false; path=/'
+    renderApp('/', SIGNED_IN)
+
+    const button = await screen.findByRole('button', {
+      name: `Account: ${USER.email}`,
+    })
+    await user.hover(button)
+
+    const tooltip = await screen.findByRole('tooltip')
+    expect(tooltip.textContent).toBe(`Account: ${USER.email}`)
+  })
+})
+
 describe('logging out from the account menu (AC-33, AC-66)', () => {
   const LOGOUT_URL = '/v1/auth/logout'
 

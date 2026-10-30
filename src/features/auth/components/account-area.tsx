@@ -285,6 +285,7 @@ function AccountMenu({
         ) : (
           <SidebarMenuButton
             size="lg"
+            tooltip={label}
             aria-label={label}
             aria-busy={logout.isPending}
             aria-disabled={pending}
