@@ -1,6 +1,12 @@
 import { Link, useLocation } from '@tanstack/react-router'
 import { LogIn, LogOut, RotateCw, User, UserPlus } from 'lucide-react'
-import { useEffect, useRef, type MouseEvent, type Ref } from 'react'
+import {
+  useEffect,
+  useRef,
+  type MouseEvent,
+  type Ref,
+  type SyntheticEvent,
+} from 'react'
 import { useTranslation } from 'react-i18next'
 
 import { MAIN_ID } from '@/components/skip-link'
@@ -242,6 +248,12 @@ function AccountMenu({
     ? t('nav.logging_out')
     : t('nav.account_menu', { email })
   const initial = Array.from(email)[0]?.toUpperCase()
+  // Not `disabled`: a disabled button that has the focus drops it to the page in browsers, and the
+  // new name would never be read out. So it only says so, and Radix's open keys are cancelled.
+  const pending = logout.isPending ? true : undefined
+  const ignoreWhilePending = (event: SyntheticEvent) => {
+    if (logout.isPending) event.preventDefault()
+  }
 
   const avatar = (
     <span
@@ -254,15 +266,19 @@ function AccountMenu({
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
+      <DropdownMenuTrigger
+        asChild
+        onPointerDown={ignoreWhilePending}
+        onKeyDown={ignoreWhilePending}
+      >
         {compact ? (
           <Button
             type="button"
             variant="ghost"
-            className="size-11 shrink-0 p-0"
+            className="size-11 shrink-0 p-0 aria-disabled:pointer-events-none aria-disabled:opacity-50"
             aria-label={label}
             aria-busy={logout.isPending}
-            disabled={logout.isPending}
+            aria-disabled={pending}
           >
             {avatar}
           </Button>
@@ -271,7 +287,7 @@ function AccountMenu({
             size="lg"
             aria-label={label}
             aria-busy={logout.isPending}
-            disabled={logout.isPending}
+            aria-disabled={pending}
           >
             {avatar}
             <span className="min-w-0 flex-1 truncate">

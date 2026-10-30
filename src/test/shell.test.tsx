@@ -222,9 +222,19 @@ describe('logging out from the account menu (AC-33, AC-66)', () => {
       const pending = await area.findByRole('button', {
         name: 'Logging out…',
       })
-      expect((pending as HTMLButtonElement).disabled).toBe(true)
+      // Not `disabled`: a disabled button that has the focus loses it in browsers, and the new
+      // name would never be read out.
+      expect(pending.getAttribute('aria-disabled')).toBe('true')
+      expect(pending.hasAttribute('disabled')).toBe(false)
       expect(pending.getAttribute('aria-busy')).toBe('true')
       expect(screen.queryByRole('menu')).toBeNull()
+      await waitFor(() => expect(document.activeElement).toBe(pending))
+      // Keys and clicks do nothing while it runs.
+      await user.keyboard('{Enter}')
+      await user.keyboard('{ArrowDown}')
+      await user.click(pending)
+      expect(screen.queryByRole('menu')).toBeNull()
+      expect(document.activeElement).toBe(pending)
       expect(app.backend.count(LOGOUT_URL)).toBe(1)
 
       await act(async () => held.answer({ status: 204 }))
