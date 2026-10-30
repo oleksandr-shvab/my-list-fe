@@ -18,7 +18,10 @@ export function GameScreen({ game, date, isToday }: GameScreenHostProps) {
   // The key restarts the boundary and the screen for another game or day. It never includes the
   // language: a language switch must keep the screen and its state (AC-55a).
   return (
-    <GameErrorBoundary key={`${game.slug}/${date}`}>
+    <GameErrorBoundary
+      key={`${game.slug}/${date}`}
+      onRetry={game.screen.reload}
+    >
       <Suspense
         fallback={
           <p

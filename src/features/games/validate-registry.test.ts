@@ -54,11 +54,11 @@ describe('the game registry (AC-49 to AC-53, AC-56)', () => {
       'screen',
       'slug',
     ])
-    // React marks a `lazy` component with this symbol: the code is not loaded until it renders.
+    // The screen comes from `lazyWithRetry`; that it loads only on render is checked in
+    // game-screen.test.tsx (the "Loading the game…" status shows first).
     for (const game of GAMES) {
-      expect((game.screen as { $$typeof: symbol }).$$typeof).toBe(
-        Symbol.for('react.lazy'),
-      )
+      expect(typeof game.screen).toBe('function')
+      expect(typeof game.screen.reload).toBe('function')
     }
   })
 

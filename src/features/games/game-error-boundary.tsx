@@ -2,7 +2,11 @@ import { Component, type ReactNode } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 
-type GameErrorBoundaryProps = { children: ReactNode }
+type GameErrorBoundaryProps = {
+  children: ReactNode
+  // Called on "Try again", before the screen renders again.
+  onRetry?: () => void
+}
 type GameErrorBoundaryState = { failed: boolean }
 
 // One per game screen (AC-54): a screen that fails while rendering shows this inside the
@@ -23,13 +27,19 @@ export class GameErrorBoundary extends Component<
     if (!this.state.failed) return this.props.children
 
     return (
-      <GameErrorFallback onRetry={() => this.setState({ failed: false })} />
+      <GameErrorFallback
+        onRetry={() => {
+          this.props.onRetry?.()
+          this.setState({ failed: false })
+        }}
+      />
     )
   }
 }
 
 // "Try again" renders the screen again. If the screen's code failed to download, `lazy` keeps
-// that failure; the reload-once handler in src/lib/version-skew.ts covers the deploy case.
+// that failure, so the screen is built with `lazyWithRetry` and `onRetry` makes it download
+// again. (src/lib/version-skew.ts only reloads the page for the deploy case.)
 function GameErrorFallback({ onRetry }: { onRetry: () => void }) {
   const { t } = useTranslation()
 

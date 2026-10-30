@@ -6,6 +6,7 @@ import { lazy } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import i18n from '@/i18n'
 import { GameScreen } from './game-screen'
+import { lazyWithRetry } from './lazy-with-retry'
 import { getDefaultGame } from './registry'
 import type { GameEntry } from './types'
 
@@ -100,5 +101,36 @@ describe('the game error boundary (AC-54)', () => {
 
     expect(await screen.findByText('Playing 2026-10-27')).toBeTruthy()
     expect(screen.queryByRole('alert')).toBeNull()
+  })
+})
+
+describe('a screen whose code fails to download (AC-53, AC-54)', () => {
+  it('"Try again" downloads the code again and shows the screen', async () => {
+    const user = userEvent.setup()
+    const load = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('Failed to fetch the module'))
+      .mockResolvedValue({
+        default: function LoadedScreen({ date }: { date: string }) {
+          return <p>Playing {date}</p>
+        },
+      })
+    const game: GameEntry = {
+      slug: 'flaky',
+      nameKey: 'games.game_guesser.name',
+      order: 1,
+      isDefault: false,
+      screen: lazyWithRetry(load),
+    }
+    render(<GameScreen game={game} date="2026-10-28" isToday />)
+
+    await screen.findByRole('alert')
+    expect(load).toHaveBeenCalledTimes(1)
+
+    await user.click(screen.getByRole('button', { name: 'Try again' }))
+
+    expect(await screen.findByText('Playing 2026-10-28')).toBeTruthy()
+    expect(screen.queryByRole('alert')).toBeNull()
+    expect(load).toHaveBeenCalledTimes(2)
   })
 })

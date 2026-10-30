@@ -1,4 +1,4 @@
-import { lazy } from 'react'
+import { lazyWithRetry } from './lazy-with-retry'
 import type { GameEntry } from './types'
 
 // The games the shell knows. Phase 1 moves the list to the backend; the shell keeps only the
@@ -9,7 +9,7 @@ export const GAMES: readonly GameEntry[] = [
     nameKey: 'games.game_guesser.name',
     order: 1,
     isDefault: true,
-    screen: lazy(() => import('./game-guesser/placeholder-screen')),
+    screen: lazyWithRetry(() => import('./game-guesser/placeholder-screen')),
   },
 ]
 
