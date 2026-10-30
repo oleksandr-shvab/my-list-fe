@@ -171,8 +171,9 @@ body {
 }
 
 /* The phone header (56 px, `h-14`) sticks to the top on screens at least 500 px tall. Keep the
-   element that has keyboard focus from sliding under it. */
-@media (max-width: 767px) and (min-height: 500px) {
+   element that has keyboard focus from sliding under it. The width part is the exact complement of Tailwind's `md`,
+   like `MOBILE_QUERY` in `use-mobile.ts`. */
+@media (not (min-width: 48rem)) and (min-height: 500px) {
   html {
     scroll-padding-top: 3.5rem;
   }

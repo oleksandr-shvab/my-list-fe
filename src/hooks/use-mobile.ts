@@ -1,7 +1,8 @@
 import * as React from 'react'
 
-const MOBILE_BREAKPOINT = 768
-const MOBILE_QUERY = `(max-width: ${MOBILE_BREAKPOINT - 1}px)`
+// The exact complement of Tailwind's `md` (`min-width: 48rem`), where the sidebar appears. A
+// `max-width: 767px` would leave 767 to 768 px with neither the panel nor the sidebar.
+export const MOBILE_QUERY = 'not (min-width: 48rem)'
 
 function subscribe(onChange: () => void) {
   const mql = window.matchMedia(MOBILE_QUERY)
