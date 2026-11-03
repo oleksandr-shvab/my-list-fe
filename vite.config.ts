@@ -18,6 +18,9 @@ export default defineConfig({
   },
   server: {
     proxy: {
+      // The backend refuses unsafe requests whose Origin is not an allowed origin. This proxy
+      // forwards the browser's Origin unchanged (changeOrigin rewrites only Host). Do not add
+      // rewriteWsOrigin, headers or a configure hook that changes Origin or Referer.
       '/api': {
         target: 'http://localhost:8000',
         changeOrigin: true,

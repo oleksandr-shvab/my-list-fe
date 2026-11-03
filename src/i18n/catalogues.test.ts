@@ -18,6 +18,32 @@ function baseKeys(tree: Tree, prefix = ''): Set<string> {
   return keys
 }
 
+// Add a code here when the backend adds one (CONTRACTS.md, Errors). `method_not_allowed` is left
+// out on purpose: it is a client bug, never shown to a player.
+const BACKEND_ERROR_CODES = [
+  'email_already_registered',
+  'invalid_credentials',
+  'not_authenticated',
+  'invalid_or_expired_reset_token',
+  'incorrect_password',
+  'passwords_do_not_match',
+  'new_password_same_as_old',
+  'validation_error',
+  'not_found',
+  'csrf_origin_mismatch',
+  'unsupported_media_type',
+  'service_unavailable',
+  'internal_error',
+  'game_not_found',
+  'variant_not_found',
+  'puzzle_not_found',
+  'title_not_found',
+  'duplicate_guess',
+  'invalid_guess_history',
+  'puzzle_already_finished',
+  'invalid_media_link',
+]
+
 function allValues(tree: Tree): string[] {
   return Object.values(tree).flatMap((value) =>
     typeof value === 'string' ? [value] : allValues(value),
@@ -31,6 +57,15 @@ describe('translation catalogues', () => {
 
     expect([...english].filter((key) => !russian.has(key))).toEqual([])
     expect([...russian].filter((key) => !english.has(key))).toEqual([])
+  })
+
+  it('have a text for every backend error code', () => {
+    for (const catalogue of [en, ru]) {
+      const missing = BACKEND_ERROR_CODES.filter(
+        (code) => !(code in catalogue.errors),
+      )
+      expect(missing).toEqual([])
+    }
   })
 
   it('give every Russian plural key all four forms', () => {

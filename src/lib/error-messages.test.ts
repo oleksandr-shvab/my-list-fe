@@ -38,6 +38,22 @@ describe('error messages', () => {
     )
   })
 
+  it('explains a refused origin in English and in Russian (AC-89)', async () => {
+    const error = new ApiError({
+      status: 403,
+      code: 'csrf_origin_mismatch',
+    })
+
+    expect(getErrorMessage(error, i18n.t)).toBe(
+      'This request came from an address the site does not accept. Open the site at its usual address and try again.',
+    )
+
+    await i18n.changeLanguage('ru')
+    expect(getErrorMessage(error, i18n.t)).toBe(
+      'Запрос пришёл с адреса, который сайт не принимает. Откройте сайт по обычному адресу и попробуйте снова.',
+    )
+  })
+
   it('speaks Russian with the right plural forms when the language is Russian', async () => {
     await i18n.changeLanguage('ru')
     const message = (min: number) =>
