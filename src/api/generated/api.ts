@@ -6,6 +6,7 @@
  */
 import type {
   AuthForgotPassword202,
+  ClockRead,
   ForgotPasswordRequest,
   HealthHealthz200,
   HealthReadyz200,
@@ -140,6 +141,19 @@ export const authUpdatePassword = (
       options);
     }
 
+/**
+ * No database and no session: only the clock dependency (AC-67).
+ * @summary Get Clock
+ */
+export const clockGetClock = (
+
+ options?: SecondParameter<typeof orvalMutator<ClockRead>>,) => {
+      return orvalMutator<ClockRead>(
+      {url: `/v1/clock`, method: 'GET'
+    },
+      options);
+    }
+
 export type HealthHealthzResult = NonNullable<Awaited<ReturnType<typeof healthHealthz>>>
 export type HealthReadyzResult = NonNullable<Awaited<ReturnType<typeof healthReadyz>>>
 export type AuthForgotPasswordResult = NonNullable<Awaited<ReturnType<typeof authForgotPassword>>>
@@ -149,3 +163,4 @@ export type AuthMeResult = NonNullable<Awaited<ReturnType<typeof authMe>>>
 export type AuthRegisterResult = NonNullable<Awaited<ReturnType<typeof authRegister>>>
 export type AuthResetPasswordResult = NonNullable<Awaited<ReturnType<typeof authResetPassword>>>
 export type AuthUpdatePasswordResult = NonNullable<Awaited<ReturnType<typeof authUpdatePassword>>>
+export type ClockGetClockResult = NonNullable<Awaited<ReturnType<typeof clockGetClock>>>
