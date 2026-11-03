@@ -6,6 +6,7 @@
  */
 
 export * from './authForgotPassword202';
+export * from './clockRead';
 export * from './fieldError';
 export * from './fieldErrorParams';
 export * from './forgotPasswordRequest';
