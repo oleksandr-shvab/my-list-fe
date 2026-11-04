@@ -7,7 +7,10 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import i18n from '@/i18n'
 import {
+  GAMES_URL,
+  gamesReply,
   GUEST,
+  SERVER_ERROR,
   SIGNED_IN,
   slowReply,
   startApp,
@@ -105,6 +108,52 @@ describe('the current game in the sidebar (AC-30)', () => {
     expect(
       within(nav).getByRole('link', { name: 'Archive' }).getAttribute('href'),
     ).toBe('/games/game-guesser/archive')
+  })
+})
+
+describe('the games both sides know in the sidebar (AC-7, AC-8)', () => {
+  // The fake backend answers `GET /v1/games`; the shell must show what the list allows.
+  function renderWithGames(path: string, games: Reply) {
+    const app = startApp({ path, me: GUEST })
+    stop = app.stop
+    app.backend.replies.set(GAMES_URL, games)
+    render(
+      <QueryClientProvider client={app.queryClient}>
+        <RouterProvider router={app.router} />
+      </QueryClientProvider>,
+    )
+  }
+
+  it('shows one entry and the archive link when the backend lists the game', async () => {
+    renderWithGames('/', gamesReply('game-guesser', 'word-game'))
+
+    const nav = await screen.findByRole('navigation', GAMES_NAV)
+    expect(
+      within(nav)
+        .getAllByRole('link')
+        .map((link) => link.textContent),
+    ).toEqual(['Game Guesser', 'Archive'])
+  })
+
+  it('shows no game entry and no archive link when the backend lacks the game, and "Unknown game" on the page', async () => {
+    renderWithGames('/', gamesReply())
+
+    const nav = await screen.findByRole('navigation', GAMES_NAV)
+    expect((await screen.findByRole('heading', { level: 1 })).textContent).toBe(
+      'Unknown game',
+    )
+    expect(within(nav).queryAllByRole('link')).toEqual([])
+  })
+
+  it('falls back to the registry when the list fails', async () => {
+    renderWithGames('/', SERVER_ERROR)
+
+    const nav = await screen.findByRole('navigation', GAMES_NAV)
+    expect(
+      within(nav)
+        .getAllByRole('link')
+        .map((link) => link.textContent),
+    ).toEqual(['Game Guesser', 'Archive'])
   })
 })
 
