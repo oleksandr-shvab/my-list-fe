@@ -8,6 +8,10 @@ import type {
   AuthForgotPassword202,
   ClockRead,
   ForgotPasswordRequest,
+  GameGuesserView,
+  GameList,
+  GamesGetPuzzleParams,
+  GamesGetTodayPuzzleParams,
   HealthHealthz200,
   HealthReadyz200,
   ResetPasswordRequest,
@@ -154,6 +158,47 @@ export const clockGetClock = (
       options);
     }
 
+/**
+ * @summary List Games
+ */
+export const gamesListGames = (
+
+ options?: SecondParameter<typeof orvalMutator<GameList>>,) => {
+      return orvalMutator<GameList>(
+      {url: `/v1/games`, method: 'GET'
+    },
+      options);
+    }
+
+/**
+ * @summary Get Today Puzzle
+ */
+export const gamesGetTodayPuzzle = (
+    slug: string,
+    params?: GamesGetTodayPuzzleParams,
+ options?: SecondParameter<typeof orvalMutator<GameGuesserView>>,) => {
+      return orvalMutator<GameGuesserView>(
+      {url: `/v1/games/${slug}/puzzles/today`, method: 'GET',
+        params
+    },
+      options);
+    }
+
+/**
+ * @summary Get Puzzle
+ */
+export const gamesGetPuzzle = (
+    slug: string,
+    date: string,
+    params?: GamesGetPuzzleParams,
+ options?: SecondParameter<typeof orvalMutator<GameGuesserView>>,) => {
+      return orvalMutator<GameGuesserView>(
+      {url: `/v1/games/${slug}/puzzles/${date}`, method: 'GET',
+        params
+    },
+      options);
+    }
+
 export type HealthHealthzResult = NonNullable<Awaited<ReturnType<typeof healthHealthz>>>
 export type HealthReadyzResult = NonNullable<Awaited<ReturnType<typeof healthReadyz>>>
 export type AuthForgotPasswordResult = NonNullable<Awaited<ReturnType<typeof authForgotPassword>>>
@@ -164,3 +209,6 @@ export type AuthRegisterResult = NonNullable<Awaited<ReturnType<typeof authRegis
 export type AuthResetPasswordResult = NonNullable<Awaited<ReturnType<typeof authResetPassword>>>
 export type AuthUpdatePasswordResult = NonNullable<Awaited<ReturnType<typeof authUpdatePassword>>>
 export type ClockGetClockResult = NonNullable<Awaited<ReturnType<typeof clockGetClock>>>
+export type GamesListGamesResult = NonNullable<Awaited<ReturnType<typeof gamesListGames>>>
+export type GamesGetTodayPuzzleResult = NonNullable<Awaited<ReturnType<typeof gamesGetTodayPuzzle>>>
+export type GamesGetPuzzleResult = NonNullable<Awaited<ReturnType<typeof gamesGetPuzzle>>>

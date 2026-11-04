@@ -5,16 +5,27 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from './answerRead';
 export * from './authForgotPassword202';
 export * from './clockRead';
 export * from './fieldError';
 export * from './fieldErrorParams';
 export * from './forgotPasswordRequest';
+export * from './gameGuesserView';
+export * from './gameList';
+export * from './gameRead';
+export * from './gamesGetPuzzleParams';
+export * from './gamesGetTodayPuzzleParams';
+export * from './guessRead';
+export * from './guessResult';
 export * from './healthHealthz200';
 export * from './healthReadyz200';
+export * from './hintRead';
 export * from './problemDetails';
 export * from './problemDetailsParams';
+export * from './progressStatus';
 export * from './resetPasswordRequest';
+export * from './stepRead';
 export * from './updatePasswordRequest';
 export * from './userLogin';
 export * from './userRead';
