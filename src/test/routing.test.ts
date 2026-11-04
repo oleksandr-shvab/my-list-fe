@@ -9,6 +9,8 @@ import { updatePasswordRequest } from '@/features/auth/api'
 import { ApiError } from '@/lib/api-client'
 import { resolvePageTitleKey } from '@/lib/page-title'
 import {
+  GAMES_URL,
+  gamesReply,
   GUEST,
   matchOf,
   SERVER_ERROR,
@@ -25,9 +27,10 @@ const UPDATE_PASSWORD_URL = '/v1/auth/update-password'
 let stop: (() => void) | undefined
 
 // Opens `path` as the first page of a fresh app and waits for the first load.
-async function open(path: string, me: Reply) {
+async function open(path: string, me: Reply, games?: Reply) {
   const app = startApp({ path, me })
   stop = app.stop
+  if (games) app.backend.replies.set(GAMES_URL, games)
   await app.router.load()
   return app
 }
@@ -270,6 +273,73 @@ describe('the game pages (AC-12, AC-39 to AC-45, AC-48)', () => {
       '/games/nope': 'error_screen.not_found_title',
       '/games/game-guesser/2026-02-30': 'error_screen.not_found_title',
     })
+  })
+})
+
+describe('the games both sides know (AC-7, AC-8)', () => {
+  const GAME_PAGES = [
+    '/',
+    '/games/game-guesser',
+    '/games/game-guesser/archive',
+  ] as const
+
+  it.each(GAME_PAGES)(
+    'shows %s as not found inside the layout when the backend lists no such game',
+    async (path) => {
+      const app = await open(path, GUEST, gamesReply())
+
+      expect(matchOf(app.router, '/_app')?.status).toBe('success')
+      const notFound = app.router.state.matches.filter(
+        (match) => match.status === 'notFound',
+      )
+      expect(notFound.map((match) => match.routeId)).toEqual([
+        path === '/' ? '/_app/' : '/_app/games/$slug',
+      ])
+      expect(resolvePageTitleKey(app.router.state.matches)).toBe(
+        'error_screen.not_found_title',
+      )
+    },
+  )
+
+  it.each([
+    ['answers 500', SERVER_ERROR],
+    ['has a network error', 'network-error'],
+  ] as const)(
+    'loads the game pages from the registry when the list %s',
+    async (_what, games) => {
+      for (const path of GAME_PAGES) {
+        const app = await open(path, GUEST, games)
+
+        expect(matchOf(app.router, '/_app')?.status).toBe('success')
+        expect(app.router.state.matches.at(-1)?.status).toBe('success')
+        stop?.()
+      }
+    },
+  )
+
+  it('asks for the list once while it is fresh', async () => {
+    const app = await open('/games/game-guesser', GUEST)
+    await app.router.navigate({ to: '/' })
+    await app.router.navigate({
+      to: '/games/$slug/archive',
+      params: { slug: 'game-guesser' },
+    })
+
+    expect(app.backend.count(GAMES_URL)).toBe(1)
+  })
+
+  it('ignores a backend game the registry has no screen for', async () => {
+    const list = gamesReply('game-guesser', 'word-game')
+
+    const unknown = await open('/games/word-game', GUEST, list)
+    expect(matchOf(unknown.router, '/_app/games/$slug')?.status).toBe(
+      'notFound',
+    )
+    expect(matchOf(unknown.router, '/_app')?.status).toBe('success')
+    stop?.()
+
+    const home = await open('/', GUEST, list)
+    expect(home.router.state.matches.at(-1)?.status).toBe('success')
   })
 })
 

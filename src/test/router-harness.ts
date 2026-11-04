@@ -4,6 +4,7 @@ import {
   type AxiosResponse,
   type InternalAxiosRequestConfig,
 } from 'axios'
+import type { GameList } from '@/api/generated/models'
 import type { User } from '@/features/auth/types'
 import { installSessionGuard } from '@/features/auth/session-guard'
 import { apiClient } from '@/lib/api-client'
@@ -28,6 +29,20 @@ export type Reply =
   | Promise<Reply>
 
 export const ME_URL = '/v1/auth/me'
+export const GAMES_URL = '/v1/games'
+
+// The answer of `GET /v1/games` for these slugs. Built from the generated model, so a renamed
+// field fails the type check.
+export function gamesReply(...slugs: string[]): Reply {
+  const data: GameList = {
+    items: slugs.map((slug) => ({
+      slug,
+      default_variant: 'default',
+      launch_date: '2026-01-01',
+    })),
+  }
+  return { status: 200, data }
+}
 
 export const SIGNED_IN: Reply = { status: 200, data: USER }
 export const GUEST: Reply = {
@@ -57,6 +72,8 @@ export class FakeBackend {
 
   constructor(me: Reply) {
     this.replies.set(ME_URL, me)
+    // The registry's game, so tests that are not about the list see the usual success path.
+    this.replies.set(GAMES_URL, gamesReply('game-guesser'))
   }
 
   count(url: string) {

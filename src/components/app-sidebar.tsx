@@ -21,7 +21,8 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar'
 import { AccountArea } from '@/features/auth/components/account-area'
-import { getDefaultGame, getGamesInOrder } from '@/features/games/registry'
+import { useKnownGames } from '@/features/games/known-games'
+import { getDefaultGame } from '@/features/games/registry'
 import type { GameEntry } from '@/features/games/types'
 import { useCurrentGame } from '@/features/games/use-current-game'
 import { isPlainClick } from '@/lib/plain-click'
@@ -35,6 +36,12 @@ export function AppSidebar({
   const { t } = useTranslation()
   const { isMobile, setOpenMobile } = useSidebar()
   const { game: currentGame, archiveOpen } = useCurrentGame()
+  const games = useKnownGames()
+  // The current game, else the default game if it is known, else the first known game.
+  const archiveGame =
+    currentGame ??
+    games.find((game) => game.slug === getDefaultGame().slug) ??
+    games[0]
   const toggleLabel = t('nav.toggle_sidebar')
 
   // The mobile sidebar is an overlay — navigating behind it would leave it open.
@@ -62,7 +69,7 @@ export function AppSidebar({
           <SidebarGroup>
             <SidebarGroupContent>
               <SidebarMenu className="gap-1">
-                {getGamesInOrder().map((game) => (
+                {games.map((game) => (
                   <GameNavItem
                     key={game.slug}
                     game={game}
@@ -75,27 +82,29 @@ export function AppSidebar({
           </SidebarGroup>
         </SidebarContent>
 
-        <SidebarGroup className="pt-0">
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                asChild
-                tooltip={t('games.archive_title')}
-                isActive={archiveOpen}
-                className="max-md:h-11"
-              >
-                <Link
-                  to="/games/$slug/archive"
-                  params={{ slug: (currentGame ?? getDefaultGame()).slug }}
-                  onClick={closeMobileSidebar}
+        {archiveGame && (
+          <SidebarGroup className="pt-0">
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  asChild
+                  tooltip={t('games.archive_title')}
+                  isActive={archiveOpen}
+                  className="max-md:h-11"
                 >
-                  <Archive />
-                  <span>{t('games.archive_title')}</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarGroup>
+                  <Link
+                    to="/games/$slug/archive"
+                    params={{ slug: archiveGame.slug }}
+                    onClick={closeMobileSidebar}
+                  >
+                    <Archive />
+                    <span>{t('games.archive_title')}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroup>
+        )}
       </nav>
 
       <SidebarFooter>
