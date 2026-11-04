@@ -12,9 +12,11 @@ import type {
   GameList,
   GamesGetPuzzleParams,
   GamesGetTodayPuzzleParams,
+  GamesSearchTitlesParams,
   HealthHealthz200,
   HealthReadyz200,
   ResetPasswordRequest,
+  TitleList,
   UpdatePasswordRequest,
   UserLogin,
   UserRead,
@@ -199,6 +201,20 @@ export const gamesGetPuzzle = (
       options);
     }
 
+/**
+ * @summary Search Titles
+ */
+export const gamesSearchTitles = (
+    slug: string,
+    params: GamesSearchTitlesParams,
+ options?: SecondParameter<typeof orvalMutator<TitleList>>,) => {
+      return orvalMutator<TitleList>(
+      {url: `/v1/games/${slug}/titles`, method: 'GET',
+        params
+    },
+      options);
+    }
+
 export type HealthHealthzResult = NonNullable<Awaited<ReturnType<typeof healthHealthz>>>
 export type HealthReadyzResult = NonNullable<Awaited<ReturnType<typeof healthReadyz>>>
 export type AuthForgotPasswordResult = NonNullable<Awaited<ReturnType<typeof authForgotPassword>>>
@@ -212,3 +228,4 @@ export type ClockGetClockResult = NonNullable<Awaited<ReturnType<typeof clockGet
 export type GamesListGamesResult = NonNullable<Awaited<ReturnType<typeof gamesListGames>>>
 export type GamesGetTodayPuzzleResult = NonNullable<Awaited<ReturnType<typeof gamesGetTodayPuzzle>>>
 export type GamesGetPuzzleResult = NonNullable<Awaited<ReturnType<typeof gamesGetPuzzle>>>
+export type GamesSearchTitlesResult = NonNullable<Awaited<ReturnType<typeof gamesSearchTitles>>>
