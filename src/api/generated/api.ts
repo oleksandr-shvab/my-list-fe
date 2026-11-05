@@ -13,6 +13,8 @@ import type {
   GamesGetPuzzleParams,
   GamesGetTodayPuzzleParams,
   GamesSearchTitlesParams,
+  GamesSubmitGuessParams,
+  GuessCreate,
   HealthHealthz200,
   HealthReadyz200,
   ResetPasswordRequest,
@@ -202,6 +204,24 @@ export const gamesGetPuzzle = (
     }
 
 /**
+ * @summary Submit Guess
+ */
+export const gamesSubmitGuess = (
+    slug: string,
+    date: string,
+    guessCreate: GuessCreate,
+    params?: GamesSubmitGuessParams,
+ options?: SecondParameter<typeof orvalMutator<GameGuesserView>>,) => {
+      return orvalMutator<GameGuesserView>(
+      {url: `/v1/games/${slug}/puzzles/${date}/guesses`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: guessCreate,
+        params
+    },
+      options);
+    }
+
+/**
  * @summary Search Titles
  */
 export const gamesSearchTitles = (
@@ -228,4 +248,5 @@ export type ClockGetClockResult = NonNullable<Awaited<ReturnType<typeof clockGet
 export type GamesListGamesResult = NonNullable<Awaited<ReturnType<typeof gamesListGames>>>
 export type GamesGetTodayPuzzleResult = NonNullable<Awaited<ReturnType<typeof gamesGetTodayPuzzle>>>
 export type GamesGetPuzzleResult = NonNullable<Awaited<ReturnType<typeof gamesGetPuzzle>>>
+export type GamesSubmitGuessResult = NonNullable<Awaited<ReturnType<typeof gamesSubmitGuess>>>
 export type GamesSearchTitlesResult = NonNullable<Awaited<ReturnType<typeof gamesSearchTitles>>>

@@ -17,6 +17,8 @@ export * from './gameRead';
 export * from './gamesGetPuzzleParams';
 export * from './gamesGetTodayPuzzleParams';
 export * from './gamesSearchTitlesParams';
+export * from './gamesSubmitGuessParams';
+export * from './guessCreate';
 export * from './guessRead';
 export * from './guessResult';
 export * from './healthHealthz200';
