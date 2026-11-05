@@ -12,12 +12,14 @@ import type {
   GameList,
   GamesGetPuzzleParams,
   GamesGetTodayPuzzleParams,
+  GamesResumePuzzleParams,
   GamesSearchTitlesParams,
   GamesSubmitGuessParams,
   GuessCreate,
   HealthHealthz200,
   HealthReadyz200,
   ResetPasswordRequest,
+  ResumeCreate,
   TitleList,
   UpdatePasswordRequest,
   UserLogin,
@@ -222,6 +224,24 @@ export const gamesSubmitGuess = (
     }
 
 /**
+ * @summary Resume Puzzle
+ */
+export const gamesResumePuzzle = (
+    slug: string,
+    date: string,
+    resumeCreate: ResumeCreate,
+    params?: GamesResumePuzzleParams,
+ options?: SecondParameter<typeof orvalMutator<GameGuesserView>>,) => {
+      return orvalMutator<GameGuesserView>(
+      {url: `/v1/games/${slug}/puzzles/${date}/resume`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: resumeCreate,
+        params
+    },
+      options);
+    }
+
+/**
  * @summary Search Titles
  */
 export const gamesSearchTitles = (
@@ -249,4 +269,5 @@ export type GamesListGamesResult = NonNullable<Awaited<ReturnType<typeof gamesLi
 export type GamesGetTodayPuzzleResult = NonNullable<Awaited<ReturnType<typeof gamesGetTodayPuzzle>>>
 export type GamesGetPuzzleResult = NonNullable<Awaited<ReturnType<typeof gamesGetPuzzle>>>
 export type GamesSubmitGuessResult = NonNullable<Awaited<ReturnType<typeof gamesSubmitGuess>>>
+export type GamesResumePuzzleResult = NonNullable<Awaited<ReturnType<typeof gamesResumePuzzle>>>
 export type GamesSearchTitlesResult = NonNullable<Awaited<ReturnType<typeof gamesSearchTitles>>>
