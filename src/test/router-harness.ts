@@ -64,6 +64,7 @@ export function gameView(
     answer: null,
     counts_for_streak: null,
     signed_in: true,
+    daily_proof: null,
     ...overrides,
   }
 }

@@ -21,6 +21,8 @@ import type {
   GuessCreate,
   HealthHealthz200,
   HealthReadyz200,
+  MergeCreate,
+  MergeRead,
   ResetPasswordRequest,
   ResumeCreate,
   StatsRead,
@@ -195,6 +197,21 @@ export const gamesListArchive = (
     }
 
 /**
+ * @summary Merge Progress
+ */
+export const gamesMergeProgress = (
+    slug: string,
+    mergeCreate: MergeCreate,
+ options?: SecondParameter<typeof orvalMutator<MergeRead>>,) => {
+      return orvalMutator<MergeRead>(
+      {url: `/v1/games/${slug}/progress/merge`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: mergeCreate
+    },
+      options);
+    }
+
+/**
  * @summary Get Today Puzzle
  */
 export const gamesGetTodayPuzzle = (
@@ -299,6 +316,7 @@ export type AuthUpdatePasswordResult = NonNullable<Awaited<ReturnType<typeof aut
 export type ClockGetClockResult = NonNullable<Awaited<ReturnType<typeof clockGetClock>>>
 export type GamesListGamesResult = NonNullable<Awaited<ReturnType<typeof gamesListGames>>>
 export type GamesListArchiveResult = NonNullable<Awaited<ReturnType<typeof gamesListArchive>>>
+export type GamesMergeProgressResult = NonNullable<Awaited<ReturnType<typeof gamesMergeProgress>>>
 export type GamesGetTodayPuzzleResult = NonNullable<Awaited<ReturnType<typeof gamesGetTodayPuzzle>>>
 export type GamesGetPuzzleResult = NonNullable<Awaited<ReturnType<typeof gamesGetPuzzle>>>
 export type GamesSubmitGuessResult = NonNullable<Awaited<ReturnType<typeof gamesSubmitGuess>>>

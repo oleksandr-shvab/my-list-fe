@@ -18,6 +18,8 @@ export interface GameGuesserView {
   /** Null until the game ends */
   answer: AnswerRead | null;
   counts_for_streak: boolean | null;
+  /** For a guest, on the puzzle's own day only: a proof to keep with the local game and send as `daily_proof` in a merge entry. Null for an account and on any other day */
+  daily_proof: string | null;
   date: string;
   guesses: GuessRead[];
   guesses_left: number;
