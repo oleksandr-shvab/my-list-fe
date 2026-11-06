@@ -4,10 +4,10 @@ import {
   type AxiosResponse,
   type InternalAxiosRequestConfig,
 } from 'axios'
-import type { GameList } from '@/api/generated/models'
+import type { GameGuesserView, GameList } from '@/api/generated/models'
 import type { User } from '@/features/auth/types'
 import { installSessionGuard } from '@/features/auth/session-guard'
-import { apiClient } from '@/lib/api-client'
+import { apiClient, apiPathOf } from '@/lib/api-client'
 import { createQueryClient } from '@/lib/query-client'
 import { createAppRouter } from '@/router'
 
@@ -44,6 +44,30 @@ export function gamesReply(...slugs: string[]): Reply {
   return { status: 200, data }
 }
 
+// A puzzle view as `GET /v1/games/{slug}/puzzles/{date}` answers it. Built from the generated
+// model, so a renamed field fails the type check.
+export function gameView(
+  overrides: Partial<GameGuesserView> = {},
+): GameGuesserView {
+  return {
+    type: 'game_guesser',
+    slug: 'game-guesser',
+    variant: 'default',
+    date: '2026-11-05',
+    number: 308,
+    status: 'in_progress',
+    max_guesses: 6,
+    guesses_used: 0,
+    guesses_left: 6,
+    guesses: [],
+    steps: [],
+    answer: null,
+    counts_for_streak: null,
+    signed_in: true,
+    ...overrides,
+  }
+}
+
 export const SIGNED_IN: Reply = { status: 200, data: USER }
 export const GUEST: Reply = {
   status: 401,
@@ -69,6 +93,8 @@ const originalAdapter = apiClient.defaults.adapter
 export class FakeBackend {
   replies = new Map<string, Reply>()
   requests: string[] = []
+  // The requests as sent, with the stamps the session guard put on them.
+  configs: InternalAxiosRequestConfig[] = []
 
   constructor(me: Reply) {
     this.replies.set(ME_URL, me)
@@ -108,10 +134,21 @@ function answerWith(
       )
 }
 
+// The key a reply is stored under: the path after `/api` for a request to this site, so
+// `/v1/auth/me`; the full address (without the query) for a request to another host. It is the
+// resolved address, so the fake sees what would go over the wire, not the raw `url`.
+function replyKey(config: InternalAxiosRequestConfig): string {
+  const path = apiPathOf(config)
+  if (path !== null) return path
+  const url = new URL(apiClient.getUri(config), window.location.origin)
+  return url.origin + url.pathname
+}
+
 function install(backend: FakeBackend) {
   apiClient.defaults.adapter = (config: InternalAxiosRequestConfig) => {
-    const url = config.url ?? ''
+    const url = replyKey(config)
     backend.requests.push(url)
+    backend.configs.push(config)
     return answerWith(backend.replies.get(url) ?? { status: 404 }, config)
   }
 }
@@ -131,6 +168,7 @@ export function startApp({ path, me }: { path: string; me: Reply }) {
     backend,
     queryClient,
     router,
+    removeSessionGuard,
     stop() {
       removeSessionGuard()
       apiClient.defaults.adapter = originalAdapter

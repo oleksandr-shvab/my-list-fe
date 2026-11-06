@@ -4,12 +4,19 @@ import { toast } from 'sonner'
 import i18n from '@/i18n'
 import { meQueryOptions } from '@/features/auth/queries'
 import { onAuthSuccess } from '@/features/auth/mutations'
-import { finishLogout, finishPasswordReset } from '@/features/auth/session'
-import { updatePasswordRequest } from '@/features/auth/api'
-import { ApiError } from '@/lib/api-client'
+import {
+  finishLogout,
+  finishPasswordReset,
+  getSessionEpoch,
+  signOutLocally,
+} from '@/features/auth/session'
+import { gamesGetPuzzle } from '@/api/generated/api'
+import { loginRequest, updatePasswordRequest } from '@/features/auth/api'
+import { ApiError, apiClient } from '@/lib/api-client'
 import { resolvePageTitleKey } from '@/lib/page-title'
 import {
   GAMES_URL,
+  gameView,
   gamesReply,
   GUEST,
   matchOf,
@@ -48,6 +55,21 @@ function callAnEndpoint() {
     confirm_password: 'b',
   }
   return updatePasswordRequest(payload).catch(() => {})
+}
+
+// Every own property name and string inside a value, nested and non-enumerable ones included.
+function everythingIn(value: unknown, seen = new Set<object>()): string {
+  if (typeof value === 'string') return value
+  if (typeof value !== 'object' || value === null || seen.has(value)) return ''
+  seen.add(value)
+  return Object.getOwnPropertyNames(value)
+    .map(
+      (name) =>
+        name +
+        ' ' +
+        everythingIn((value as Record<string, unknown>)[name], seen),
+    )
+    .join(' ')
 }
 
 // Lets a settled promise run its handlers: the late answer reaches the query before this returns.
@@ -473,6 +495,358 @@ describe('a 401 in the middle of a session (AC-25, AC-26)', () => {
     await callAnEndpoint()
 
     expect(app.queryClient.getQueryData(['games', 'progress'])).toBeUndefined()
+  })
+})
+
+describe('a game response that says signed_in: false (AC-42)', () => {
+  const SLUG = 'game-guesser'
+  const DATE = '2026-11-05'
+  const PUZZLE_URL = `/v1/games/${SLUG}/puzzles/${DATE}`
+  // The real call: its URL comes from the generated function, not from a string in the test.
+  const askForPuzzle = () => gamesGetPuzzle(SLUG, DATE)
+
+  it('on a public page: signs out, stays on the page, shows no message, drops other queries', async () => {
+    const info = vi.spyOn(toast, 'info')
+    const app = await open('/', SIGNED_IN)
+    app.queryClient.setQueryData(['games', 'progress'], { solved: 3 })
+    const view = gameView({ signed_in: false })
+    app.backend.replies.set(PUZZLE_URL, { status: 200, data: view })
+
+    // The caller still gets the answer unchanged.
+    expect(await askForPuzzle()).toEqual(view)
+
+    expect(app.queryClient.getQueryData(ME_KEY)).toBeNull()
+    expect(app.queryClient.getQueryData(['games', 'progress'])).toBeUndefined()
+    expect(where(app)).toBe('/')
+    expect(info).not.toHaveBeenCalled()
+  })
+
+  it('on the account page: shows the message and goes to login with the page', async () => {
+    const info = vi.spyOn(toast, 'info')
+    const app = await open('/profile', SIGNED_IN)
+    app.backend.replies.set(PUZZLE_URL, {
+      status: 200,
+      data: gameView({ signed_in: false }),
+    })
+
+    await askForPuzzle()
+
+    await vi.waitFor(() =>
+      expect(where(app)).toBe('/login?redirect=%2Fprofile'),
+    )
+    expect(app.queryClient.getQueryData(ME_KEY)).toBeNull()
+    expect(info).toHaveBeenCalledWith(
+      'Your session has ended. Please log in again.',
+    )
+  })
+
+  it('leaves the user alone for signed_in: true', async () => {
+    const app = await open('/', SIGNED_IN)
+    app.backend.replies.set(PUZZLE_URL, {
+      status: 200,
+      data: gameView({ signed_in: true }),
+    })
+
+    await askForPuzzle()
+
+    expect(app.queryClient.getQueryData(ME_KEY)).toEqual(USER)
+  })
+
+  it('leaves the user alone when the field is missing or null, only `false` counts', async () => {
+    const app = await open('/', SIGNED_IN)
+    const { signed_in: _missing, ...withoutField } = gameView()
+    void _missing
+
+    for (const data of [withoutField, { ...gameView(), signed_in: null }]) {
+      app.backend.replies.set(PUZZLE_URL, { status: 200, data })
+      await askForPuzzle()
+    }
+
+    expect(app.queryClient.getQueryData(ME_KEY)).toEqual(USER)
+  })
+
+  it('leaves the user alone on a path that is not a game route', async () => {
+    const app = await open('/', SIGNED_IN)
+    const data = gameView({ signed_in: false })
+    for (const url of ['/v1/other', '/v1/gamesx/a', '/v1/games']) {
+      app.backend.replies.set(url, { status: 200, data })
+      await apiClient.get(url)
+    }
+
+    expect(app.queryClient.getQueryData(ME_KEY)).toEqual(USER)
+  })
+
+  it('does nothing for a guest, and throws nothing', async () => {
+    const info = vi.spyOn(toast, 'info')
+    const app = await open('/', GUEST)
+    app.queryClient.setQueryData(['games', 'progress'], { solved: 3 })
+    app.backend.replies.set(PUZZLE_URL, {
+      status: 200,
+      data: gameView({ signed_in: false }),
+    })
+
+    await expect(askForPuzzle()).resolves.toBeDefined()
+
+    expect(app.queryClient.getQueryData(ME_KEY)).toBeNull()
+    expect(app.queryClient.getQueryData(['games', 'progress'])).toEqual({
+      solved: 3,
+    })
+    expect(info).not.toHaveBeenCalled()
+  })
+
+  it('leaves the new user alone when the request was sent as a guest and answered after the login', async () => {
+    const app = await open('/', GUEST)
+    const late = slowReply()
+    app.backend.replies.set(PUZZLE_URL, late.reply)
+
+    // No await between the call and the login: the request is stamped when it is sent.
+    const pending = askForPuzzle()
+    onAuthSuccess(app.queryClient, USER)
+    late.answer({ status: 200, data: gameView({ signed_in: false }) })
+    await pending
+
+    expect(app.queryClient.getQueryData(ME_KEY)).toEqual(USER)
+  })
+
+  it('leaves the new session alone when a request sent before a re-login answers 401 after it', async () => {
+    const app = await open('/', SIGNED_IN)
+    const late = slowReply()
+    app.backend.replies.set(UPDATE_PASSWORD_URL, late.reply)
+
+    const pending = callAnEndpoint()
+    onAuthSuccess(app.queryClient, USER)
+    late.answer(GUEST)
+    await pending
+
+    expect(app.queryClient.getQueryData(ME_KEY)).toEqual(USER)
+  })
+
+  it('still signs out when the request was sent and answered in the same session', async () => {
+    const app = await open('/', SIGNED_IN)
+    const lateGame = slowReply()
+    app.backend.replies.set(PUZZLE_URL, lateGame.reply)
+
+    const pending = askForPuzzle()
+    await settle()
+    lateGame.answer({ status: 200, data: gameView({ signed_in: false }) })
+    await pending
+    expect(app.queryClient.getQueryData(ME_KEY)).toBeNull()
+
+    onAuthSuccess(app.queryClient, USER)
+    const late401 = slowReply()
+    app.backend.replies.set(UPDATE_PASSWORD_URL, late401.reply)
+    const pending401 = callAnEndpoint()
+    await settle()
+    late401.answer(GUEST)
+    await pending401
+    expect(app.queryClient.getQueryData(ME_KEY)).toBeNull()
+  })
+
+  it('treats a sign-out as the end of the session too, whatever brings the user back', async () => {
+    const app = await open('/', SIGNED_IN)
+    const late = slowReply()
+    app.backend.replies.set(PUZZLE_URL, late.reply)
+
+    const pending = askForPuzzle()
+    signOutLocally(app.queryClient)
+    // The user comes back some other way than a login, for example a fresh `/auth/me`.
+    app.queryClient.setQueryData(ME_KEY, USER)
+    late.answer({ status: 200, data: gameView({ signed_in: false }) })
+    await pending
+
+    expect(app.queryClient.getQueryData(ME_KEY)).toEqual(USER)
+  })
+
+  it('never turns the answer into an error when signing out fails, and reports it', async () => {
+    const app = await open('/', SIGNED_IN)
+    const view = gameView({ signed_in: false })
+    app.backend.replies.set(PUZZLE_URL, { status: 200, data: view })
+    vi.spyOn(app.queryClient, 'setQueryData').mockImplementation(() => {
+      throw new Error('cache broke')
+    })
+
+    await expect(askForPuzzle()).resolves.toEqual(view)
+
+    expect(console.error).toHaveBeenCalled()
+  })
+
+  it('looks at the address the request really goes to', async () => {
+    const body = gameView({ signed_in: false })
+    const cases: {
+      name: string
+      send: () => Promise<unknown>
+      key: string
+      signsOut: boolean
+    }[] = [
+      {
+        name: 'an absolute url on this site',
+        send: () => apiClient.get(`http://localhost:5173/api${PUZZLE_URL}`),
+        key: PUZZLE_URL,
+        signsOut: true,
+      },
+      {
+        name: 'a path that only resolves into the game routes',
+        send: () => apiClient.get(`/v1/auth/../games/${SLUG}/puzzles/today`),
+        key: `/v1/games/${SLUG}/puzzles/today`,
+        signsOut: true,
+      },
+      {
+        name: 'a game path under a base url on another host',
+        send: () =>
+          apiClient.get(PUZZLE_URL, { baseURL: 'https://other.example/api' }),
+        key: `https://other.example/api${PUZZLE_URL}`,
+        signsOut: false,
+      },
+      {
+        name: 'a game path that resolves out of the game routes',
+        send: () => apiClient.get(`/v1/games/../other`),
+        key: '/v1/other',
+        signsOut: false,
+      },
+    ]
+
+    for (const { name, send, key, signsOut } of cases) {
+      const app = await open('/', SIGNED_IN)
+      app.backend.replies.set(key, { status: 200, data: body })
+      await send()
+      expect(app.queryClient.getQueryData(ME_KEY), name).toEqual(
+        signsOut ? null : USER,
+      )
+      expect(app.backend.requests, name).toEqual(expect.arrayContaining([key]))
+      stop?.()
+      stop = undefined
+    }
+  })
+
+  it('leaves the user alone for bodies where signed_in is not a top-level false', async () => {
+    const bodies: [string, unknown][] = [
+      ['nested in a step', { ...gameView(), steps: [{ signed_in: false }] }],
+      ['nested in an object', { ...gameView(), extra: { signed_in: false } }],
+      ['an html string', '<html><body>signed_in: false</body></html>'],
+      ['an empty string', ''],
+      ['null', null],
+      ['an array', [{ signed_in: false }]],
+      ['a blob', new Blob(['{"signed_in":false}'])],
+    ]
+    const app = await open('/', SIGNED_IN)
+
+    for (const [name, data] of bodies) {
+      app.backend.replies.set(PUZZLE_URL, { status: 200, data })
+      await askForPuzzle()
+      expect(app.queryClient.getQueryData(ME_KEY), name).toEqual(USER)
+    }
+  })
+
+  it('is removed, with the stamp and the 401 reaction, by the one eject', async () => {
+    const app = await open('/', SIGNED_IN)
+    app.backend.replies.set(PUZZLE_URL, { status: 200, data: gameView() })
+    app.backend.replies.set(UPDATE_PASSWORD_URL, GUEST)
+
+    // While the guard is installed, a request is stamped.
+    await askForPuzzle()
+    expect(typeof app.backend.configs.at(-1)?.sessionEpoch).toBe('number')
+
+    app.removeSessionGuard()
+    app.backend.replies.set(PUZZLE_URL, {
+      status: 200,
+      data: gameView({ signed_in: false }),
+    })
+    await askForPuzzle()
+    expect(app.backend.configs.at(-1)?.sessionEpoch).toBeUndefined()
+    await callAnEndpoint()
+    expect(app.queryClient.getQueryData(ME_KEY)).toEqual(USER)
+
+    // The `me` subscription is gone too: a new identity no longer starts a new epoch.
+    const epoch = getSessionEpoch()
+    const other: typeof USER = { ...USER, id: 'user-2' }
+    app.queryClient.setQueryData(ME_KEY, other)
+    expect(getSessionEpoch()).toBe(epoch)
+  })
+
+  it('treats another user in the `me` data as a new session', async () => {
+    const app = await open('/', SIGNED_IN)
+    const late = slowReply()
+    app.backend.replies.set(PUZZLE_URL, late.reply)
+
+    const pending = askForPuzzle()
+    // Another tab logged in as someone else, and a fresh `/auth/me` shows it here.
+    const other = { ...USER, id: 'user-2', email: 'other@example.com' }
+    app.queryClient.setQueryData(ME_KEY, other)
+    late.answer({ status: 200, data: gameView({ signed_in: false }) })
+    await pending
+
+    expect(app.queryClient.getQueryData(ME_KEY)).toEqual(other)
+  })
+
+  it('never rejects a good response when the address cannot be resolved', async () => {
+    const app = await open('/', SIGNED_IN)
+    const late = slowReply()
+    const view = gameView({ signed_in: false })
+    app.backend.replies.set(PUZZLE_URL, late.reply)
+    const getUri = apiClient.getUri.bind(apiClient)
+    let answered = false
+    vi.spyOn(apiClient, 'getUri').mockImplementation((config) => {
+      if (answered) throw new TypeError('Invalid URL')
+      return getUri(config)
+    })
+
+    // The fake backend resolved the address when the request was sent; from here it throws.
+    const pending = askForPuzzle()
+    answered = true
+    late.answer({ status: 200, data: view })
+
+    await expect(pending).resolves.toEqual(view)
+    expect(console.error).toHaveBeenCalled()
+  })
+
+  it('does not resolve the address of an answer that is not a guest game answer', async () => {
+    const app = await open('/', SIGNED_IN)
+    const late = slowReply()
+    app.backend.replies.set(PUZZLE_URL, late.reply)
+    const getUri = vi.spyOn(apiClient, 'getUri')
+
+    const pending = askForPuzzle()
+    getUri.mockClear()
+    late.answer({ status: 200, data: gameView({ signed_in: true }) })
+    await pending
+
+    expect(getUri).not.toHaveBeenCalled()
+  })
+
+  it('matches the game routes when the base url ends in a slash', async () => {
+    const app = await open('/', SIGNED_IN)
+    app.backend.replies.set(PUZZLE_URL, {
+      status: 200,
+      data: gameView({ signed_in: false }),
+    })
+    apiClient.defaults.baseURL = '/api/'
+    try {
+      await askForPuzzle()
+    } finally {
+      apiClient.defaults.baseURL = '/api'
+    }
+
+    expect(app.queryClient.getQueryData(ME_KEY)).toBeNull()
+  })
+})
+
+describe('an ApiError holds no part of the request', () => {
+  it('has no password in any of its properties after a failed login', async () => {
+    const app = await open('/login', GUEST)
+    app.backend.replies.set('/v1/auth/login', {
+      status: 401,
+      data: { status: 401, code: 'invalid_credentials', request_id: 'r-1' },
+    })
+
+    const error = await loginRequest({
+      email: USER.email,
+      password: 'hunter2-plaintext',
+    }).catch((caught: unknown) => caught)
+
+    expect(error).toBeInstanceOf(ApiError)
+    expect(everythingIn(error)).not.toContain('hunter2-plaintext')
+    expect(everythingIn(error)).toContain('invalid_credentials')
+    expect(app.backend.requests).toContain('/v1/auth/login')
   })
 })
 

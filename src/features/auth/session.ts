@@ -57,6 +57,30 @@ export async function redirectIfSignedIn(queryClient: QueryClient) {
   if (user) throw redirect({ to: '/' })
 }
 
+// Counts the sessions this tab has shown; the session guard stamps each request with it. It is not
+// signed-in state: only the `/auth/me` query is.
+let sessionEpoch = 0
+
+export function getSessionEpoch(): number {
+  return sessionEpoch
+}
+
+export function startNewSessionEpoch(): void {
+  sessionEpoch += 1
+}
+
+// True from the moment the user asks to log out until the local sign-out is done, so an answer that
+// arrives meanwhile is not taken for a session that ended on its own.
+let logoutRunning = false
+
+export function isLogoutRunning(): boolean {
+  return logoutRunning
+}
+
+export function setLogoutRunning(running: boolean): void {
+  logoutRunning = running
+}
+
 export function getSignedInUser(queryClient: QueryClient): User | undefined {
   return queryClient.getQueryData(meQueryOptions().queryKey) ?? undefined
 }
