@@ -4,11 +4,14 @@ import { QueryClientProvider } from '@tanstack/react-query'
 import { RouterContextProvider } from '@tanstack/react-router'
 import { act, renderHook, waitFor } from '@testing-library/react'
 import type { ReactNode } from 'react'
+import { toast } from 'sonner'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { updatePasswordRequest } from './api'
 import {
   GUEST,
   SERVER_ERROR,
   SIGNED_IN,
+  slowReply,
   startApp,
   USER,
   type Reply,
@@ -83,6 +86,36 @@ describe('useLogoutMutation (AC-20)', () => {
       expect(app.queryClient.getQueryData(PROGRESS_KEY)).toBeUndefined()
     },
   )
+})
+
+describe('an answer that arrives during a logout', () => {
+  it('is not taken for a session that ended on its own', async () => {
+    const info = vi.spyOn(toast, 'info')
+    const app = await open('/profile', SIGNED_IN)
+    const logoutAnswer = slowReply()
+    const requestAnswer = slowReply()
+    app.backend.replies.set('/v1/auth/logout', logoutAnswer.reply)
+    app.backend.replies.set('/v1/auth/update-password', requestAnswer.reply)
+    const { result } = renderMutation(() => useLogoutMutation(), app)
+
+    const request = updatePasswordRequest({
+      old_password: 'a',
+      new_password: 'b',
+      confirm_password: 'b',
+    }).catch(() => {})
+    await act(async () => result.current.mutate())
+    // The server ended the session with the logout, so the request that was still open gets 401.
+    requestAnswer.answer(GUEST)
+    await request
+
+    expect(info).not.toHaveBeenCalled()
+    expect(app.router.state.location.pathname).toBe('/profile')
+
+    logoutAnswer.answer({ status: 204 })
+    await waitFor(() => expect(app.router.state.location.pathname).toBe('/'))
+    expect(app.queryClient.getQueryData(ME_KEY)).toBeNull()
+    expect(info).not.toHaveBeenCalled()
+  })
 })
 
 describe('useResetPasswordMutation (AC-19b)', () => {

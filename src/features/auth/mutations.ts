@@ -18,7 +18,12 @@ import {
   updatePasswordRequest,
 } from './api'
 import { meQueryOptions } from './queries'
-import { finishLogout, finishPasswordReset } from './session'
+import {
+  finishLogout,
+  finishPasswordReset,
+  setLogoutRunning,
+  startNewSessionEpoch,
+} from './session'
 import type {
   ForgotPasswordPayload,
   LoginPayload,
@@ -29,6 +34,8 @@ import type {
 } from './types'
 
 export function onAuthSuccess(queryClient: QueryClient, user: User) {
+  // Logging in again as the same user changes no identity, so the guard cannot see the new session.
+  startNewSessionEpoch()
   const meKey = meQueryOptions().queryKey
   // An `/auth/me` request still in flight started before this login: cancel it, so its late
   // answer cannot replace the user who just logged in.
@@ -71,9 +78,11 @@ export function useLogoutMutation() {
 
   return useMutation<void, ApiError>({
     mutationFn: logoutRequest,
+    onMutate: () => setLogoutRunning(true),
     onSettled: (_data, error) => {
       // Clear locally regardless of the answer. The user stays on a public page.
       void finishLogout(queryClient, router)
+      setLogoutRunning(false)
       if (error) {
         reportError(
           error,
