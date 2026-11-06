@@ -11,6 +11,7 @@ import type {
   GameGuesserView,
   GameList,
   GamesGetPuzzleParams,
+  GamesGetStatsParams,
   GamesGetTodayPuzzleParams,
   GamesResumePuzzleParams,
   GamesSearchTitlesParams,
@@ -20,6 +21,7 @@ import type {
   HealthReadyz200,
   ResetPasswordRequest,
   ResumeCreate,
+  StatsRead,
   TitleList,
   UpdatePasswordRequest,
   UserLogin,
@@ -242,6 +244,20 @@ export const gamesResumePuzzle = (
     }
 
 /**
+ * @summary Get Stats
+ */
+export const gamesGetStats = (
+    slug: string,
+    params?: GamesGetStatsParams,
+ options?: SecondParameter<typeof orvalMutator<StatsRead>>,) => {
+      return orvalMutator<StatsRead>(
+      {url: `/v1/games/${slug}/stats`, method: 'GET',
+        params
+    },
+      options);
+    }
+
+/**
  * @summary Search Titles
  */
 export const gamesSearchTitles = (
@@ -270,4 +286,5 @@ export type GamesGetTodayPuzzleResult = NonNullable<Awaited<ReturnType<typeof ga
 export type GamesGetPuzzleResult = NonNullable<Awaited<ReturnType<typeof gamesGetPuzzle>>>
 export type GamesSubmitGuessResult = NonNullable<Awaited<ReturnType<typeof gamesSubmitGuess>>>
 export type GamesResumePuzzleResult = NonNullable<Awaited<ReturnType<typeof gamesResumePuzzle>>>
+export type GamesGetStatsResult = NonNullable<Awaited<ReturnType<typeof gamesGetStats>>>
 export type GamesSearchTitlesResult = NonNullable<Awaited<ReturnType<typeof gamesSearchTitles>>>
