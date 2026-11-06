@@ -5,9 +5,11 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { HintRead } from './hintRead';
+import type { MediaRead } from './mediaRead';
 
 export interface StepRead {
   hint: HintRead | null;
+  media: MediaRead;
   /** Null until the game ends */
   source_url: string | null;
   step: number;
