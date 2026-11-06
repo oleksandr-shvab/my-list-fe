@@ -5,6 +5,7 @@
  * OpenAPI spec version: 0.1.0
  */
 import type {
+  ArchiveList,
   AuthForgotPassword202,
   ClockRead,
   ForgotPasswordRequest,
@@ -13,6 +14,7 @@ import type {
   GamesGetPuzzleParams,
   GamesGetStatsParams,
   GamesGetTodayPuzzleParams,
+  GamesListArchiveParams,
   GamesResumePuzzleParams,
   GamesSearchTitlesParams,
   GamesSubmitGuessParams,
@@ -179,6 +181,20 @@ export const gamesListGames = (
     }
 
 /**
+ * @summary List Archive
+ */
+export const gamesListArchive = (
+    slug: string,
+    params?: GamesListArchiveParams,
+ options?: SecondParameter<typeof orvalMutator<ArchiveList>>,) => {
+      return orvalMutator<ArchiveList>(
+      {url: `/v1/games/${slug}/archive`, method: 'GET',
+        params
+    },
+      options);
+    }
+
+/**
  * @summary Get Today Puzzle
  */
 export const gamesGetTodayPuzzle = (
@@ -282,6 +298,7 @@ export type AuthResetPasswordResult = NonNullable<Awaited<ReturnType<typeof auth
 export type AuthUpdatePasswordResult = NonNullable<Awaited<ReturnType<typeof authUpdatePassword>>>
 export type ClockGetClockResult = NonNullable<Awaited<ReturnType<typeof clockGetClock>>>
 export type GamesListGamesResult = NonNullable<Awaited<ReturnType<typeof gamesListGames>>>
+export type GamesListArchiveResult = NonNullable<Awaited<ReturnType<typeof gamesListArchive>>>
 export type GamesGetTodayPuzzleResult = NonNullable<Awaited<ReturnType<typeof gamesGetTodayPuzzle>>>
 export type GamesGetPuzzleResult = NonNullable<Awaited<ReturnType<typeof gamesGetPuzzle>>>
 export type GamesSubmitGuessResult = NonNullable<Awaited<ReturnType<typeof gamesSubmitGuess>>>
