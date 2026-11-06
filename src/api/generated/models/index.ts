@@ -6,6 +6,9 @@
  */
 
 export * from './answerRead';
+export * from './archiveItem';
+export * from './archiveList';
+export * from './archiveState';
 export * from './authForgotPassword202';
 export * from './clockRead';
 export * from './fieldError';
@@ -17,6 +20,7 @@ export * from './gameRead';
 export * from './gamesGetPuzzleParams';
 export * from './gamesGetStatsParams';
 export * from './gamesGetTodayPuzzleParams';
+export * from './gamesListArchiveParams';
 export * from './gamesResumePuzzleParams';
 export * from './gamesSearchTitlesParams';
 export * from './gamesSubmitGuessParams';
