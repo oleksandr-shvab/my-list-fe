@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next'
 
 import { cn } from '@/lib/utils'
 
-// The same letter as public/favicon.svg, drawn as a path so it needs no font.
+// Same letter as public/favicon.svg, drawn as a path so it needs no font.
 function LetterMark() {
   return (
     <span
@@ -20,8 +20,6 @@ function LetterMark() {
   )
 }
 
-// The product name as a link to the home page. Extra props go to the link, so the
-// sidebar can wrap it in a menu button with `asChild`.
 export function BrandLink({
   className,
   ...delegated

@@ -17,7 +17,6 @@ describe('the DOM test setup', () => {
     expect(window.matchMedia).toBe(matchMedia)
 
     vi.unstubAllGlobals()
-    // The stubs from the setup are back.
     expect(typeof window.ResizeObserver).toBe('function')
     expect(window.matchMedia('(min-width: 1px)').matches).toBe(false)
   })

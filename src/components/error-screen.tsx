@@ -28,13 +28,11 @@ export function ErrorScreen({ error }: { error: Error }) {
   )
 }
 
-// The screen for a page that does not exist. The router renders it with props of its own, so it
-// takes none; `NotFoundMessage` is the one with texts that can be replaced.
+// The router renders this with props of its own, so it takes none. `NotFoundMessage` takes custom texts.
 export function NotFoundScreen() {
   return <NotFoundMessage />
 }
 
-// A "not found" page with its own texts, so a game page can say "Unknown game" in the same layout.
 export function NotFoundMessage({
   titleKey = 'error_screen.not_found_title',
   textKey = 'error_screen.not_found_text',

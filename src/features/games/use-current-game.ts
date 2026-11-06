@@ -9,16 +9,13 @@ type CurrentGameMatch = {
 }
 
 export type CurrentGame = {
-  // The game the page shows. None on pages that are not a game (profile, "not found").
   game: GameEntry | undefined
-  // The archive page of that game is open.
   archiveOpen: boolean
 }
 
 const NO_GAME: CurrentGame = { game: undefined, archiveOpen: false }
 
-// Which game the visitor is looking at: the game of the `slug` in the address, or the default game
-// on the home page. A "not found" page shows no game, even when its slug is a real one.
+// A "not found" page shows no game, even when its slug is a real one.
 export function resolveCurrentGame(
   matches: readonly CurrentGameMatch[],
 ): CurrentGame {

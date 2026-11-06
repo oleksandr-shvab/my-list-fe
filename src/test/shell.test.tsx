@@ -18,10 +18,6 @@ import {
   type Reply,
 } from './router-harness'
 
-// The navigation shell in jsdom: the sidebar, the phone header and panel, the skip link and the
-// account menu, on the real route tree with the fake backend. The fixed day makes "today"
-// 2026-10-28 in UTC.
-
 let stop: (() => void) | undefined
 
 function renderApp(path: string, me: Reply) {
@@ -35,7 +31,7 @@ function renderApp(path: string, me: Reply) {
   return app
 }
 
-// Below 768 px: the sidebar is a panel and the slim header shows. Matches `use-mobile.ts`.
+// Below 768 px, like `use-mobile.ts`.
 function usePhoneScreen() {
   vi.stubGlobal('matchMedia', (query: string) => ({
     matches: true,
@@ -98,7 +94,6 @@ describe('the current game in the sidebar (AC-30)', () => {
         .getAttribute('aria-current'),
     ).toBeNull()
 
-    // A page that is not a game shows no current game, and the archive link keeps the default.
     await user.click(
       await screen.findByRole('button', { name: `Account: ${USER.email}` }),
     )
@@ -112,7 +107,6 @@ describe('the current game in the sidebar (AC-30)', () => {
 })
 
 describe('the games both sides know in the sidebar (AC-7, AC-8)', () => {
-  // The fake backend answers `GET /v1/games`; the shell must show what the list allows.
   function renderWithGames(path: string, games: Reply) {
     const app = startApp({ path, me: GUEST })
     stop = app.stop
@@ -159,7 +153,7 @@ describe('the games both sides know in the sidebar (AC-7, AC-8)', () => {
 
 describe('the game list in the sidebar (AC-30)', () => {
   it('scrolls its own list to the current game and never scrolls the page', async () => {
-    // jsdom has no layout: the list is 100 px high and the current entry sticks out 34 px below.
+    // jsdom has no layout, so fake a 100 px list with the current entry 34 px below it.
     const box = (top: number, bottom: number) =>
       ({
         top,
@@ -254,7 +248,6 @@ describe('the account menu button with the sidebar collapsed to icons', () => {
 describe('logging out from the account menu (AC-33, AC-66)', () => {
   const LOGOUT_URL = '/v1/auth/logout'
 
-  // Starts signed in with a logout that does not answer until the test says so.
   function renderWithHeldLogout(path = '/') {
     const held = slowReply()
     const app = renderApp(path, SIGNED_IN)
@@ -291,14 +284,13 @@ describe('logging out from the account menu (AC-33, AC-66)', () => {
       const pending = await area.findByRole('button', {
         name: 'Logging out…',
       })
-      // Not `disabled`: a disabled button that has the focus loses it in browsers, and the new
-      // name would never be read out.
+      // Not `disabled`: a focused button that becomes disabled loses focus in browsers, and
+      // the new name would not be read out.
       expect(pending.getAttribute('aria-disabled')).toBe('true')
       expect(pending.hasAttribute('disabled')).toBe(false)
       expect(pending.getAttribute('aria-busy')).toBe('true')
       expect(screen.queryByRole('menu')).toBeNull()
       await waitFor(() => expect(document.activeElement).toBe(pending))
-      // Keys and clicks do nothing while it runs.
       await user.keyboard('{Enter}')
       await user.keyboard('{ArrowDown}')
       await user.click(pending)
@@ -328,7 +320,7 @@ describe('the skip link and the order of the sidebar (AC-27a, AC-62)', () => {
     await user.keyboard('{Enter}')
 
     expect(document.activeElement).toBe(screen.getByRole('main'))
-    // The jump is ours: the address does not get a `#main`.
+    // The skip link jumps by script, so the address gets no `#main`.
     expect(window.location.hash).toBe('')
     expect(app.router.state.location.hash).toBe('')
   })
@@ -387,7 +379,6 @@ describe('the landmarks (AC-63)', () => {
     const main = screen.getByRole('main')
     expect(screen.getAllByRole('main')).toEqual([main])
     expect(main.contains(banner)).toBe(false)
-    // The sidebar is a panel on a phone, so its navigation is not there while it is closed.
     expect(screen.queryByRole('navigation')).toBeNull()
   })
 })
@@ -416,12 +407,10 @@ describe('the phone header and panel (AC-32, AC-35, AC-66)', () => {
     const panel = await screen.findByRole('dialog', { name: 'Site menu' })
     expect(within(panel).getByRole('navigation', GAMES_NAV)).toBeTruthy()
     expect(panel.contains(document.activeElement)).toBe(true)
-    // The panel's hidden title follows the language.
     await act(() => i18n.changeLanguage('ru'))
     expect(screen.getByRole('dialog', { name: 'Меню сайта' })).toBe(panel)
     await act(() => i18n.changeLanguage('en'))
 
-    // Tab and Shift+Tab walk around the panel and never leave it.
     for (let step = 0; step < 14; step++) {
       await user.tab()
       expect(panel.contains(document.activeElement)).toBe(true)
@@ -471,7 +460,7 @@ describe('the phone header and panel (AC-32, AC-35, AC-66)', () => {
     const user = userEvent.setup()
     usePhoneScreen()
     const app = renderApp('/', SIGNED_IN)
-    // The browser opens a modified click in a new tab; jsdom would only print "not implemented".
+    // Browsers open a modified click in a new tab; jsdom logs "not implemented".
     const keepPage = (event: Event) => event.preventDefault()
     document.addEventListener('click', keepPage)
 
@@ -489,7 +478,6 @@ describe('the phone header and panel (AC-32, AC-35, AC-66)', () => {
       expect(panel.getAttribute('data-state')).toBe('open')
       expect(app.router.state.location.pathname).toBe('/')
 
-      // The same goes for Profile in the account menu: the menu closes, the panel stays.
       const accountButton = within(panel).getByRole('button', {
         name: `Account: ${USER.email}`,
       })
@@ -510,9 +498,8 @@ describe('the phone header and panel (AC-32, AC-35, AC-66)', () => {
   it('keeps the focus on the main area after Profile is chosen from the account menu inside the closing panel', async () => {
     const user = userEvent.setup()
     usePhoneScreen()
-    // jsdom has no animations, so the panel would vanish at once and take its menu button with
-    // it. The real panel plays an exit animation first and stays in the page while it runs, so
-    // give it one, and end it by hand.
+    // jsdom has no animations, so the panel would vanish at once with its menu button. The real
+    // panel stays in the page during its exit animation, so fake one and end it by hand.
     const realGetComputedStyle = window.getComputedStyle
     vi.stubGlobal('CSS', { escape: (value: string) => value })
     vi.stubGlobal('getComputedStyle', (element: Element) => {
@@ -546,10 +533,9 @@ describe('the phone header and panel (AC-32, AC-35, AC-66)', () => {
     await waitFor(() =>
       expect(app.router.state.location.pathname).toBe('/profile'),
     )
-    // The panel is closing but still in the page, with the button that had the menu.
     expect(panel.getAttribute('data-state')).toBe('closed')
     expect(panel.isConnected).toBe(true)
-    // Let the menu's own focus return (a timer) run.
+    // Let the menu's focus return (a timer) run.
     await act(() => new Promise((resolve) => setTimeout(resolve, 20)))
     expect(document.activeElement).toBe(
       screen.getByRole('main', { hidden: true }),

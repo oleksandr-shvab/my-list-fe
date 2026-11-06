@@ -33,7 +33,6 @@ const UPDATE_PASSWORD_URL = '/v1/auth/update-password'
 
 let stop: (() => void) | undefined
 
-// Opens `path` as the first page of a fresh app and waits for the first load.
 async function open(path: string, me: Reply, games?: Reply) {
   const app = startApp({ path, me })
   stop = app.stop
@@ -47,7 +46,6 @@ function where(app: Awaited<ReturnType<typeof open>>) {
   return pathname + searchStr
 }
 
-// A call to any endpoint that answers 401 while the page shows a signed-in user.
 function callAnEndpoint() {
   const payload = {
     old_password: 'a',
@@ -57,7 +55,6 @@ function callAnEndpoint() {
   return updatePasswordRequest(payload).catch(() => {})
 }
 
-// Every own property name and string inside a value, nested and non-enumerable ones included.
 function everythingIn(value: unknown, seen = new Set<object>()): string {
   if (typeof value === 'string') return value
   if (typeof value !== 'object' || value === null || seen.has(value)) return ''
@@ -72,12 +69,12 @@ function everythingIn(value: unknown, seen = new Set<object>()): string {
     .join(' ')
 }
 
-// Lets a settled promise run its handlers: the late answer reaches the query before this returns.
+// Lets a late answer reach the query before the test goes on.
 const settle = () => new Promise((resolve) => setTimeout(resolve, 0))
 
 beforeEach(async () => {
   await i18n.changeLanguage('en')
-  // Failed queries are reported through console.error in development.
+  // Failed queries are logged with console.error in development.
   vi.spyOn(console, 'error').mockImplementation(() => {})
 })
 
@@ -164,7 +161,7 @@ describe('unknown paths (AC-10)', () => {
 })
 
 describe('the game pages (AC-12, AC-39 to AC-45, AC-48)', () => {
-  // Fixed, so "today" is 2026-10-28 in UTC. Only the date is faked: the router needs real timers.
+  // "Today" is 2026-10-28 in UTC. Only Date is faked because the router needs real timers.
   beforeEach(() => {
     vi.useFakeTimers({ toFake: ['Date'] })
     vi.setSystemTime(new Date('2026-10-28T12:00:00Z'))
@@ -174,7 +171,6 @@ describe('the game pages (AC-12, AC-39 to AC-45, AC-48)', () => {
     vi.useRealTimers()
   })
 
-  // What the game screen is given: the game, the day and whether it is today.
   function shownPuzzle(app: Awaited<ReturnType<typeof open>>) {
     const leaf = app.router.state.matches.at(-1)
     // The router types a match's context for any route, so say which part this test reads.
@@ -216,7 +212,6 @@ describe('the game pages (AC-12, AC-39 to AC-45, AC-48)', () => {
     })
     stop?.()
 
-    // No redirect to the page without a date.
     const today = await open('/games/game-guesser/2026-10-28', GUEST)
     expect(where(today)).toBe('/games/game-guesser/2026-10-28')
     expect(shownPuzzle(today)).toMatchObject({
@@ -465,8 +460,8 @@ describe('a 401 in the middle of a session (AC-25, AC-26)', () => {
     expect(app.queryClient.getQueryData(ME_KEY)).toBeNull()
     expect(info).not.toHaveBeenCalled()
 
-    // The stale-cache bug: the old guard cleared its own store only, so the cached `/auth/me`
-    // brought the user back on the next navigation. The fake would still answer with a user.
+    // Regression: the old guard cleared only its own store, so the cached `/auth/me` brought
+    // the user back on the next navigation. The fake still answers with a user.
     await app.router.navigate({ to: '/$', params: { _splat: 'lists' } })
     await app.router.navigate({ to: '/' })
     expect(app.queryClient.getQueryData(ME_KEY)).toBeNull()
@@ -502,7 +497,7 @@ describe('a game response that says signed_in: false (AC-42)', () => {
   const SLUG = 'game-guesser'
   const DATE = '2026-11-05'
   const PUZZLE_URL = `/v1/games/${SLUG}/puzzles/${DATE}`
-  // The real call: its URL comes from the generated function, not from a string in the test.
+  // Calls the generated function so the URL comes from it.
   const askForPuzzle = () => gamesGetPuzzle(SLUG, DATE)
 
   it('on a public page: signs out, stays on the page, shows no message, drops other queries', async () => {
@@ -512,7 +507,6 @@ describe('a game response that says signed_in: false (AC-42)', () => {
     const view = gameView({ signed_in: false })
     app.backend.replies.set(PUZZLE_URL, { status: 200, data: view })
 
-    // The caller still gets the answer unchanged.
     expect(await askForPuzzle()).toEqual(view)
 
     expect(app.queryClient.getQueryData(ME_KEY)).toBeNull()
@@ -599,7 +593,7 @@ describe('a game response that says signed_in: false (AC-42)', () => {
     const late = slowReply()
     app.backend.replies.set(PUZZLE_URL, late.reply)
 
-    // No await between the call and the login: the request is stamped when it is sent.
+    // No await between the call and the login, because the request is stamped when sent.
     const pending = askForPuzzle()
     onAuthSuccess(app.queryClient, USER)
     late.answer({ status: 200, data: gameView({ signed_in: false }) })
@@ -649,7 +643,6 @@ describe('a game response that says signed_in: false (AC-42)', () => {
 
     const pending = askForPuzzle()
     signOutLocally(app.queryClient)
-    // The user comes back some other way than a login, for example a fresh `/auth/me`.
     app.queryClient.setQueryData(ME_KEY, USER)
     late.answer({ status: 200, data: gameView({ signed_in: false }) })
     await pending
@@ -742,7 +735,6 @@ describe('a game response that says signed_in: false (AC-42)', () => {
     app.backend.replies.set(PUZZLE_URL, { status: 200, data: gameView() })
     app.backend.replies.set(UPDATE_PASSWORD_URL, GUEST)
 
-    // While the guard is installed, a request is stamped.
     await askForPuzzle()
     expect(typeof app.backend.configs.at(-1)?.sessionEpoch).toBe('number')
 
@@ -756,7 +748,6 @@ describe('a game response that says signed_in: false (AC-42)', () => {
     await callAnEndpoint()
     expect(app.queryClient.getQueryData(ME_KEY)).toEqual(USER)
 
-    // The `me` subscription is gone too: a new identity no longer starts a new epoch.
     const epoch = getSessionEpoch()
     const other: typeof USER = { ...USER, id: 'user-2' }
     app.queryClient.setQueryData(ME_KEY, other)
@@ -769,7 +760,6 @@ describe('a game response that says signed_in: false (AC-42)', () => {
     app.backend.replies.set(PUZZLE_URL, late.reply)
 
     const pending = askForPuzzle()
-    // Another tab logged in as someone else, and a fresh `/auth/me` shows it here.
     const other = { ...USER, id: 'user-2', email: 'other@example.com' }
     app.queryClient.setQueryData(ME_KEY, other)
     late.answer({ status: 200, data: gameView({ signed_in: false }) })
@@ -790,7 +780,7 @@ describe('a game response that says signed_in: false (AC-42)', () => {
       return getUri(config)
     })
 
-    // The fake backend resolved the address when the request was sent; from here it throws.
+    // The fake backend resolved the address at send time; from here getUri throws.
     const pending = askForPuzzle()
     answered = true
     late.answer({ status: 200, data: view })
@@ -886,7 +876,7 @@ describe('a password reset while signed in (AC-19b)', () => {
 
 describe('an `/auth/me` answer that arrives after the session changed (AC-19b)', () => {
   it('does not bring the user back after a password reset', async () => {
-    // The reset page does not wait for `/auth/me`, so the reset can finish before the answer.
+    // The reset page does not wait for `/auth/me`, so the reset can finish first.
     const late = slowReply()
     const app = await open('/reset-password?token=abc', late.reply)
 
@@ -913,9 +903,8 @@ describe('an `/auth/me` answer that arrives after the session changed (AC-19b)',
   })
 
   it('does not sign out the user who just logged in when the replaced request answers 401', async () => {
-    // The login cancels the `/auth/me` request that was still running. Cancelling the query does
-    // not stop the HTTP request unless the query passes its signal on, so its 401 would reach the
-    // session guard while the new user is shown.
+    // The login cancels the running `/auth/me` query, but that does not stop the HTTP request
+    // unless the query passes its signal on, so its 401 would reach the session guard.
     const late = slowReply()
     const app = await open('/', late.reply)
 

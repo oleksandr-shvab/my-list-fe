@@ -1,8 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 
-// The real archive comes later; for now the page says so (AC-31). A static segment wins over
-// `$date`, so this is never read as a date.
+// Placeholder until the real archive (AC-31). A static segment wins over `$date`, so this is never read as a date.
 export const Route = createFileRoute('/_app/games/$slug/archive')({
   staticData: { pageTitle: 'games.archive_title' },
   component: ArchivePage,

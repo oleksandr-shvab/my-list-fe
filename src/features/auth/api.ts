@@ -18,8 +18,6 @@ import type {
   User,
 } from './types'
 
-// Thin wrappers over the generated client, so queries and mutations keep their call sites.
-
 export function registerRequest(payload: RegisterPayload): Promise<User> {
   return authRegister(payload)
 }
@@ -32,10 +30,8 @@ export async function logoutRequest(): Promise<void> {
   await authLogout()
 }
 
-// A visitor with no session is normal, not an error: a 401 here means "guest" (null). Any other
-// failure (network, 5xx) is thrown, because then the sign-in state is unknown. The query's signal
-// is passed on, so a request that login or logout replaced is aborted and its late 401 never
-// reaches the session guard.
+// No session is normal: a 401 means "guest" (null). Other failures throw, because then the sign-in state is unknown.
+// The query's signal is passed on so a request that login or logout replaced is aborted and its late 401 never reaches the session guard.
 export async function getMe(signal?: AbortSignal): Promise<User | null> {
   try {
     return await authMe({ signal })

@@ -43,9 +43,8 @@ export function onAuthSuccess(queryClient: QueryClient, user: User) {
   queryClient.setQueryData(meKey, user)
 }
 
-// `redirectTo` comes from the login or sign-up page's search, already checked by
-// `resolveRedirect`, so it is a path on this site. It goes through history.push, as in
-// TanStack Router's "Authenticated Routes" guide, because it can hold a query and a hash.
+// `redirectTo` is checked by `resolveRedirect`. It goes through history.push, as in TanStack Router's
+// "Authenticated Routes" guide, because it can hold a query and a hash.
 export function useLoginMutation(redirectTo?: string) {
   const queryClient = useQueryClient()
   const router = useRouter()

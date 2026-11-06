@@ -25,7 +25,6 @@ import { mapApiErrorToForm } from '../map-error-to-form'
 import { useLoginMutation } from '../mutations'
 import { createLoginSchema, type LoginFormValues } from '../schemas'
 
-// `redirectTo` is the validated page to return to after login; it is kept on the link to sign-up.
 export function LoginForm({ redirectTo }: { redirectTo?: string }) {
   const { t } = useTranslation()
   const schema = useMemo(() => createLoginSchema(t), [t])

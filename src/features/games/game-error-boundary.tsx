@@ -6,15 +6,12 @@ type GameErrorBoundaryProps = {
   children: ReactNode
   // The game's name, for the page's h1: the screen's own h1 is not there while it has failed.
   heading: string
-  // Called on "Try again", before the screen renders again.
   onRetry?: () => void
 }
 type GameErrorBoundaryState = { failed: boolean }
 
-// One per game screen (AC-54): a screen that fails while rendering shows this inside the
-// layout, so the sidebar and the header keep working. React still needs a class for this.
-// The error is not reported here: `createRoot`'s `onCaughtError` (src/main.tsx) reports every
-// error a boundary catches.
+// One per game screen (AC-54), so a failing screen leaves the sidebar and header working. React needs a class for this.
+// Errors are reported by `createRoot`'s `onCaughtError` (src/main.tsx), not here.
 export class GameErrorBoundary extends Component<
   GameErrorBoundaryProps,
   GameErrorBoundaryState
@@ -40,9 +37,8 @@ export class GameErrorBoundary extends Component<
   }
 }
 
-// "Try again" renders the screen again. If the screen's code failed to download, `lazy` keeps
-// that failure, so the screen is built with `lazyWithRetry` and `onRetry` makes it download
-// again. (src/lib/version-skew.ts only reloads the page for the deploy case.)
+// `lazy` keeps a failed download, so the screen is built with `lazyWithRetry` and `onRetry` makes it download again.
+// (src/lib/version-skew.ts only reloads the page for the deploy case.)
 function GameErrorFallback({
   heading,
   onRetry,

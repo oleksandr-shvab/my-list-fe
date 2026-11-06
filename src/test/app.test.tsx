@@ -17,9 +17,6 @@ import {
   type Reply,
 } from './router-harness'
 
-// The real route tree, layout and pages rendered in jsdom, with the fake backend behind the axios
-// client. The fixed day makes "today" 2026-10-28 in UTC.
-
 let stop: (() => void) | undefined
 
 function renderApp(path: string, me: Reply) {
@@ -37,7 +34,7 @@ beforeEach(async () => {
   vi.useFakeTimers({ toFake: ['Date'] })
   vi.setSystemTime(new Date('2026-10-28T12:00:00Z'))
   await i18n.changeLanguage('en')
-  // Failed queries are reported through console.error in development.
+  // Failed queries are logged with console.error in development.
   vi.spyOn(console, 'error').mockImplementation(() => {})
 })
 
@@ -68,7 +65,6 @@ describe('the game pages in the layout (AC-3, AC-47, AC-48)', () => {
       expect(document.title).toBe('Архив | Daily Game Challenge'),
     )
 
-    // The brand in the sidebar leads to the home page: the default game, today's puzzle.
     await user.click(screen.getByRole('link', { name: 'Daily Game Challenge' }))
     expect((await screen.findByRole('heading', { level: 1 })).textContent).toBe(
       'Game Guesser',
@@ -98,7 +94,6 @@ describe('the game pages in the layout (AC-3, AC-47, AC-48)', () => {
         (await screen.findByRole('heading', { level: 1 })).textContent,
       ).toBe(title)
       expect(screen.getByText(text)).toBeTruthy()
-      // The sidebar is still there.
       expect(
         screen.getByRole('link', { name: 'Daily Game Challenge' }),
       ).toBeTruthy()
@@ -121,7 +116,6 @@ describe('the account area (AC-21, AC-24, AC-32, AC-33)', () => {
     const late = slowReply()
     renderApp('/games/game-guesser/2026-10-01', late.reply)
 
-    // The game shows before the answer; the account area shows neither guest nor user.
     expect(await screen.findByText('Puzzle for October 1, 2026')).toBeTruthy()
     expect(screen.queryByRole('link', { name: 'Log in' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Retry' })).toBeNull()
@@ -140,7 +134,6 @@ describe('the account area (AC-21, AC-24, AC-32, AC-33)', () => {
     const user = userEvent.setup()
     const app = renderApp('/games/game-guesser', SERVER_ERROR)
 
-    // Public pages show anyway.
     expect(await screen.findByText('Puzzle for October 28, 2026')).toBeTruthy()
     const retry = await screen.findByRole('button', { name: 'Retry' })
     expect(screen.getByText("Couldn't check your sign-in.")).toBeTruthy()

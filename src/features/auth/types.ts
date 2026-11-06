@@ -1,5 +1,4 @@
-// The backend's models, generated from its OpenAPI snapshot (npm run api:generate). These names
-// are what the rest of the app imports; do not hand-write backend shapes here.
+// Generated from the backend's OpenAPI snapshot (npm run api:generate); do not hand-write backend shapes.
 export type {
   UserRead as User,
   UserRegister as RegisterPayload,

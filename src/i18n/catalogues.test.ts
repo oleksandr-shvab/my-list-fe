@@ -4,8 +4,7 @@ import ru from './locales/ru.json'
 
 type Tree = { [key: string]: string | Tree }
 
-// Plural forms differ by language (_one/_other in English, also _few/_many in Russian), so
-// compare the keys without the plural suffix.
+// English has _one/_other and Russian also _few/_many, so compare keys without the suffix.
 function baseKeys(tree: Tree, prefix = ''): Set<string> {
   const keys = new Set<string>()
   for (const [key, value] of Object.entries(tree)) {
@@ -18,8 +17,8 @@ function baseKeys(tree: Tree, prefix = ''): Set<string> {
   return keys
 }
 
-// Add a code here when the backend adds one (CONTRACTS.md, Errors). `method_not_allowed` is left
-// out on purpose: it is a client bug, never shown to a player.
+// Add a code here when the backend adds one (CONTRACTS.md, Errors). `method_not_allowed` is
+// omitted on purpose: it is a client bug and no player sees it.
 const BACKEND_ERROR_CODES = [
   'email_already_registered',
   'invalid_credentials',

@@ -1,8 +1,7 @@
 import type { TFunction } from 'i18next'
 import { z } from 'zod'
 
-// Schemas are built with the current `t`, so the messages follow the interface language.
-// Components create them with useMemo(() => createXSchema(t), [t]).
+// Built with the current `t`, so messages follow the interface language. Create with useMemo(() => createXSchema(t), [t]).
 
 const MIN_PASSWORD_LENGTH = 8
 const MAX_PASSWORD_LENGTH = 128

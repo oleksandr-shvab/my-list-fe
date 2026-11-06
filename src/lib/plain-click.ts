@@ -1,8 +1,7 @@
 import type { MouseEvent } from 'react'
 
-// A click the router follows itself, the same test TanStack Router's `Link` makes. Anything else
-// (ctrl or cmd for a new tab, a middle button, a handler that cancelled it) is left to the browser,
-// so the page stays where it is.
+// A click the router follows itself, as TanStack Router's `Link` tests it. Other clicks (ctrl or cmd,
+// middle button, cancelled) are left to the browser.
 export function isPlainClick(event: MouseEvent) {
   return !(
     event.metaKey ||

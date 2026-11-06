@@ -18,9 +18,8 @@ function isAuthPath(pathname: string): boolean {
   return AUTH_PATHS.has(decoded.toLowerCase().replace(/\/+$/, ''))
 }
 
-// Validates the `redirect` search parameter, which anyone can write into a link. Returns the
-// path (with query and hash) to go to after login, or undefined when the value must be ignored.
-// The result comes from the resolved URL, never from the raw value.
+// `redirect` can be written into a link by anyone. Returns the path (with query and hash) to go to after login,
+// built from the resolved URL, never the raw value.
 export function resolveRedirect(
   value: unknown,
   origin: string,

@@ -19,8 +19,7 @@ export function slugsOf(list: GameList): ReadonlySet<string> {
   return new Set(list.items.map((item) => item.slug))
 }
 
-// The slugs the backend lists, or `undefined` when the list is not known. For route guards: it
-// never throws, because a failed call must not block the page.
+// For route guards: never throws, because a failed call must not block the page.
 export async function knownGameSlugs(
   queryClient: QueryClient,
 ): Promise<ReadonlySet<string> | undefined> {

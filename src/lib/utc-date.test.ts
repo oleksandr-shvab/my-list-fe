@@ -11,7 +11,6 @@ afterEach(() => {
   vi.unstubAllEnvs()
 })
 
-// Runs `todayUtc()` with the device clock at `instant`, on a device in `timeZone`.
 function todayOnDevice(instant: string, timeZone: string) {
   vi.stubEnv('TZ', timeZone)
   vi.useFakeTimers({ toFake: ['Date'] })
@@ -21,7 +20,6 @@ function todayOnDevice(instant: string, timeZone: string) {
 
 describe('todayUtc (AC-46)', () => {
   it('is the UTC day for a device at 23:30 in UTC-5', () => {
-    // 23:30 on the 27th on the device, 04:30 on the 28th in UTC.
     const { today, localHour } = todayOnDevice(
       '2026-10-28T04:30:00Z',
       'Etc/GMT+5',
@@ -32,7 +30,6 @@ describe('todayUtc (AC-46)', () => {
   })
 
   it('is the UTC day for a device at 01:00 in UTC+3', () => {
-    // 01:00 on the 28th on the device, 22:00 on the 27th in UTC.
     const { today, localHour } = todayOnDevice(
       '2026-10-27T22:00:00Z',
       'Europe/Moscow',
@@ -87,7 +84,7 @@ describe('parsePuzzleDate (AC-44, AC-45)', () => {
     ['an empty value', ''],
     ['tomorrow', '2026-10-29'],
     ['a far future day', '2099-01-01'],
-    // `Date.UTC` maps the years 0 to 99 to 1900 to 1999, so the round trip alone lets some pass.
+    // `Date.UTC` maps years 0 to 99 to 1900 to 1999, so a round trip alone lets them pass.
     ['year 0000', '0000-01-01'],
     ['year 0050', '0050-06-01'],
     ['year 0100', '0100-01-01'],

@@ -30,7 +30,6 @@ export function isDefaultKnown(
   return slugs === undefined || slugs.has(getDefaultGame().slug)
 }
 
-// The games for the navigation, derived from the query on every render.
 export function useKnownGames(): GameEntry[] {
   const { data } = useQuery(gamesQueryOptions())
   return knownGames(data && slugsOf(data))
