@@ -1,9 +1,6 @@
 import { lazyWithRetry } from './lazy-with-retry'
 import type { GameEntry } from './types'
 
-// The games the frontend can open: their screens, names, order and the default. The backend decides
-// which of them are enabled (`GET /v1/games`), and the nav shows the ones both sides know
-// (`known-games.ts`).
 export const GAMES: readonly GameEntry[] = [
   {
     slug: 'game-guesser',

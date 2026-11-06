@@ -1,8 +1,7 @@
 import type { TFunction } from 'i18next'
 import type { ApiError, FieldError } from '@/lib/api-client'
 
-// The backend sends stable codes; the texts live in the catalogues (errors.<code>). Dynamic keys
-// are not in the typed key set, so go through a loosely typed call and fall back to errors.unknown.
+// Dynamic keys are not in the typed key set, so go through a loosely typed call and fall back to errors.unknown.
 type LooseT = (
   key: string | string[],
   options?: Record<string, unknown>,

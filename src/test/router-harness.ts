@@ -11,8 +11,7 @@ import { apiClient, apiPathOf } from '@/lib/api-client'
 import { createQueryClient } from '@/lib/query-client'
 import { createAppRouter } from '@/router'
 
-// Builds the real router and route tree on a memory history, with a fake backend behind the
-// shared axios client. Import ./browser-stubs before this file.
+// Import ./browser-stubs before this file.
 
 export const USER: User = {
   id: 'user-1',
@@ -21,7 +20,6 @@ export const USER: User = {
   created_at: '2026-01-01T00:00:00Z',
 }
 
-// A promise is an answer that comes later: see `slowReply`.
 export type Reply =
   | { status: number; data?: unknown }
   | 'network-error'
@@ -31,8 +29,7 @@ export type Reply =
 export const ME_URL = '/v1/auth/me'
 export const GAMES_URL = '/v1/games'
 
-// The answer of `GET /v1/games` for these slugs. Built from the generated model, so a renamed
-// field fails the type check.
+// Typed with the generated model so a renamed field fails the type check.
 export function gamesReply(...slugs: string[]): Reply {
   const data: GameList = {
     items: slugs.map((slug) => ({
@@ -44,8 +41,7 @@ export function gamesReply(...slugs: string[]): Reply {
   return { status: 200, data }
 }
 
-// A puzzle view as `GET /v1/games/{slug}/puzzles/{date}` answers it. Built from the generated
-// model, so a renamed field fails the type check.
+// Typed with the generated model so a renamed field fails the type check.
 export function gameView(
   overrides: Partial<GameGuesserView> = {},
 ): GameGuesserView {
@@ -79,7 +75,6 @@ export const SERVER_ERROR: Reply = {
   data: { status: 500, code: 'internal_error', request_id: 'req-500' },
 }
 
-// An answer that arrives when the test calls `answer`, after the page has moved on.
 export function slowReply() {
   let answer!: (reply: Reply) => void
   const reply = new Promise<Reply>((resolve) => {
@@ -90,16 +85,15 @@ export function slowReply() {
 
 const originalAdapter = apiClient.defaults.adapter
 
-// What the fake backend answers, by URL. A test can change it between steps.
 export class FakeBackend {
   replies = new Map<string, Reply>()
   requests: string[] = []
-  // The requests as sent, with the stamps the session guard put on them.
+  // Requests as sent, including the stamps the session guard added.
   configs: InternalAxiosRequestConfig[] = []
 
   constructor(me: Reply) {
     this.replies.set(ME_URL, me)
-    // The registry's game, so tests that are not about the list see the usual success path.
+    // The registry's game, so tests not about the list get the success path.
     this.replies.set(GAMES_URL, gamesReply('game-guesser'))
   }
 
@@ -135,9 +129,8 @@ function answerWith(
       )
 }
 
-// The key a reply is stored under: the path after `/api` for a request to this site, so
-// `/v1/auth/me`; the full address (without the query) for a request to another host. It is the
-// resolved address, so the fake sees what would go over the wire, not the raw `url`.
+// Replies key on the resolved address, not the raw `url`: the path after `/api` for this site
+// (`/v1/auth/me`), the full address without the query for another host.
 function replyKey(config: InternalAxiosRequestConfig): string {
   const path = apiPathOf(config)
   if (path !== null) return path

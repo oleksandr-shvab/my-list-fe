@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest'
 import { findKnownGame, isDefaultKnown, knownGames } from './known-games'
 import type { GameEntry } from './types'
 
-// Two games, listed out of order, to check that `order` decides.
 const stubScreen = () => null
 const FIXTURE: readonly GameEntry[] = [
   {

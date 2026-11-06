@@ -5,14 +5,13 @@ const ORIGIN = 'http://localhost:5173'
 
 describe('resolveRedirect', () => {
   it.each([
-    // The required table of the spec ("Untrusted inputs"), accepted rows.
+    // Accepted rows of the spec's "Untrusted inputs" table.
     [
       '/games/game-guesser/2026-10-01?a=1',
       '/games/game-guesser/2026-10-01?a=1',
     ],
     ['/profile', '/profile'],
     ['/%2F/evil.com', '/%2F/evil.com'],
-    // The resolved path is used, not the raw value.
     ['/profile#section', '/profile#section'],
     ['http://localhost:5173/profile?x=1', '/profile?x=1'],
     ['/a/./b/../profile', '/a/profile'],
@@ -21,13 +20,12 @@ describe('resolveRedirect', () => {
   })
 
   it.each([
-    // The required table, rejected rows.
+    // Rejected rows of the same table.
     ['//evil.com'],
     ['/\\evil.com'],
     ['/\t/evil.com'],
     ['https://evil.com'],
     ['javascript:alert(1)'],
-    // More ways to leave the site or to look like it.
     ['/\n/evil.com'],
     ['/\\/evil.com'],
     ['http://localhost:5174/profile'],
@@ -37,15 +35,15 @@ describe('resolveRedirect', () => {
     ['file:///profile'],
     ['file:///etc/passwd'],
     // A blob: URL takes the origin of the URL inside it, but its path is that whole URL, so it
-    // would be returned as an absolute URL. It also skips the auth-page rule and can hide a
-    // second host behind `//`.
+    // would come back as an absolute URL, skip the auth-page rule and can hide a second host
+    // behind `//`.
     ['blob:http://localhost:5173/profile'],
     ['blob:http://localhost:5173/login'],
     ['blob:http://localhost:5173//evil.com'],
     ['BLOB:http://localhost:5173/profile'],
     ['blob:https://evil.com/profile'],
-    // Same origin after resolving, but the path starts with two slashes, which
-    // history.push would read as another host.
+    // Same origin after resolving, but the path starts with `//`, which history.push reads
+    // as another host.
     ['/.//evil.com'],
     ['/a/../..//evil.com'],
   ])('rejects %j', (value) => {
@@ -58,9 +56,9 @@ describe('resolveRedirect', () => {
     ['/register'],
     ['/forgot-password'],
     ['/reset-password'],
-    // A token in the URL is never copied into another URL.
+    // A token must not be copied into another URL.
     ['/reset-password?token=x'],
-    // The router matches paths without regard to case, so these are the same pages.
+    // The router matches paths case-insensitively, so these are the same pages.
     ['/LOGIN'],
     ['/Forgot-Password'],
     ['/login/'],

@@ -1,7 +1,6 @@
 // "Today" and puzzle dates are UTC days written as YYYY-MM-DD, never the device's local day.
 
-// A temporary lower bound: no puzzle is older than this. Phase 1's backend answer (task M1-16,
-// past days only) replaces it.
+// Temporary lower bound until the backend lists past days (M1-16).
 export const FIRST_PUZZLE_DATE = '2026-01-01'
 
 const PUZZLE_DATE_FORMAT = /^\d{4}-\d{2}-\d{2}$/
@@ -22,8 +21,6 @@ export type PuzzleDate = {
   isToday: boolean
 }
 
-// A date from the address bar. Only a real calendar day written as YYYY-MM-DD, from
-// FIRST_PUZZLE_DATE up to `today`, gives a puzzle date; anything else gives null.
 export function parsePuzzleDate(
   value: string,
   today: string,

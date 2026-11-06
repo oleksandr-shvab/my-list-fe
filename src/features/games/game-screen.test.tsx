@@ -12,7 +12,7 @@ import type { GameEntry } from './types'
 
 beforeEach(async () => {
   await i18n.changeLanguage('en')
-  // React logs an error a boundary catches; the tests make some on purpose.
+  // React logs every error a boundary catches, and these tests throw on purpose.
   vi.spyOn(console, 'error').mockImplementation(() => {})
 })
 
@@ -25,7 +25,6 @@ describe('the placeholder screen (AC-47, AC-55a)', () => {
   it('shows the name, the UTC day and "coming soon", and keeps its page when the language changes', async () => {
     render(<GameScreen game={getDefaultGame()} date="2026-10-28" isToday />)
 
-    // The screen's code loads first (AC-53).
     expect(screen.getByRole('status').textContent).toBe('Loading the game…')
     expect(await screen.findByText('This game is coming soon.')).toBeTruthy()
     const heading = screen.getByRole('heading', { level: 1 })
@@ -34,7 +33,6 @@ describe('the placeholder screen (AC-47, AC-55a)', () => {
 
     await act(() => i18n.changeLanguage('ru'))
 
-    // The same element, with new text: the screen was not remounted.
     expect(screen.getByRole('heading', { level: 1 })).toBe(heading)
     expect(heading.textContent).toBe('Game Guesser')
     expect(screen.getByText('Загадка на 28 октября 2026 г.')).toBeTruthy()
@@ -43,7 +41,6 @@ describe('the placeholder screen (AC-47, AC-55a)', () => {
 })
 
 describe('the game error boundary (AC-54)', () => {
-  // A screen that throws while `broken.now` is true.
   const broken = { now: true }
   const brokenGame: GameEntry = {
     slug: 'broken',
@@ -95,7 +92,6 @@ describe('the game error boundary (AC-54)', () => {
     )
     const area = screen.getByTestId('area')
     await screen.findByRole('alert')
-    // First load: the focus stays where it was.
     expect(document.body.contains(document.activeElement)).toBe(true)
     expect(area.contains(document.activeElement)).toBe(false)
 
@@ -119,7 +115,6 @@ describe('the game error boundary (AC-54)', () => {
     )
     expect(screen.getByRole('button').textContent).toBe('Попробовать снова')
 
-    // Another puzzle gets a new boundary, without a click on the button.
     broken.now = false
     rerender(<GameScreen game={brokenGame} date="2026-10-27" isToday={false} />)
 
@@ -183,7 +178,6 @@ describe('the page heading and the loading status (AC-53, AC-54)', () => {
     }
     render(<GameScreen game={game} date="2026-10-28" isToday />)
 
-    // Loading: the hidden h1 with the game's name, and the text in the status region.
     const status = screen.getByRole('status')
     expect(status.textContent).toBe('Loading the game…')
     expect(headings().map((h) => h.textContent)).toEqual(['Game Guesser'])
@@ -191,7 +185,6 @@ describe('the page heading and the loading status (AC-53, AC-54)', () => {
     finishLoading()
     await screen.findByText('The real heading')
 
-    // Loaded: only the screen's own h1, and the same status element, now empty.
     expect(headings().map((h) => h.textContent)).toEqual(['The real heading'])
     expect(screen.getByRole('status')).toBe(status)
     expect(status.textContent).toBe('')

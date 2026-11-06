@@ -5,8 +5,7 @@ type Theme = 'light' | 'dark'
 const STORAGE_KEY = 'theme'
 const media = window.matchMedia('(prefers-color-scheme: dark)')
 
-// Storage can throw (private windows, blocked site data): the theme then works for this tab
-// only, as the language does (src/i18n/language.ts).
+// Storage can throw (private windows, blocked site data): the theme then lasts for this tab only.
 function getStoredTheme(): Theme | null {
   try {
     const stored = localStorage.getItem(STORAGE_KEY)
@@ -24,8 +23,7 @@ function storeTheme(theme: Theme) {
   }
 }
 
-// With storage blocked nothing is stored, and "nothing stored" would read as "never chosen". The
-// choice is kept here too, so it lasts for the open tab.
+// "Nothing stored" would read as "never chosen" when storage is blocked, so keep the choice here too.
 let chosenInThisTab = false
 
 function getSystemTheme(): Theme {
@@ -42,8 +40,7 @@ type ThemeState = {
   toggleTheme: () => void
 }
 
-// A store rather than local state: several toggles can be mounted at once
-// (sidebar footer and the profile page) and they must not drift apart.
+// A store, not local state: several toggles can be mounted at once and must not drift apart.
 export const useTheme = create<ThemeState>((set, get) => ({
   theme: getStoredTheme() ?? getSystemTheme(),
   setTheme: (theme) => {
@@ -57,7 +54,6 @@ export const useTheme = create<ThemeState>((set, get) => ({
 
 applyTheme(useTheme.getState().theme)
 
-// Follow the OS only until the user makes an explicit choice.
 media.addEventListener('change', () => {
   if (chosenInThisTab || getStoredTheme()) return
   const theme = getSystemTheme()

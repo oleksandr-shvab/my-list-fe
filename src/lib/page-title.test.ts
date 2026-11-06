@@ -32,7 +32,6 @@ describe('formatPageTitle', () => {
 
 type Match = Parameters<typeof resolvePageTitleKey>[0][number]
 
-// A route match as the resolver reads it.
 function match(overrides: Partial<Match> = {}): Match {
   return { status: 'success', params: {}, staticData: {}, ...overrides }
 }
@@ -68,7 +67,6 @@ describe('resolvePageTitleKey', () => {
   })
 
   it('names a game page after its game (AC-3)', () => {
-    // The home page has no slug and shows the default game.
     expect(
       resolvePageTitleKey([
         match({ staticData: { pageTitle: GAME_NAME_TITLE } }),

@@ -3,8 +3,8 @@ import { createRequire } from 'node:module'
 import path from 'path'
 import { defineConfig } from 'vitest/config'
 
-// Vitest's `?raw` import gives an empty string for a stylesheet, so the CSS tests get the text
-// from here (Node, outside the app's type check) through `inject('cssText')`.
+// Vitest's `?raw` import returns an empty string for a stylesheet, so CSS tests read the text
+// here and get it through `inject('cssText')`.
 const require = createRequire(import.meta.url)
 const cssText = {
   tailwindTheme: readFileSync(require.resolve('tailwindcss/theme.css'), 'utf8'),
@@ -14,8 +14,8 @@ const cssText = {
   ),
 }
 
-// Unit tests run in plain Node; the app's Vite plugins (router, Tailwind) are not needed.
-// A component test opts in to jsdom with `// @vitest-environment jsdom` as its first line.
+// Tests run in Node without the app's Vite plugins. A component test opts in to jsdom with
+// `// @vitest-environment jsdom` as its first line.
 export default defineConfig({
   resolve: {
     alias: {

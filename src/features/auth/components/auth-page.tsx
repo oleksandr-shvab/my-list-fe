@@ -1,8 +1,6 @@
 import { BrandLink } from '@/components/brand-link'
 import { LanguageSwitcher } from '@/components/language-switcher'
 
-// Shared frame of the signed-out pages: a centred card, the brand link at the
-// start corner and the language switcher at the end corner.
 export function AuthPage({ children }: { children: React.ReactNode }) {
   return (
     <div className="relative flex min-h-svh items-center justify-center px-6">

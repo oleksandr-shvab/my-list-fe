@@ -6,15 +6,12 @@ import { findGame, getDefaultGame } from '@/features/games/registry'
 
 type TitleKey = ParseKeys
 
-// Marks a page whose name is the name of the game it shows: the game of the `slug` in the
-// address, or the default game on the home page.
 export const GAME_NAME_TITLE = 'game-name'
 type PageTitle = TitleKey | typeof GAME_NAME_TITLE
 
 declare module '@tanstack/react-router' {
   interface StaticDataRouteOption {
-    // Catalogue key of the page name shown in the browser tab, e.g. 'profile.title'.
-    // Keys only, so a URL value (like a reset token) can never reach the title.
+    // Catalogue keys only, so a URL value (like a reset token) can never reach the title.
     pageTitle?: PageTitle
   }
 }
@@ -49,7 +46,6 @@ export function formatPageTitle(pageName: string | undefined, appName: string) {
   return pageName ? `${pageName} | ${appName}` : appName
 }
 
-// Keeps the browser tab title in step with the current page and language.
 export function useDocumentTitle() {
   const { t } = useTranslation()
   const key = useMatches({ select: resolvePageTitleKey })

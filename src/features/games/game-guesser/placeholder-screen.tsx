@@ -2,8 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { formatPuzzleDate } from '@/lib/utc-date'
 import type { GameScreenProps } from '../types'
 
-// The screen of the game guesser until Phase 2 replaces it. Default export, so the registry can
-// load it with a plain `lazy(() => import(...))`.
+// Placeholder until Phase 2. Default export, so the registry can load it with a plain `lazy(() => import(...))`.
 export default function PlaceholderScreen({ date }: GameScreenProps) {
   const { t, i18n } = useTranslation()
 

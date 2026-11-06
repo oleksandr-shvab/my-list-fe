@@ -6,9 +6,8 @@ import { UnknownGame } from '@/features/games/unknown-game'
 import { GAME_NAME_TITLE } from '@/lib/page-title'
 import { todayUtc } from '@/lib/utc-date'
 
-// The pages of one game. The slug is checked here, so every page below it can rely on `game`.
-// It comes from the address, so it must match a registry slug exactly (AC-43), and the backend's
-// list must have it too (AC-7). When the list cannot be read, the registry alone decides (AC-8).
+// The slug comes from the address, so it must match a registry slug exactly (AC-43) and be in the backend list (AC-7).
+// When the list cannot be read, the registry alone decides (AC-8).
 export const Route = createFileRoute('/_app/games/$slug')({
   staticData: { pageTitle: GAME_NAME_TITLE },
   beforeLoad: async ({ params, context }) => {

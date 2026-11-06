@@ -2,8 +2,7 @@ import { createFileRoute, redirect } from '@tanstack/react-router'
 import { PendingScreen } from '@/components/pending-screen'
 import { ensureSession } from '@/features/auth/session'
 
-// The pages that need an account. This guard is a convenience: the backend answers 401 on
-// account endpoints either way.
+// This guard is a convenience: the backend answers 401 on account endpoints either way.
 export const Route = createFileRoute('/_app/_account')({
   staticData: { accountOnly: true },
   beforeLoad: async ({ context, location }) => {

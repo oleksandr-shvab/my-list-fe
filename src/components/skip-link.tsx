@@ -2,8 +2,7 @@ import { useTranslation } from 'react-i18next'
 
 export const MAIN_ID = 'main'
 
-// The first thing a keyboard user reaches. It shows only while focused, and moves the focus to
-// the page's main area. It does not follow the `#main` link, so the address stays clean (AC-62).
+// Moves the focus to the main area instead of following the `#main` link, so the address stays clean (AC-62).
 export function SkipLink() {
   const { t } = useTranslation()
 

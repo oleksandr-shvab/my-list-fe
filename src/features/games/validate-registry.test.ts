@@ -6,8 +6,7 @@ import { validateRegistry } from './validate-registry'
 
 const catalogues = { en, ru }
 
-// A registry entry as the checks see it. The keys are made up, so the fixtures need their own
-// catalogues.
+// The keys are made up, so the fixtures need their own catalogues.
 function entry(
   overrides: Partial<Parameters<typeof validateRegistry>[0][number]> = {},
 ) {
@@ -46,7 +45,7 @@ describe('the game registry (AC-49 to AC-53, AC-56)', () => {
       order: 1,
       isDefault: true,
     })
-    // Only the five items of the contract (AC-49).
+    // Exactly the five keys of the contract (AC-49).
     expect(Object.keys(GAMES[0]).sort()).toEqual([
       'isDefault',
       'nameKey',
@@ -54,8 +53,7 @@ describe('the game registry (AC-49 to AC-53, AC-56)', () => {
       'screen',
       'slug',
     ])
-    // The screen comes from `lazyWithRetry`; that it loads only on render is checked in
-    // game-screen.test.tsx (the "Loading the game…" status shows first).
+    // That the screen loads only on render is checked in game-screen.test.tsx.
     for (const game of GAMES) {
       expect(typeof game.screen).toBe('function')
       expect(typeof game.screen.reload).toBe('function')

@@ -6,13 +6,11 @@ import { MAIN_ID } from '@/components/skip-link'
 import { SidebarTrigger, useSidebar } from '@/components/ui/sidebar'
 import { AccountArea } from '@/features/auth/components/account-area'
 
-// The slim one-row header below 768 px (AC-35): the sidebar button, the brand and the account
-// control. It is the page banner there, so it sits outside `main`. It scrolls away when the
-// screen is shorter than 500 px (AC-37). Wider screens do not render it at all.
+// The page banner on phones (AC-35, AC-37), so it sits outside `main`.
 export function PhoneHeader({
   linkFollowedRef,
 }: {
-  // Set by the panel's links just before they close it, and read here when the panel has closed.
+  // Set by the panel's links just before they close it; read here once the panel has closed.
   linkFollowedRef: RefObject<boolean>
 }) {
   const { t } = useTranslation()
@@ -20,10 +18,8 @@ export function PhoneHeader({
   const toggleRef = useRef<HTMLButtonElement>(null)
   const wasOpen = useRef(false)
 
-  // The panel is a dialog that a plain button opens, not a dialog trigger, so Radix has no
-  // trigger to give the focus back to. Do it here when the panel closes (AC-66). Escape, a tap
-  // outside and the close button give the focus back to the button. A followed link means the
-  // page changed, so the focus goes to the page, as after the skip link.
+  // The panel is a dialog opened by a plain button, so Radix has no trigger to return focus to (AC-66).
+  // A followed link changed the page, so focus goes to the page, as after the skip link.
   useEffect(() => {
     if (wasOpen.current && !openMobile) {
       if (linkFollowedRef.current) document.getElementById(MAIN_ID)?.focus()
@@ -33,7 +29,7 @@ export function PhoneHeader({
     wasOpen.current = openMobile
   }, [openMobile, linkFollowedRef])
 
-  // The same 768 px breakpoint as the sidebar's own switch to a panel, so the two always agree.
+  // Same 768 px breakpoint as the sidebar's own switch to a panel.
   if (!isMobile) return null
 
   return (

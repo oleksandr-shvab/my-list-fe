@@ -11,8 +11,7 @@ export const Route = createFileRoute('/_app')({
   component: AppLayout,
 })
 
-// SidebarProvider persists its state to a cookie for SSR to read back; there is
-// no server render here, so read it ourselves to avoid a flash of open sidebar.
+// SidebarProvider writes its state to a cookie for SSR to read. There is no server render here, so read it to avoid a flash of open sidebar.
 function getStoredSidebarOpen() {
   return !document.cookie
     .split('; ')
@@ -20,7 +19,6 @@ function getStoredSidebarOpen() {
 }
 
 function AppLayout() {
-  // Shared by the sidebar's links and the phone header: see `PhoneHeader`.
   const linkFollowedRef = useRef(false)
 
   return (

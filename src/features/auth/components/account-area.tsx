@@ -29,14 +29,10 @@ import { useLogoutMutation } from '../mutations'
 import { useSession, type SessionStatus } from '../session'
 
 type AccountAreaProps = {
-  // `sidebar`: the bottom of the sidebar. `compact`: one control for the phone header.
   variant?: 'sidebar' | 'compact'
-  // Called when a link is followed, so the phone sidebar can close behind it.
   onNavigate?: (event: MouseEvent) => void
 }
 
-// What the visitor can do about their account. One component per session state; the state itself
-// is derived from the `/auth/me` query.
 export function AccountArea({
   variant = 'sidebar',
   onNavigate,
@@ -106,7 +102,6 @@ function AccountCheckFailed({ onRetry }: { onRetry: () => void }) {
   )
 }
 
-// Both links carry the current page, so login or sign-up brings the visitor back to it.
 function useCurrentHref() {
   return useLocation({ select: (location) => location.href })
 }
@@ -154,7 +149,6 @@ function GuestActions({ onNavigate, logInRef }: GuestActionsProps) {
   )
 }
 
-// The slim phone header has room for one control: "Log in", or the account menu (AC-32, AC-33).
 function CompactAccount() {
   const { t } = useTranslation()
   const { status, user, retry } = useSession()
@@ -208,7 +202,6 @@ function useLogout(status: SessionStatus) {
 
   useEffect(() => {
     if (!loggedOut) return
-    // Nothing has the focus: the page, or the phone panel that caught it when the menu went.
     const focused = document.activeElement
     const focusIsLost =
       !focused ||
@@ -231,8 +224,6 @@ type AccountMenuProps = {
   onNavigate?: (event: MouseEvent) => void
 }
 
-// The signed-in account: a menu button named with the email, offering "Profile" and "Log out".
-// Radix gives Enter, Space and Arrow Down to open, Escape to close and focus back to the button.
 function AccountMenu({
   email,
   logout,
@@ -241,15 +232,12 @@ function AccountMenu({
 }: AccountMenuProps) {
   const { t } = useTranslation()
   const { isMobile } = useSidebar()
-  // Set when "Profile" is followed from the phone panel, which closes behind the link.
   const panelIsClosing = useRef(false)
-  // Radix closes the menu on select, so the button shows that the logout is running.
   const label = logout.isPending
     ? t('nav.logging_out')
     : t('nav.account_menu', { email })
   const initial = Array.from(email)[0]?.toUpperCase()
-  // Not `disabled`: a disabled button that has the focus drops it to the page in browsers, and the
-  // new name would never be read out. So it only says so, and Radix's open keys are cancelled.
+  // Not `disabled`: a disabled button that has the focus drops it to the page and the new name would not be read out.
   const pending = logout.isPending ? true : undefined
   const ignoreWhilePending = (event: SyntheticEvent) => {
     if (logout.isPending) event.preventDefault()
@@ -301,10 +289,8 @@ function AccountMenu({
         side={compact ? 'bottom' : isMobile ? 'top' : 'right'}
         align="end"
         className="min-w-48"
-        // Radix gives the focus back to the button when the menu closes. When the button is in the
-        // panel that a followed link is closing, that would pull the focus off the page. The
-        // panel's own move to `main` (`PhoneHeader`) cannot do it: it runs while this menu still
-        // traps the focus. So do it here, once the menu is gone.
+        // Radix returns focus to the button on close. In a panel that a followed link is closing, that pulls focus off the page,
+        // and `PhoneHeader`'s move to `main` cannot prevent it because it runs while this menu still traps focus.
         onCloseAutoFocus={(event) => {
           if (!panelIsClosing.current) return
           panelIsClosing.current = false

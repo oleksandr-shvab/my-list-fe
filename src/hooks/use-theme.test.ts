@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
-// The theme store reads `window.matchMedia` and `localStorage` when it is first imported, so each
-// test stubs the browser and then imports a fresh copy of the module.
+// The theme store reads `window.matchMedia` and `localStorage` on import, so each test stubs
+// the browser first and then imports a fresh copy of the module.
 async function startWithBlockedStorage({
   systemIsDark,
 }: {

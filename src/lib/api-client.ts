@@ -2,7 +2,6 @@ import axios, { type AxiosError, type AxiosRequestConfig } from 'axios'
 
 declare module 'axios' {
   interface AxiosRequestConfig {
-    // The session that was current when the request was sent (set by the session guard).
     sessionEpoch?: number
   }
 }
@@ -13,8 +12,7 @@ export type FieldError = {
   params: Record<string, unknown>
 }
 
-// The backend's error body: RFC 9457 problem details plus `code`, `params`, `request_id` and
-// `errors` (see CONTRACTS.md, "Errors").
+// The backend error body (CONTRACTS.md, "Errors").
 type ErrorBody = {
   status?: number
   title?: string
@@ -30,8 +28,7 @@ export class ApiError extends Error {
   params: Record<string, unknown>
   requestId: string | null
   fieldErrors: FieldError[]
-  // The session stamp of the request that failed. Never the request itself: its body can hold a
-  // password or a token.
+  // The session stamp, never the request: its body can hold a password or a token.
   sentInEpoch: number | undefined
 
   constructor(options: {
@@ -98,9 +95,8 @@ apiClient.interceptors.response.use(
   },
 )
 
-// The path after `baseURL` of a request to this site's API (`/v1/games/x`), or null for any other
-// host. It is the resolved address, so an absolute url, `//host/...` and `..` are what the browser
-// would send, and a `baseURL` with or without a trailing slash gives the same path.
+// The path after `baseURL` for a request to this site's API, or null for any other host. Uses the resolved
+// address, so an absolute url, `//host/...` and `..` give what the browser would send.
 export function apiPathOf(config: AxiosRequestConfig): string | null {
   const url = new URL(apiClient.getUri(config), window.location.origin)
   const base = new URL(apiClient.getUri({ url: '/' }), window.location.origin)

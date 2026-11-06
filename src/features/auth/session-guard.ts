@@ -15,8 +15,7 @@ import {
   startNewSessionEpoch,
 } from './session'
 
-// Only a top-level `signed_in: false` counts, and only on a game route; the cheap body check goes
-// first. A missing or null field, a nested one, a string, an array or a Blob say nothing.
+// Only a top-level `signed_in: false` on a game route counts. The cheap body check goes first.
 function isGuestGameAnswer(response: AxiosResponse): boolean {
   const { data } = response
   if (typeof data !== 'object' || data === null) return false
@@ -24,8 +23,7 @@ function isGuestGameAnswer(response: AxiosResponse): boolean {
   return apiPathOf(response.config)?.startsWith('/v1/games/') === true
 }
 
-// Signs out locally on a 401 or a game response with `signed_in: false`, but only for a request
-// sent in the current session (see CLAUDE.md). Returns one function that removes all of it.
+// Only a request sent in the current session can sign the user out (see CLAUDE.md).
 export function installSessionGuard({
   queryClient,
   router,
@@ -33,7 +31,6 @@ export function installSessionGuard({
   queryClient: QueryClient
   router: AnyRouter
 }): () => void {
-  // A different identity in the `me` data is a new session: it starts a new epoch.
   const meHash = hashKey(meQueryOptions().queryKey)
   let identity = getSignedInUser(queryClient)?.id
   const unsubscribe = queryClient.getQueryCache().subscribe((event) => {

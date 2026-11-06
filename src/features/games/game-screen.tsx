@@ -6,15 +6,12 @@ import type { GameEntry } from './types'
 
 type GameScreenHostProps = {
   game: GameEntry
-  // The puzzle day as YYYY-MM-DD, in UTC.
   date: string
   isToday: boolean
 }
 
-// Shown while the screen's code downloads. It has no text: the always-mounted status region in
-// `GameScreen` gets it, because a live region only announces a change, not a node that is
-// inserted with its text already in it. A layout effect, so the status never lags a commit
-// behind the screen (it must be empty when the error is shown).
+// Has no text: the always-mounted status region in `GameScreen` gets it, because a live region announces
+// a change, not a node inserted with its text. A layout effect keeps the status from lagging a commit behind.
 function LoadingMarker({
   onLoadingChange,
 }: {
@@ -27,8 +24,6 @@ function LoadingMarker({
   return null
 }
 
-// Shows a game's own screen. The screen's code downloads when this first renders (AC-53), and a
-// failure inside it stays inside the boundary (AC-54).
 export function GameScreen({ game, date, isToday }: GameScreenHostProps) {
   const { t } = useTranslation()
   const areaRef = useRef<HTMLDivElement>(null)

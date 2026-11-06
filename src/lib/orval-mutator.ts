@@ -1,8 +1,7 @@
 import type { AxiosRequestConfig } from 'axios'
 import { apiClient } from '@/lib/api-client'
 
-// Used by the generated API client (src/api/generated). Routing everything through apiClient keeps
-// the base URL, the cookie setting and the ApiError conversion in one place.
+// Routes the generated client through apiClient: one place for the base URL, the cookie setting and the ApiError conversion.
 export async function orvalMutator<T>(
   config: AxiosRequestConfig,
   options?: AxiosRequestConfig,

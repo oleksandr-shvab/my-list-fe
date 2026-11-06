@@ -3,13 +3,11 @@ import { redirect, type AnyRouter } from '@tanstack/react-router'
 import { meQueryOptions } from './queries'
 import type { User } from './types'
 
-// The signed-in state lives in one place: the `/auth/me` query. Its data is the user, or null
-// for a guest (a 401). An error means the answer is unknown (network failure, 5xx). Nothing here
-// copies that into other state, so a cached answer can never disagree with what is shown.
+// The `/auth/me` query is the only signed-in state: the user, null for a guest (401), an error when unknown.
+// Nothing copies it into other state, so a cached answer cannot disagree with what is shown.
 
 declare module '@tanstack/react-router' {
   interface StaticDataRouteOption {
-    // Marks a page that needs an account. A 401 on it sends the user to the login page.
     accountOnly?: boolean
   }
 }
@@ -45,7 +43,6 @@ export function useSession() {
   }
 }
 
-// For route guards: the cached answer, or one request. Throws when the answer is unknown.
 export function ensureSession(queryClient: QueryClient): Promise<User | null> {
   return queryClient.query(meQueryOptions())
 }
@@ -57,8 +54,7 @@ export async function redirectIfSignedIn(queryClient: QueryClient) {
   if (user) throw redirect({ to: '/' })
 }
 
-// Counts the sessions this tab has shown; the session guard stamps each request with it. It is not
-// signed-in state: only the `/auth/me` query is.
+// Counts the sessions this tab has shown; the session guard stamps each request with it.
 let sessionEpoch = 0
 
 export function getSessionEpoch(): number {
@@ -69,8 +65,7 @@ export function startNewSessionEpoch(): void {
   sessionEpoch += 1
 }
 
-// True from the moment the user asks to log out until the local sign-out is done, so an answer that
-// arrives meanwhile is not taken for a session that ended on its own.
+// True while a logout runs, so a 401 arriving meanwhile is not taken for a session that ended on its own.
 let logoutRunning = false
 
 export function isLogoutRunning(): boolean {
@@ -85,10 +80,8 @@ export function getSignedInUser(queryClient: QueryClient): User | undefined {
   return queryClient.getQueryData(meQueryOptions().queryKey) ?? undefined
 }
 
-// Sets the answer to "guest" and drops every other cached query (they belong to the old user).
-// `me` is set to null instead of removed: a mounted `useQuery` keeps reading a removed query
-// object, and would go on showing the old user. An `/auth/me` request still in flight is
-// cancelled first, so its late answer cannot write the old user back.
+// `me` is set to null, not removed: a mounted `useQuery` keeps reading a removed query and would go on
+// showing the old user. A pending `/auth/me` request is cancelled first so it cannot write the old user back.
 export function signOutLocally(queryClient: QueryClient) {
   const meKey = meQueryOptions().queryKey
   const meHash = hashKey(meKey)
@@ -103,7 +96,6 @@ export function isOnAccountOnlyPage(router: AnyRouter): boolean {
   return router.state.matches.some((match) => match.staticData.accountOnly)
 }
 
-// The user logged out: forget everything, and leave the page only when it is for accounts.
 export async function finishLogout(
   queryClient: QueryClient,
   router: AnyRouter,

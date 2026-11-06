@@ -170,8 +170,8 @@ body {
   }
 }
 
-/* The phone header (56 px, `h-14`) sticks to the top on screens at least 500 px tall. Keep the
-   element that has keyboard focus from sliding under it. The width part is the exact complement of Tailwind's `md`,
+/* The phone header (56 px, `h-14`) sticks on screens at least 500 px tall; this keeps focused
+   elements from sliding under it. The width query is the exact complement of Tailwind's `md`,
    like `MOBILE_QUERY` in `use-mobile.ts`. */
 @media (not (min-width: 48rem)) and (min-height: 500px) {
   html {
@@ -179,15 +179,15 @@ body {
   }
 }
 
-/* Edge/IE render their own reveal/clear icons inside password inputs, overlapping
-   our custom PasswordInput toggle button and stealing clicks. */
+/* Edge/IE draw their own reveal/clear icons in password inputs, covering the PasswordInput
+   toggle and stealing its clicks. */
 input[type='password']::-ms-reveal,
 input[type='password']::-ms-clear {
   display: none;
 }
 
-/* Beats sonner's own injected [data-sonner-toast][data-styled='true'] rule (13px/16px),
-   which loads at Toaster mount time so source order alone can't be relied on. */
+/* Beats sonner's injected [data-sonner-toast][data-styled='true'] rule (13px/16px), which
+   loads at Toaster mount, so source order can't decide. */
 [data-sonner-toast].cn-toast[data-styled='true'] {
   font-size: 14px;
   padding: 18px;

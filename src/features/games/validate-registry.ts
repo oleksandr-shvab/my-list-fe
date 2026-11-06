@@ -24,8 +24,6 @@ type RegistryEntry = {
   isDefault: boolean
 }
 
-// Checks the rules a registry must keep (AC-50, AC-51) and returns what is wrong, one text per
-// problem. An empty list means the registry is fine.
 export function validateRegistry(
   entries: readonly RegistryEntry[],
   catalogues: Record<string, Catalogue>,

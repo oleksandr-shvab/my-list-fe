@@ -10,8 +10,7 @@ type RouterContext = {
 
 export const Route = createRootRouteWithContext<RouterContext>()({
   beforeLoad: ({ context }) => {
-    // Start the sign-in check, but do not wait for it: public pages show before it answers.
-    // Pages that need the answer wait for it themselves, and a failure shows up there.
+    // Start the sign-in check without waiting: public pages show before it answers, and pages that need it wait for it themselves.
     ensureSession(context.queryClient).catch(() => {})
   },
   component: RootComponent,

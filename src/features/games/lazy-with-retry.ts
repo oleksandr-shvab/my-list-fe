@@ -3,11 +3,9 @@ import type { GameScreenComponent, GameScreenProps } from './types'
 
 type Load = () => Promise<{ default: ComponentType<GameScreenProps> }>
 
-// `lazy` keeps a failed import for good: the same rejected component throws on every render, so
-// a retry in the error boundary would show the same error. This wraps the lazy component and
-// builds a new one when `reload` is called after a failed download (the boundary does that on
-// "Try again"). The reload-once handler in src/lib/version-skew.ts is a separate path: it only
-// reacts to Vite's `vite:preloadError` and reloads the whole page.
+// `lazy` keeps a failed import for good, so a retry in the error boundary would throw the same error.
+// This builds a new lazy component when `reload` is called. src/lib/version-skew.ts is a separate path:
+// it reloads the whole page on Vite's `vite:preloadError`.
 export function lazyWithRetry(load: Load): GameScreenComponent {
   let failed = false
   const loadAndNote: Load = () =>

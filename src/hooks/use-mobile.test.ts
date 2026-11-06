@@ -3,7 +3,7 @@ import { MOBILE_QUERY } from './use-mobile'
 
 // The phone layout and the sidebar must meet exactly at Tailwind's `md`, or a fractional width
 // between them shows no navigation. The sidebar shows from `md:`, so everything else is a phone.
-// The stylesheets come as text from `vitest.config.ts` (`?raw` gives an empty string for a stylesheet).
+// Stylesheets come as text from `vitest.config.ts`, because `?raw` returns an empty string.
 const { tailwindTheme, index } = inject('cssText')
 
 describe('the phone breakpoint', () => {

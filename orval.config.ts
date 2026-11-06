@@ -1,7 +1,7 @@
 import { defineConfig } from 'orval'
 
-// The backend's OpenAPI snapshot is the contract (see CONTRACTS.md). Locally it is read from the
-// sibling backend checkout; CI points API_SPEC at the snapshot on the backend's main branch.
+// The backend's OpenAPI snapshot is the contract (CONTRACTS.md). CI sets API_SPEC to the
+// snapshot on the backend's main branch; locally it comes from the sibling checkout.
 const input = process.env.API_SPEC ?? '../my-list-be/openapi/openapi.json'
 
 export default defineConfig({
@@ -14,7 +14,7 @@ export default defineConfig({
       client: 'axios-functions',
       clean: true,
       override: {
-        // Requests go through the shared axios instance, so errors become ApiError.
+        // Routes requests through the shared axios instance so errors become ApiError.
         mutator: { path: 'src/lib/orval-mutator.ts', name: 'orvalMutator' },
       },
     },

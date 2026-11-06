@@ -24,10 +24,6 @@ import {
 } from './mutations'
 import { meQueryOptions } from './queries'
 
-// These hooks are the only place that connects a successful request to the session and to the
-// router (see session.ts). session.test.ts and routing.test.ts cover the functions they call;
-// the tests here fail when one of the hooks stops calling them.
-
 const ME_KEY = meQueryOptions().queryKey
 const PROGRESS_KEY = ['games', 'progress']
 
@@ -57,7 +53,7 @@ function renderMutation<T>(
 }
 
 beforeEach(() => {
-  // A failed request is reported through console.error in development.
+  // Failed requests are logged with console.error in development.
   vi.spyOn(console, 'error').mockImplementation(() => {})
 })
 
@@ -104,7 +100,7 @@ describe('an answer that arrives during a logout', () => {
       confirm_password: 'b',
     }).catch(() => {})
     await act(async () => result.current.mutate())
-    // The server ended the session with the logout, so the request that was still open gets 401.
+    // The logout ended the session on the server, so the request still open gets 401.
     requestAnswer.answer(GUEST)
     await request
 
@@ -163,7 +159,7 @@ describe('useLoginMutation and useRegisterMutation (AC-14)', () => {
           result.current.mutate({ email: USER.email, password: 'a-password' }),
         )
 
-        // Nothing renders the matches here, so the router does not follow the history.
+        // Nothing renders the matches, so the router does not follow the history.
         await waitFor(() =>
           expect(app.router.history.location.href).toBe(expected),
         )

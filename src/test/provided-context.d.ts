@@ -1,5 +1,4 @@
-// The values `vitest.config.ts` hands to tests through `provide`, read with `inject()`.
-// tsconfig.node.json includes this file too, so the config's `provide` is checked against it.
+// tsconfig.node.json includes this file too, so the `provide` in vitest.config.ts is type-checked.
 export {}
 
 declare module 'vitest' {

@@ -30,21 +30,19 @@ import { isPlainClick } from '@/lib/plain-click'
 export function AppSidebar({
   linkFollowedRef,
 }: {
-  // Told when a link closes the phone panel, so `PhoneHeader` puts the focus on the page.
   linkFollowedRef: RefObject<boolean>
 }) {
   const { t } = useTranslation()
   const { isMobile, setOpenMobile } = useSidebar()
   const { game: currentGame, archiveOpen } = useCurrentGame()
   const games = useKnownGames()
-  // The current game, else the default game if it is known, else the first known game.
   const archiveGame =
     currentGame ??
     games.find((game) => game.slug === getDefaultGame().slug) ??
     games[0]
   const toggleLabel = t('nav.toggle_sidebar')
 
-  // The mobile sidebar is an overlay — navigating behind it would leave it open.
+  // The mobile sidebar is an overlay: navigating behind it would leave it open.
   function closeMobileSidebar(event: MouseEvent) {
     if (!isMobile || !isPlainClick(event)) return
     linkFollowedRef.current = true
@@ -113,7 +111,6 @@ export function AppSidebar({
           <ThemeToggle className="shrink-0 max-md:size-11" />
         </div>
         <AccountArea onNavigate={closeMobileSidebar} />
-        {/* On a phone the header holds the toggle; here it is the keyboard way to collapse. */}
         {!isMobile && (
           <SidebarTrigger aria-label={toggleLabel} className="self-start" />
         )}
@@ -124,8 +121,7 @@ export function AppSidebar({
   )
 }
 
-// Scrolls the sidebar's list and nothing else. `scrollIntoView` would also scroll the page and
-// every other scrollable ancestor.
+// `scrollIntoView` would also scroll the page and every other scrollable ancestor.
 function revealInList(item: HTMLElement) {
   const list = item.closest<HTMLElement>('[data-slot="sidebar-content"]')
   if (!list) return
@@ -140,7 +136,6 @@ function revealInList(item: HTMLElement) {
 
 type GameNavItemProps = {
   game: GameEntry
-  // This entry is the game being shown, and its archive is not open (AC-30).
   isCurrent: boolean
   onNavigate: (event: MouseEvent) => void
 }
@@ -150,7 +145,6 @@ function GameNavItem({ game, isCurrent, onNavigate }: GameNavItemProps) {
   const itemRef = useRef<HTMLLIElement>(null)
   const name = t(game.nameKey)
 
-  // A long list scrolls inside the sidebar, so bring the current entry into view.
   useEffect(() => {
     if (isCurrent && itemRef.current) revealInList(itemRef.current)
   }, [isCurrent])
