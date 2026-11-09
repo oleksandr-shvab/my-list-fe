@@ -6,8 +6,9 @@ import type { GameEntry } from './types'
 
 type GameScreenHostProps = {
   game: GameEntry
-  date: string
-  isToday: boolean
+  date: string | null
+  // Changes when the player visits a page without a date again (`nextOpening`).
+  opening?: number
 }
 
 // Has no text: the always-mounted status region in `GameScreen` gets it, because a live region announces
@@ -24,7 +25,7 @@ function LoadingMarker({
   return null
 }
 
-export function GameScreen({ game, date, isToday }: GameScreenHostProps) {
+export function GameScreen({ game, date, opening }: GameScreenHostProps) {
   const { t } = useTranslation()
   const areaRef = useRef<HTMLDivElement>(null)
   const [loading, setLoading] = useState(false)
@@ -37,7 +38,7 @@ export function GameScreen({ game, date, isToday }: GameScreenHostProps) {
     areaRef.current?.focus()
   }
 
-  // The key restarts the boundary and the screen for another game or day. It never includes the
+  // The key restarts the boundary and the screen for another game, day or visit. It never includes the
   // language: a language switch must keep the screen and its state (AC-55a).
   return (
     <div
@@ -55,7 +56,7 @@ export function GameScreen({ game, date, isToday }: GameScreenHostProps) {
         {loading ? t('games.loading') : ''}
       </p>
       <GameErrorBoundary
-        key={`${game.slug}/${date}`}
+        key={`${game.slug}/${date ?? 'today'}/${opening ?? 0}`}
         heading={gameName}
         onRetry={handleRetry}
       >
@@ -68,7 +69,7 @@ export function GameScreen({ game, date, isToday }: GameScreenHostProps) {
             </>
           }
         >
-          <game.screen slug={game.slug} date={date} isToday={isToday} />
+          <game.screen slug={game.slug} date={date} />
         </Suspense>
       </GameErrorBoundary>
     </div>

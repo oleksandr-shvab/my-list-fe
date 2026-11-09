@@ -1,10 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import {
-  FIRST_PUZZLE_DATE,
-  formatPuzzleDate,
-  parsePuzzleDate,
-  todayUtc,
-} from './utc-date'
+import { formatPuzzleDate, parsePuzzleDate, todayUtc } from './utc-date'
 
 afterEach(() => {
   vi.useRealTimers()
@@ -45,30 +40,12 @@ describe('todayUtc (AC-46)', () => {
   })
 })
 
-describe('parsePuzzleDate (AC-44, AC-45)', () => {
-  const today = '2026-10-28'
-
-  it('accepts a real day up to today, and flags today', () => {
-    expect(parsePuzzleDate('2026-10-01', today)).toEqual({
-      date: '2026-10-01',
-      isToday: false,
-    })
-    expect(parsePuzzleDate('2026-10-28', today)).toEqual({
-      date: '2026-10-28',
-      isToday: true,
-    })
-    expect(parsePuzzleDate('2028-02-29', '2028-03-01')).toEqual({
-      date: '2028-02-29',
-      isToday: false,
-    })
-  })
-
-  it('accepts the first puzzle day when today is later', () => {
-    expect(FIRST_PUZZLE_DATE).toBe('2026-01-01')
-    expect(parsePuzzleDate('2026-01-01', today)).toEqual({
-      date: '2026-01-01',
-      isToday: false,
-    })
+describe('parsePuzzleDate (AC-3)', () => {
+  it('accepts any real day, past or future: the backend decides whether a puzzle exists', () => {
+    expect(parsePuzzleDate('2026-10-01')).toBe('2026-10-01')
+    expect(parsePuzzleDate('2028-02-29')).toBe('2028-02-29')
+    expect(parsePuzzleDate('2099-01-01')).toBe('2099-01-01')
+    expect(parsePuzzleDate('2025-12-31')).toBe('2025-12-31')
   })
 
   it.each([
@@ -82,15 +59,11 @@ describe('parsePuzzleDate (AC-44, AC-45)', () => {
     ['trailing text', '2026-10-01x'],
     ['a line break at the end', '2026-10-01\n'],
     ['an empty value', ''],
-    ['tomorrow', '2026-10-29'],
-    ['a far future day', '2099-01-01'],
     // `Date.UTC` maps years 0 to 99 to 1900 to 1999, so a round trip alone lets them pass.
     ['year 0000', '0000-01-01'],
     ['year 0050', '0050-06-01'],
-    ['year 0100', '0100-01-01'],
-    ['the day before the first puzzle', '2025-12-31'],
   ])('rejects %s', (_case, value) => {
-    expect(parsePuzzleDate(value, today)).toBeNull()
+    expect(parsePuzzleDate(value)).toBeNull()
   })
 })
 

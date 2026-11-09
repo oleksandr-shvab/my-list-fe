@@ -25,6 +25,8 @@ export type Reply =
   | 'network-error'
   | 'never-answers'
   | Promise<Reply>
+  // Decides from the request, for an answer that depends on its body (a guess's `previous`).
+  | ((config: InternalAxiosRequestConfig) => Reply)
 
 export const ME_URL = '/v1/auth/me'
 export const GAMES_URL = '/v1/games'
@@ -100,6 +102,15 @@ export class FakeBackend {
   count(url: string) {
     return this.requests.filter((request) => request === url).length
   }
+
+  // The JSON bodies sent to `url`, in order.
+  bodiesOf(url: string): unknown[] {
+    return this.configs
+      .filter((config) => replyKey(config) === url)
+      .map((config) =>
+        typeof config.data === 'string' ? JSON.parse(config.data) : undefined,
+      )
+  }
 }
 
 function answerWith(
@@ -109,6 +120,7 @@ function answerWith(
   if (reply instanceof Promise) {
     return reply.then((late) => answerWith(late, config))
   }
+  if (typeof reply === 'function') return answerWith(reply(config), config)
   if (reply === 'never-answers') return new Promise(() => {})
   if (reply === 'network-error') {
     return Promise.reject(

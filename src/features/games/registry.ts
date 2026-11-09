@@ -7,7 +7,7 @@ export const GAMES: readonly GameEntry[] = [
     nameKey: 'games.game_guesser.name',
     order: 1,
     isDefault: true,
-    screen: lazyWithRetry(() => import('./game-guesser/placeholder-screen')),
+    screen: lazyWithRetry(() => import('./game-guesser/game-guesser-screen')),
   },
 ]
 

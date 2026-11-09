@@ -174,12 +174,11 @@ describe('the game pages (AC-12, AC-39 to AC-45, AC-48)', () => {
   function shownPuzzle(app: Awaited<ReturnType<typeof open>>) {
     const leaf = app.router.state.matches.at(-1)
     // The router types a match's context for any route, so say which part this test reads.
-    const { game, date, isToday } = (leaf?.context ?? {}) as {
+    const { game, date } = (leaf?.context ?? {}) as {
       game?: { slug: string }
-      date?: string
-      isToday?: boolean
+      date?: string | null
     }
-    return { routeId: leaf?.routeId, slug: game?.slug, date, isToday }
+    return { routeId: leaf?.routeId, slug: game?.slug, date }
   }
 
   function titleKey(app: Awaited<ReturnType<typeof open>>) {
@@ -198,34 +197,37 @@ describe('the game pages (AC-12, AC-39 to AC-45, AC-48)', () => {
     expect(app.router.state.matches.at(-1)?.status).toBe('success')
   })
 
-  it('shows the same puzzle on the home page, on the game page and on the date of today', async () => {
-    const expected = { slug: 'game-guesser', date: '2026-10-28', isToday: true }
-
+  it('gives the screen no date on the home page and the game page, and the address date on a dated page', async () => {
     const home = await open('/', GUEST)
-    expect(shownPuzzle(home)).toMatchObject({ ...expected, routeId: '/_app/' })
+    expect(shownPuzzle(home)).toEqual({
+      routeId: '/_app/',
+      slug: 'game-guesser',
+      date: null,
+    })
     stop?.()
 
     const game = await open('/games/game-guesser', GUEST)
-    expect(shownPuzzle(game)).toMatchObject({
-      ...expected,
+    expect(shownPuzzle(game)).toEqual({
       routeId: '/_app/games/$slug/',
+      slug: 'game-guesser',
+      date: null,
     })
     stop?.()
 
     const today = await open('/games/game-guesser/2026-10-28', GUEST)
     expect(where(today)).toBe('/games/game-guesser/2026-10-28')
-    expect(shownPuzzle(today)).toMatchObject({
-      ...expected,
+    expect(shownPuzzle(today)).toEqual({
       routeId: '/_app/games/$slug/$date',
+      slug: 'game-guesser',
+      date: '2026-10-28',
     })
   })
 
-  it('shows an earlier day as not today, and the archive page as the archive', async () => {
+  it('shows an earlier day with its date, and the archive page as the archive', async () => {
     const past = await open('/games/game-guesser/2026-02-28', GUEST)
     expect(shownPuzzle(past)).toMatchObject({
       slug: 'game-guesser',
       date: '2026-02-28',
-      isToday: false,
     })
     stop?.()
 
@@ -233,6 +235,13 @@ describe('the game pages (AC-12, AC-39 to AC-45, AC-48)', () => {
     expect(archive.router.state.matches.at(-1)?.routeId).toBe(
       '/_app/games/$slug/archive',
     )
+  })
+
+  // A well-formed date is the backend's call (404 `puzzle_not_found`), shown by the screen.
+  it('lets a future date through to the screen', async () => {
+    const app = await open('/games/game-guesser/2099-01-01', GUEST)
+
+    expect(shownPuzzle(app).date).toBe('2099-01-01')
   })
 
   it.each(['/games/nope', '/games/Game-Guesser', '/games/nope/2026-10-01'])(
@@ -249,8 +258,6 @@ describe('the game pages (AC-12, AC-39 to AC-45, AC-48)', () => {
     '/games/game-guesser/2026-02-30',
     '/games/game-guesser/2026-1-5',
     '/games/game-guesser/today',
-    '/games/game-guesser/2026-10-29',
-    '/games/game-guesser/2099-01-01',
   ])('gives %s the "no puzzle" screen inside the layout', async (path) => {
     const app = await open(path, GUEST)
 

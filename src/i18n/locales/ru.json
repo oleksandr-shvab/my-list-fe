@@ -22,8 +22,6 @@
     "game_guesser": {
       "name": "Game Guesser"
     },
-    "coming_soon": "Эта игра скоро появится.",
-    "puzzle_date": "Загадка на {{date}}",
     "archive_title": "Архив",
     "archive_coming_soon": "Архив скоро появится.",
     "unknown_game": "Неизвестная игра",
@@ -31,7 +29,40 @@
     "no_puzzle": "Нет загадки на эту дату",
     "no_puzzle_text": "Проверьте дату в адресе или сыграйте в сегодняшнюю загадку.",
     "error": "В игре произошла ошибка.",
-    "loading": "Загружаем игру…"
+    "loading": "Загружаем игру…",
+    "guesses_left_one": "Осталась {{count}} попытка",
+    "guesses_left_few": "Осталось {{count}} попытки",
+    "guesses_left_many": "Осталось {{count}} попыток",
+    "guesses_left_other": "Осталось {{count}} попытки",
+    "skip": "Пропустить",
+    "steps_label": "Шаги подсказок",
+    "step": "Шаг {{n}}",
+    "step_locked": "Шаг {{n}}, закрыт",
+    "clue_alt": "Подсказка {{n}} из {{total}}",
+    "guesses_label": "Ваши ответы",
+    "result": {
+      "correct": "Верно",
+      "franchise": "Та же серия",
+      "wrong": "Неверно",
+      "skipped": "Пропущено"
+    },
+    "hint": {
+      "metacritic_score": "Metacritic",
+      "platform": "Платформа",
+      "genre": "Жанр",
+      "year": "Год выхода",
+      "developer": "Разработчик",
+      "hint": "Подсказка"
+    },
+    "announce": "{{result}}. Открыт шаг {{n}}. {{left}}.",
+    "answer": "Ответ: {{name}} ({{year}})",
+    "answer_no_year": "Ответ: {{name}}",
+    "archive_marker": "Загадка из архива: она идёт в статистику, но не в серию.",
+    "no_puzzle_today": "Сегодня загадки нет",
+    "no_puzzle_today_text": "Сегодняшней загадки пока нет. Загляните позже.",
+    "puzzle_line": "#{{number}} · {{date}}",
+    "hint_line": "{{label}}: {{value}}",
+    "clue_failed": "Подсказка не загрузилась."
   },
   "theme": {
     "switch_to_light": "Включить светлую тему",

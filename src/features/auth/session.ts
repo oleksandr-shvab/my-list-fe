@@ -47,6 +47,14 @@ export function ensureSession(queryClient: QueryClient): Promise<User | null> {
   return queryClient.query(meQueryOptions())
 }
 
+// Asks `/auth/me` again, although its data never goes stale. For a caller that learned from another answer that the
+// session is not what is shown. A failed check changes nothing.
+export async function refreshSession(queryClient: QueryClient): Promise<void> {
+  await queryClient
+    .fetchQuery({ ...meQueryOptions(), staleTime: 0 })
+    .catch(() => undefined)
+}
+
 // For the sign-in pages: a signed-in user goes home. When the check fails the page shows anyway,
 // because a signed-out visitor must be able to log in while the check is down.
 export async function redirectIfSignedIn(queryClient: QueryClient) {
