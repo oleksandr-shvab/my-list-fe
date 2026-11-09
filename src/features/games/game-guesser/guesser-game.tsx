@@ -8,6 +8,7 @@ import { getErrorMessage } from '@/lib/error-messages'
 import { formatPuzzleDate } from '@/lib/utc-date'
 import { ClueLadder } from '../clue-ladder/clue-ladder'
 import { useGuess } from '../guess'
+import { useRefreshLinks } from '../refresh-links'
 import type { Viewer } from '../view-queries'
 import { GuessList } from './guess-list'
 import { RESULT_KEYS } from './results'
@@ -36,6 +37,7 @@ export function GuesserGame({
   const { t, i18n } = useTranslation()
   const clock = useServerClock()
   const guess = useGuess({ target: { slug, date, viewer }, view })
+  const refreshLinks = useRefreshLinks({ target: { slug, date, viewer }, view })
 
   // A new step is selected when it is earned (AC-10). The screen owns the selection, so it survives a language
   // switch (AC-107).
@@ -102,6 +104,7 @@ export function GuesserGame({
         totalSteps={view.max_guesses}
         selected={selection.step}
         onSelect={(step) => setSelection({ step, newest })}
+        onRefreshLinks={refreshLinks}
       />
 
       <GuessList guesses={view.guesses} />

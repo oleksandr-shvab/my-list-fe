@@ -1,17 +1,30 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import type { MediaRead } from '@/api/generated/models'
+import type { MediaRead, PosterRead } from '@/api/generated/models'
+import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import { ClueVideo } from './clue-video'
 
 type Link = { url: string; expiresAt: string }
 
-// A video step shows its poster as a still; the clip itself comes with M1-30b.
-function stillOf(media: MediaRead): Link | null {
-  if (media.type === 'video') {
-    return media.poster
-      ? { url: media.poster.url, expiresAt: media.poster.expires_at }
-      : null
-  }
+// `retried` is links that were asked for, loading (a failure now is final, AC-25); `refreshing` and `removed` wait for
+// new links, with the media on the page or, after "Try again", off it.
+type Status =
+  'loading' | 'loaded' | 'retried' | 'refreshing' | 'removed' | 'failed'
+
+type Shown = {
+  // What the page shows, and the last media from the view that was looked at.
+  media: MediaRead
+  seen: MediaRead
+  status: Status
+  // The still that fills a clip's box before it plays has a request of its own: its failure never touches the clip.
+  poster: PosterRead | null
+  posterStatus: 'ok' | 'refreshing' | 'retried'
+  posterLoaded: string | null
+}
+
+// The link that stands for the media: its first source.
+function linkOf(media: MediaRead): Link | null {
   const [source] = media.sources
   return source ? { url: source.url, expiresAt: media.expires_at } : null
 }
@@ -22,38 +35,166 @@ function fileOf(url: string): string {
   return origin + pathname
 }
 
-function hasExpired(link: Link): boolean {
-  return Date.parse(link.expiresAt) <= Date.now()
+function hasExpired(expiresAt: string): boolean {
+  return Date.parse(expiresAt) <= Date.now()
+}
+
+function sourcesOf(media: MediaRead): string {
+  return media.sources.map((source) => source.url).join(' ')
+}
+
+function takeMedia(now: Shown, media: MediaRead, status: Status): Shown {
+  return {
+    ...now,
+    media,
+    status,
+    poster: media.poster,
+    posterStatus: 'ok',
+  }
+}
+
+// The view brought media, from a guess or as the answer to a request for links (already taken by `settle`). A good
+// link stays, so the browser keeps its file and a clip keeps playing; a failed or expired one takes the new link.
+function adopt(now: Shown, offered: MediaRead): Shown {
+  const seen = { ...now, seen: offered }
+  const link = linkOf(offered)
+  const current = linkOf(now.media)
+  if (!link || link.url === current?.url) return seen
+
+  if (
+    !current ||
+    now.status === 'failed' ||
+    now.status === 'refreshing' ||
+    now.status === 'removed' ||
+    hasExpired(current.expiresAt) ||
+    fileOf(link.url) !== fileOf(current.url)
+  ) {
+    // Links that were asked for stay on trial; a guess's start fresh.
+    const asked = now.status === 'refreshing' || now.status === 'removed'
+    return takeMedia(seen, offered, asked ? 'retried' : 'loading')
+  }
+  // The poster runs out sooner than the clip does, and changing it does not restart the clip.
+  const { poster } = offered
+  if (
+    poster &&
+    now.poster &&
+    poster.url !== now.poster.url &&
+    hasExpired(now.poster.expires_at)
+  ) {
+    return { ...seen, poster, posterStatus: 'ok' }
+  }
+  return seen
+}
+
+// The answer to a request for links: take them, or, with nothing new, there is nothing to wait for.
+function settle(now: Shown, fresh: MediaRead | undefined): Shown {
+  if (now.status !== 'refreshing' && now.status !== 'removed') return now
+  if (fresh && sourcesOf(fresh) !== sourcesOf(now.media)) {
+    return takeMedia(now, fresh, 'retried')
+  }
+  // Media taken off the page tries the same links again; a file that just failed has nothing left to try.
+  return { ...now, status: now.status === 'removed' ? 'retried' : 'failed' }
+}
+
+// The answer for the poster: only the new poster is taken, and a second failure ends the poster, not the clip.
+function settlePoster(now: Shown, fresh: MediaRead | undefined): Shown {
+  if (now.posterStatus !== 'refreshing') return now
+  const poster = fresh?.poster
+  return poster && poster.url !== now.poster?.url
+    ? { ...now, poster, posterStatus: 'retried' }
+    : { ...now, poster: null, posterStatus: 'retried' }
+}
+
+type ClueMediaProps = {
+  media: MediaRead
+  alt: string
+  // Whether the step is the one shown: a clip on another step pauses.
+  active: boolean
+  // Gets every link signed again and gives this step's new media, if there is any.
+  onRefreshLinks: () => Promise<MediaRead | undefined>
 }
 
 // The box takes its size from the media before the file loads, so the page does not jump (AC-19).
-export function ClueMedia({ media, alt }: { media: MediaRead; alt: string }) {
+export function ClueMedia({
+  media,
+  alt,
+  active,
+  onRefreshLinks,
+}: ClueMediaProps) {
   const { t } = useTranslation()
-  const offered = stillOf(media)
-  const [shown, setShown] = useState({
-    link: offered,
-    loaded: false,
-    failed: false,
+  const [shown, setShown] = useState<Shown>({
+    media,
+    seen: media,
+    status: 'loading',
+    poster: media.poster,
+    posterStatus: 'ok',
+    posterLoaded: null,
   })
+  // The link a request is out for, so two failures of one file in a row ask once.
+  const asking = useRef<string | null>(null)
+  const askingPoster = useRef<string | null>(null)
 
-  // Every guess signs all links again. The shown file stays while its link is still good, so the browser does not
-  // download it again; a failed or expired one takes the new link.
-  if (
-    offered &&
-    offered.url !== shown.link?.url &&
-    (!shown.link ||
-      shown.failed ||
-      hasExpired(shown.link) ||
-      fileOf(offered.url) !== fileOf(shown.link.url))
+  if (media !== shown.seen) setShown((now) => adopt(now, media))
+
+  function ask(
+    guard: { current: string | null },
+    failedUrl: string,
+    begin: (now: Shown) => Shown,
+    answer: (now: Shown, fresh: MediaRead | undefined) => Shown,
   ) {
-    setShown({ link: offered, loaded: false, failed: false })
+    if (guard.current === failedUrl) return
+    guard.current = failedUrl
+    setShown(begin)
+    onRefreshLinks()
+      .catch(() => undefined)
+      .then((fresh) => {
+        guard.current = null
+        setShown((now) => answer(now, fresh))
+      })
   }
 
-  // M1-30b: this is where a failed or expired link asks the screen for fresh links, once (AC-24, AC-25).
-  // Until then a failed file ends the loading state and says so.
-  function handleError() {
-    setShown((current) => ({ ...current, failed: true }))
+  const clipUrl = linkOf(shown.media)?.url ?? ''
+
+  // A file that failed, or a clip that stopped, asks for fresh links once (AC-24). A second failure shows the
+  // message, and nothing asks again until the player presses "Try again" (AC-25).
+  function handleFailure() {
+    if (shown.status === 'retried') {
+      setShown((now) =>
+        now.status === 'retried' ? { ...now, status: 'failed' } : now,
+      )
+    } else if (shown.status === 'loading' || shown.status === 'loaded') {
+      ask(asking, clipUrl, (now) => ({ ...now, status: 'refreshing' }), settle)
+    }
   }
+
+  function retry() {
+    ask(asking, clipUrl, (now) => ({ ...now, status: 'removed' }), settle)
+  }
+
+  function handleLoaded() {
+    setShown((now) => ({ ...now, status: 'loaded' }))
+  }
+
+  // A poster that fails asks for links once and takes only the new poster; a second failure drops the poster.
+  function handlePosterFailure() {
+    if (shown.posterStatus === 'retried') {
+      setShown((now) => ({ ...now, poster: null }))
+    } else if (shown.posterStatus === 'ok') {
+      ask(
+        askingPoster,
+        shown.poster?.url ?? '',
+        (now) => ({ ...now, posterStatus: 'refreshing' }),
+        settlePoster,
+      )
+    }
+  }
+
+  const { poster } = shown
+  const isVideo = shown.media.type === 'video'
+  const posterShowing =
+    isVideo && poster?.url === shown.posterLoaded && shown.status !== 'removed'
+  const loading =
+    shown.status !== 'loaded' && shown.status !== 'failed' && !posterShowing
 
   return (
     <div
@@ -63,25 +204,64 @@ export function ClueMedia({ media, alt }: { media: MediaRead; alt: string }) {
         maxWidth: media.width,
       }}
     >
-      {!shown.loaded && !shown.failed && (
-        <Skeleton className="absolute inset-0 rounded-none" />
-      )}
-      {shown.failed ? (
-        <p className="absolute inset-0 grid place-items-center p-4 text-center text-sm text-muted-foreground">
-          {t('games.clue_failed')}
-        </p>
+      {loading && <Skeleton className="absolute inset-0 rounded-none" />}
+      {shown.status === 'failed' ? (
+        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-4 text-center">
+          <p className="text-sm text-muted-foreground">
+            {t('games.clue_failed')}
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="max-md:h-11"
+            onClick={retry}
+          >
+            {t('games.clue_retry')}
+          </Button>
+        </div>
       ) : (
-        shown.link && (
+        shown.status !== 'removed' &&
+        clipUrl !== '' &&
+        (isVideo ? (
+          <>
+            <ClueVideo
+              sources={shown.media.sources}
+              poster={poster?.url}
+              width={media.width}
+              height={media.height}
+              active={active}
+              onLoaded={handleLoaded}
+              onFailure={handleFailure}
+            />
+            {/* A `<video>` says nothing when its poster fails or loads, so the poster is also loaded as an image. */}
+            {poster && (
+              <img
+                src={poster.url}
+                alt=""
+                hidden
+                onLoad={() =>
+                  setShown((now) => ({
+                    ...now,
+                    posterStatus: 'ok',
+                    posterLoaded: poster.url,
+                  }))
+                }
+                onError={handlePosterFailure}
+              />
+            )}
+          </>
+        ) : (
           <img
-            src={shown.link.url}
+            src={clipUrl}
             alt={alt}
             width={media.width}
             height={media.height}
-            onLoad={() => setShown((current) => ({ ...current, loaded: true }))}
-            onError={handleError}
+            onLoad={handleLoaded}
+            onError={handleFailure}
             className="size-full object-cover"
           />
-        )
+        ))
       )}
     </div>
   )

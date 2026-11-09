@@ -68,6 +68,78 @@ function step(n: number, sig = 'a', expiresAt = LIVE): StepRead {
   }
 }
 
+// The step-6 clip: two sources, the one the browser should try first coming first.
+function clip(n: number, sig = 'a'): StepRead {
+  const base = step(n, sig)
+  return {
+    ...base,
+    media: {
+      ...base.media,
+      type: 'video',
+      poster: {
+        content_type: 'image/webp',
+        url: `/api/v1/media/poster-${n}.webp?exp=4070908800&sig=${sig}`,
+        expires_at: LIVE,
+      },
+      sources: [
+        {
+          content_type: 'video/webm',
+          url: `/api/v1/media/${n}.webm?exp=4070908800&sig=${sig}`,
+        },
+        {
+          content_type: 'video/mp4',
+          url: `/api/v1/media/${n}.mp4?exp=4070908800&sig=${sig}`,
+        },
+      ],
+    },
+  }
+}
+
+// jsdom plays nothing: a fake that keeps `paused` and sends the events a browser sends. A load stops the element.
+function fakePlayback({ refuseFirstPlay = false } = {}) {
+  let paused = true
+  vi.spyOn(HTMLMediaElement.prototype, 'paused', 'get').mockImplementation(
+    () => paused,
+  )
+  const play = vi
+    .spyOn(HTMLMediaElement.prototype, 'play')
+    .mockImplementation(function (this: HTMLMediaElement) {
+      paused = false
+      this.dispatchEvent(new Event('play'))
+      return Promise.resolve()
+    })
+  if (refuseFirstPlay) {
+    play.mockRejectedValueOnce(new DOMException('refused', 'NotAllowedError'))
+  }
+  const pause = vi
+    .spyOn(HTMLMediaElement.prototype, 'pause')
+    .mockImplementation(function (this: HTMLMediaElement) {
+      paused = true
+      this.dispatchEvent(new Event('pause'))
+    })
+  const load = vi
+    .spyOn(HTMLMediaElement.prototype, 'load')
+    .mockImplementation(() => {
+      paused = true
+    })
+  return { play, pause, load }
+}
+
+// An account's view that signs its links again with every answer: `a`, then `b`, then `c`...
+function signedAgain(
+  app: ReturnType<typeof renderApp>,
+  stepsOf: (sig: string) => StepRead[],
+) {
+  let answers = 0
+  app.backend.replies.set(VIEW_URL, () => ({
+    status: 200,
+    data: {
+      ...accountView(1),
+      steps: stepsOf('abcdef'[answers++]),
+    },
+  }))
+}
+
 function accountView(earned: number): GameGuesserView {
   return { ...view(earned), signed_in: true }
 }
@@ -661,16 +733,200 @@ describe('what the server says decides, not what the page thinks (AC-53)', () =>
   )
 })
 
-describe('a clue that does not load (AC-19)', () => {
-  it('ends the loading state and says so', async () => {
+describe('a clue that does not load (AC-19, AC-24, AC-25)', () => {
+  it('for a guest, asks to resume with the shown guesses, then ends the loading state and says so', async () => {
     const app = renderApp(`/games/game-guesser/${DAY}`, GUEST)
     serve(app, view(1))
 
     const [image] = await screen.findAllByRole('img')
     fireEvent.error(image)
 
-    expect(screen.getByText("The clue didn't load.")).toBeTruthy()
+    expect(await screen.findByText("The clue didn't load.")).toBeTruthy()
     expect(screen.queryByRole('img')).toBeNull()
+    expect(app.backend.bodiesOf(`${VIEW_URL}/resume`)).toEqual([
+      { previous: [] },
+    ])
+  })
+
+  it('asks for the view once, keeps the selected step, and after a second failure shows the message and asks no more', async () => {
+    const user = userEvent.setup()
+    const app = renderApp(`/games/game-guesser/${DAY}`, SIGNED_IN)
+    // Every answer signs the links again.
+    let signed = 0
+    app.backend.replies.set(VIEW_URL, () => {
+      const sig = signed++ === 0 ? 'a' : 'b'
+      return {
+        status: 200,
+        data: {
+          ...accountView(3),
+          steps: [1, 2, 3].map((n) => step(n, sig)),
+        },
+      }
+    })
+
+    await user.click(await screen.findByRole('tab', { name: 'Step 2' }))
+    fireEvent.error(screen.getByAltText('Clue 2 of 6'))
+
+    await waitFor(() =>
+      expect(screen.getByAltText('Clue 2 of 6').getAttribute('src')).toContain(
+        'sig=b',
+      ),
+    )
+    expect(app.backend.count(VIEW_URL)).toBe(2)
+    expect(
+      screen.getByRole('tab', { name: 'Step 2' }).getAttribute('aria-selected'),
+    ).toBe('true')
+
+    fireEvent.error(screen.getByAltText('Clue 2 of 6'))
+
+    expect(screen.getByText("The clue didn't load.")).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Try again' })).toBeTruthy()
+    expect(app.backend.count(VIEW_URL)).toBe(2)
+  })
+})
+
+describe('fresh links for a clue that failed (AC-24, AC-25)', () => {
+  it('for an account, asks once for an image and a clip that fail together, and when the new links are the same ones shows the failure, with "Try again" asking once more', async () => {
+    vi.spyOn(HTMLMediaElement.prototype, 'play').mockResolvedValue()
+    const user = userEvent.setup()
+    const app = renderApp(`/games/game-guesser/${DAY}`, SIGNED_IN)
+    // The server signs the same links again: the file is gone, not the signature.
+    serve(app, { ...accountView(2), steps: [step(1), clip(2)] })
+    await screen.findByAltText('Clue 1 of 6')
+    const mp4 = document.querySelector('source[type="video/mp4"]')!
+
+    // The two steps fail together and share one request.
+    fireEvent.error(screen.getByAltText('Clue 1 of 6'))
+    fireEvent.error(mp4)
+    await waitFor(() =>
+      expect(screen.getAllByText("The clue didn't load.")).toHaveLength(2),
+    )
+    expect(app.backend.count(VIEW_URL)).toBe(2)
+    // An account's game is on the server: its view is fetched again, never resumed.
+    expect(app.backend.count(`${VIEW_URL}/resume`)).toBe(0)
+
+    // The same links again: the image is put back to try them, so only the clip still shows the failure.
+    await user.click(screen.getAllByRole('button', { name: 'Try again' })[0])
+    await waitFor(() => expect(app.backend.count(VIEW_URL)).toBe(3))
+    await waitFor(() =>
+      expect(screen.getAllByText("The clue didn't load.")).toHaveLength(1),
+    )
+  })
+
+  it('for a guest, resumes with the shown guesses, and takes the links of the answer', async () => {
+    const app = renderApp(`/games/game-guesser/${DAY}`, GUEST)
+    serve(app, {
+      ...view(2),
+      guesses: [{ title_id: 42, name: 'Doom', result: 'wrong' }],
+      steps: [step(1), step(2)],
+    })
+    app.backend.replies.set(`${VIEW_URL}/resume`, {
+      status: 200,
+      data: { ...view(2), steps: [step(1, 'b'), step(2, 'b')] },
+    })
+
+    fireEvent.error(await screen.findByAltText('Clue 1 of 6'))
+
+    await waitFor(() =>
+      expect(screen.getByAltText('Clue 1 of 6').getAttribute('src')).toContain(
+        'sig=b',
+      ),
+    )
+    expect(app.backend.bodiesOf(`${VIEW_URL}/resume`)).toEqual([
+      { previous: [42] },
+    ])
+    // A guest's dated view would come back empty: it is not asked for again.
+    expect(app.backend.count(VIEW_URL)).toBe(1)
+  })
+
+  it('drops the resume answer when a guess was answered meanwhile', async () => {
+    const user = userEvent.setup()
+    const app = renderApp(`/games/game-guesser/${DAY}`, GUEST)
+    serve(app, view(2))
+    const late = slowReply()
+    app.backend.replies.set(`${VIEW_URL}/resume`, late.reply)
+    app.backend.replies.set(GUESS_URL, {
+      status: 200,
+      data: { ...view(3), steps: [1, 2, 3].map((n) => step(n, 'b')) },
+    })
+
+    fireEvent.error(await screen.findByAltText('Clue 1 of 6'))
+    await waitFor(() => expect(app.backend.count(`${VIEW_URL}/resume`)).toBe(1))
+    await user.click(screen.getByRole('button', { name: 'Skip' }))
+    await screen.findByAltText('Clue 3 of 6')
+
+    // The answer to the older request arrives last, with two steps and other links.
+    late.answer({
+      status: 200,
+      data: { ...view(2), steps: [step(1, 'c'), step(2, 'c')] },
+    })
+    // Let the answer travel through the client before looking.
+    await act(() => new Promise((done) => setTimeout(done, 20)))
+
+    expect(screen.getByText('4 guesses left')).toBeTruthy()
+    expect(screen.getByAltText('Clue 3 of 6').getAttribute('src')).toContain(
+      'sig=b',
+    )
+    expect(screen.getByAltText('Clue 1 of 6').getAttribute('src')).toContain(
+      'sig=b',
+    )
+  })
+})
+
+describe('the step-6 clip (AC-21, AC-23)', () => {
+  afterEach(() => vi.unstubAllGlobals())
+
+  it('does not start by itself when the system asks for reduced motion, and shows the play control', async () => {
+    vi.stubGlobal('matchMedia', (query: string) => ({
+      matches: query === '(prefers-reduced-motion: reduce)',
+      media: query,
+      addEventListener: () => {},
+      removeEventListener: () => {},
+    }))
+    const play = vi
+      .spyOn(HTMLMediaElement.prototype, 'play')
+      .mockResolvedValue()
+    const app = renderApp(`/games/game-guesser/${DAY}`, GUEST)
+    serve(app, { ...view(1), steps: [clip(1)] })
+
+    expect(
+      await screen.findByRole('button', { name: 'Play clip' }),
+    ).toBeTruthy()
+    expect(play).not.toHaveBeenCalled()
+  })
+})
+
+describe('the step-6 clip controls (AC-21 to AC-23)', () => {
+  it('is muted, looping and inline with its sources in order, and when the browser refuses to start it keeps the poster and a play control with no error', async () => {
+    const user = userEvent.setup()
+    const { play } = fakePlayback({ refuseFirstPlay: true })
+    const app = renderApp(`/games/game-guesser/${DAY}`, GUEST)
+    serve(app, { ...view(1), steps: [clip(1)] })
+
+    const start = await screen.findByRole('button', { name: 'Play clip' })
+    const video = document.querySelector('video')!
+    expect(video.muted).toBe(true)
+    expect(video.loop).toBe(true)
+    expect(video.hasAttribute('playsinline')).toBe(true)
+    expect(
+      Array.from(video.querySelectorAll('source')).map((source) => [
+        source.getAttribute('type'),
+        source.getAttribute('src'),
+      ]),
+    ).toEqual([
+      ['video/webm', '/api/v1/media/1.webm?exp=4070908800&sig=a'],
+      ['video/mp4', '/api/v1/media/1.mp4?exp=4070908800&sig=a'],
+    ])
+    // The start by itself was refused (AC-23): the poster stays, and nothing says it went wrong.
+    expect(play).toHaveBeenCalledTimes(1)
+    expect(video.getAttribute('poster')).toContain('poster-1.webp')
+    expect(screen.queryByText("The clue didn't load.")).toBeNull()
+
+    await user.click(start)
+    await user.click(await screen.findByRole('button', { name: 'Pause clip' }))
+
+    expect(screen.getByRole('button', { name: 'Play clip' })).toBeTruthy()
+    expect(play).toHaveBeenCalledTimes(2)
   })
 })
 
@@ -777,5 +1033,253 @@ describe('clue links that every guess signs again', () => {
     expect(srcOf(2)).toContain('sig=b')
     expect(srcOf(3)).toContain('sig=b')
     expect(srcOf(4)).toContain('sig=b')
+  })
+})
+
+describe('a clip and its links that stop working (AC-24)', () => {
+  const failedMessage = "The clue didn't load."
+
+  it('asks for nothing when the first source fails and the next one may play', async () => {
+    fakePlayback()
+    const app = renderApp(`/games/game-guesser/${DAY}`, SIGNED_IN)
+    serve(app, { ...accountView(1), steps: [clip(1)] })
+    await screen.findByRole('button', { name: 'Pause clip' })
+
+    fireEvent.error(document.querySelector('source[type="video/webm"]')!)
+    // Let a request, if there were one, travel before looking.
+    await act(() => new Promise((done) => setTimeout(done, 20)))
+
+    expect(app.backend.count(VIEW_URL)).toBe(1)
+    expect(screen.queryByText(failedMessage)).toBeNull()
+  })
+
+  it('swaps in the new links of a clip that stopped while it plays, with no failure shown, the same element and still playing', async () => {
+    const { play, load } = fakePlayback()
+    const app = renderApp(`/games/game-guesser/${DAY}`, SIGNED_IN)
+    signedAgain(app, (sig) => [clip(1, sig)])
+    await screen.findByRole('button', { name: 'Pause clip' })
+    const video = document.querySelector('video')!
+
+    fireEvent.error(video)
+
+    await waitFor(() =>
+      expect(
+        video.querySelector('source[type="video/mp4"]')!.getAttribute('src'),
+      ).toContain('sig=b'),
+    )
+    expect(screen.queryByText(failedMessage)).toBeNull()
+    expect(document.querySelector('video')).toBe(video)
+    expect(load).toHaveBeenCalledTimes(1)
+    expect(play).toHaveBeenCalledTimes(2)
+    expect(screen.getByRole('button', { name: 'Pause clip' })).toBeTruthy()
+  })
+
+  it('starts a clip by itself once new links replace ones that never loaded', async () => {
+    const { play } = fakePlayback({ refuseFirstPlay: true })
+    const app = renderApp(`/games/game-guesser/${DAY}`, SIGNED_IN)
+    signedAgain(app, (sig) => [clip(1, sig)])
+    await screen.findByRole('button', { name: 'Play clip' })
+
+    fireEvent.error(document.querySelector('source[type="video/mp4"]')!)
+
+    expect(
+      await screen.findByRole('button', { name: 'Pause clip' }),
+    ).toBeTruthy()
+    expect(play).toHaveBeenCalledTimes(2)
+  })
+
+  it('takes only a new poster when the poster fails, and drops the poster when that fails too, with the clip left alone', async () => {
+    const { load } = fakePlayback()
+    const app = renderApp(`/games/game-guesser/${DAY}`, SIGNED_IN)
+    signedAgain(app, (sig) => [clip(1, sig)])
+    await screen.findByRole('button', { name: 'Pause clip' })
+    const video = document.querySelector('video')!
+    const poster = () => document.querySelector('img[alt=""]')!
+
+    fireEvent.error(poster())
+
+    await waitFor(() => expect(video.getAttribute('poster')).toContain('sig=b'))
+    expect(
+      video.querySelector('source[type="video/mp4"]')!.getAttribute('src'),
+    ).toContain('sig=a')
+    expect(load).not.toHaveBeenCalled()
+
+    fireEvent.error(poster())
+
+    await waitFor(() => expect(video.hasAttribute('poster')).toBe(false))
+    expect(app.backend.count(VIEW_URL)).toBe(2)
+    expect(screen.queryByText(failedMessage)).toBeNull()
+    expect(screen.getByRole('button', { name: 'Pause clip' })).toBeTruthy()
+  })
+
+  it('takes the new poster of a guess when the old one ran out, without touching the clip', async () => {
+    fakePlayback()
+    const user = userEvent.setup()
+    const app = renderApp(`/games/game-guesser/${DAY}`, SIGNED_IN)
+    const old = clip(1)
+    old.media.poster!.expires_at = EXPIRED
+    serve(app, { ...accountView(1), steps: [old] })
+    app.backend.replies.set(GUESS_URL, {
+      status: 200,
+      data: { ...accountView(2), steps: [clip(1, 'b'), step(2, 'b')] },
+    })
+
+    await user.click(await screen.findByRole('button', { name: 'Skip' }))
+    await screen.findByAltText('Clue 2 of 6')
+
+    const video = document.querySelector('video')!
+    expect(video.getAttribute('poster')).toContain('sig=b')
+    expect(
+      video.querySelector('source[type="video/mp4"]')!.getAttribute('src'),
+    ).toContain('sig=a')
+  })
+})
+
+describe('"Try again" and new link sets (AC-24, AC-25)', () => {
+  it('shows the loading state, not the dead image, while the links are asked for, and then lets the image load', async () => {
+    const user = userEvent.setup()
+    const app = renderApp(`/games/game-guesser/${DAY}`, SIGNED_IN)
+    // The server signs the same links again, so the first failure is final.
+    serve(app, { ...accountView(1), steps: [step(1)] })
+    fireEvent.error(await screen.findByAltText('Clue 1 of 6'))
+    await screen.findByText("The clue didn't load.")
+    const late = slowReply()
+    app.backend.replies.set(VIEW_URL, late.reply)
+
+    await user.click(screen.getByRole('button', { name: 'Try again' }))
+
+    expect(screen.queryByRole('img')).toBeNull()
+    expect(screen.queryByText("The clue didn't load.")).toBeNull()
+    await act(async () =>
+      late.answer({
+        status: 200,
+        data: { ...accountView(1), steps: [step(1)] },
+      }),
+    )
+    fireEvent.load(await screen.findByRole('img'))
+    expect(screen.queryByText("The clue didn't load.")).toBeNull()
+  })
+
+  it('asks again for a link a guess brought in place of the links asked for before', async () => {
+    const user = userEvent.setup()
+    const app = renderApp(`/games/game-guesser/${DAY}`, SIGNED_IN)
+    // The links asked for have run out, so the guess's set replaces them.
+    signedAgain(app, (sig) => [step(1, sig, sig === 'a' ? LIVE : EXPIRED)])
+    app.backend.replies.set(GUESS_URL, {
+      status: 200,
+      data: { ...accountView(2), steps: [step(1, 'x'), step(2, 'x')] },
+    })
+    fireEvent.error(await screen.findByAltText('Clue 1 of 6'))
+    await waitFor(() => expect(app.backend.count(VIEW_URL)).toBe(2))
+    await user.click(screen.getByRole('button', { name: 'Skip' }))
+    await screen.findByAltText('Clue 2 of 6')
+
+    // The guess's link is a new one: it gets its own request if it fails.
+    fireEvent.error(screen.getByAltText('Clue 1 of 6'))
+
+    await waitFor(() => expect(app.backend.count(VIEW_URL)).toBe(3))
+    expect(screen.queryByText("The clue didn't load.")).toBeNull()
+  })
+
+  it('keeps the links asked for on trial when a guess leaves them in place, so a second failure is final', async () => {
+    const user = userEvent.setup()
+    const app = renderApp(`/games/game-guesser/${DAY}`, SIGNED_IN)
+    signedAgain(app, (sig) => [step(1, sig)])
+    app.backend.replies.set(GUESS_URL, {
+      status: 200,
+      data: { ...accountView(2), steps: [step(1, 'x'), step(2, 'x')] },
+    })
+    fireEvent.error(await screen.findByAltText('Clue 1 of 6'))
+    await waitFor(() => expect(app.backend.count(VIEW_URL)).toBe(2))
+    await user.click(screen.getByRole('button', { name: 'Skip' }))
+    await screen.findByAltText('Clue 2 of 6')
+
+    // The guess's link is the same file and still good: the shown one stays, and it is the one asked for.
+    fireEvent.error(screen.getByAltText('Clue 1 of 6'))
+
+    expect(screen.getByText("The clue didn't load.")).toBeTruthy()
+    expect(app.backend.count(VIEW_URL)).toBe(2)
+  })
+})
+
+describe('a clip on a step that is not shown (AC-22, AC-24)', () => {
+  it('pauses, takes a failure only when its step is opened, and plays again when shown', async () => {
+    const user = userEvent.setup()
+    const { play, pause } = fakePlayback()
+    const app = renderApp(`/games/game-guesser/${DAY}`, SIGNED_IN)
+    serve(app, { ...accountView(2), steps: [step(1), clip(2)] })
+    await screen.findByRole('button', { name: 'Pause clip' })
+
+    await user.click(screen.getByRole('tab', { name: 'Step 1' }))
+
+    expect(pause).toHaveBeenCalledTimes(1)
+    fireEvent.error(document.querySelector('video')!)
+    await act(() => new Promise((done) => setTimeout(done, 20)))
+    expect(app.backend.count(VIEW_URL)).toBe(1)
+
+    await user.click(screen.getByRole('tab', { name: 'Step 2' }))
+
+    expect(play).toHaveBeenCalledTimes(2)
+    await waitFor(() => expect(app.backend.count(VIEW_URL)).toBe(2))
+  })
+})
+
+describe('the loading state of a clip (AC-19)', () => {
+  const skeleton = () => document.querySelector('[data-slot="skeleton"]')
+
+  it('lasts until the first frame is there, not until the metadata is', async () => {
+    fakePlayback()
+    const app = renderApp(`/games/game-guesser/${DAY}`, GUEST)
+    serve(app, { ...view(1), steps: [clip(1)] })
+    await screen.findByRole('button', { name: 'Pause clip' })
+    const video = document.querySelector('video')!
+
+    fireEvent.loadedMetadata(video)
+    expect(skeleton()).toBeTruthy()
+
+    fireEvent.loadedData(video)
+    expect(skeleton()).toBeNull()
+  })
+
+  it('ends when the poster has loaded', async () => {
+    fakePlayback()
+    const app = renderApp(`/games/game-guesser/${DAY}`, GUEST)
+    serve(app, { ...view(1), steps: [clip(1)] })
+    await screen.findByRole('button', { name: 'Pause clip' })
+    expect(skeleton()).toBeTruthy()
+
+    fireEvent.load(document.querySelector('img[alt=""]')!)
+
+    expect(skeleton()).toBeNull()
+  })
+})
+
+describe('what a guest keeps when links are asked for (AC-40)', () => {
+  it('shows no archive marker after a resume answered counts_for_streak with null', async () => {
+    const app = renderApp(`/games/game-guesser/${DAY}`, GUEST)
+    serve(app, { ...view(1), counts_for_streak: true })
+    app.backend.replies.set(`${VIEW_URL}/resume`, {
+      status: 200,
+      data: { ...view(1), counts_for_streak: null, steps: [step(1, 'b')] },
+    })
+    app.backend.replies.set('/v1/clock', {
+      status: 200,
+      data: {
+        now: '2026-11-06T12:00:00Z',
+        today: '2026-11-06',
+        next_reset: '2026-11-07T00:00:00Z',
+      },
+    })
+    const image = await screen.findByAltText('Clue 1 of 6')
+    await waitFor(() => expect(app.backend.count('/v1/clock')).toBe(1))
+
+    fireEvent.error(image)
+
+    await waitFor(() =>
+      expect(screen.getByAltText('Clue 1 of 6').getAttribute('src')).toContain(
+        'sig=b',
+      ),
+    )
+    expect(screen.queryByText(/Archive puzzle/)).toBeNull()
   })
 })

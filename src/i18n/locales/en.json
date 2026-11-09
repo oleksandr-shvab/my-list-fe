@@ -60,7 +60,10 @@
     "no_puzzle_today_text": "There is no puzzle for today yet. Please check back later.",
     "puzzle_line": "#{{number}} · {{date}}",
     "hint_line": "{{label}}: {{value}}",
-    "clue_failed": "The clue didn't load."
+    "clue_failed": "The clue didn't load.",
+    "clip_play": "Play clip",
+    "clip_pause": "Pause clip",
+    "clue_retry": "Try again"
   },
   "theme": {
     "switch_to_light": "Switch to light mode",

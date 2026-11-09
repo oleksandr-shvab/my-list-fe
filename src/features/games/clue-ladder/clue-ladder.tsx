@@ -34,6 +34,8 @@ type ClueLadderProps = {
   totalSteps: number
   selected: number
   onSelect: (step: number) => void
+  // Gets every clue link signed again (AC-24) and gives the steps with the new links.
+  onRefreshLinks: () => Promise<StepRead[] | undefined>
 }
 
 // The clue steps of a game: a tab per step, locked until earned. It knows nothing about guesses or the answer.
@@ -42,6 +44,7 @@ export function ClueLadder({
   totalSteps,
   selected,
   onSelect,
+  onRefreshLinks,
 }: ClueLadderProps) {
   const { t } = useTranslation()
   const earned = new Map(steps.map((step) => [step.step, step]))
@@ -89,6 +92,13 @@ export function ClueLadder({
           <ClueMedia
             media={step.media}
             alt={t('games.clue_alt', { n: step.step, total: totalSteps })}
+            active={step.step === selected}
+            onRefreshLinks={() =>
+              onRefreshLinks().then(
+                (fresh) =>
+                  fresh?.find((item) => item.step === step.step)?.media,
+              )
+            }
           />
           {step.hint && <Hint hint={step.hint} />}
         </TabsContent>

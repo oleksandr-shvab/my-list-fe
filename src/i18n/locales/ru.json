@@ -62,7 +62,10 @@
     "no_puzzle_today_text": "Сегодняшней загадки пока нет. Загляните позже.",
     "puzzle_line": "#{{number}} · {{date}}",
     "hint_line": "{{label}}: {{value}}",
-    "clue_failed": "Подсказка не загрузилась."
+    "clue_failed": "Подсказка не загрузилась.",
+    "clip_play": "Воспроизвести клип",
+    "clip_pause": "Приостановить клип",
+    "clue_retry": "Попробовать снова"
   },
   "theme": {
     "switch_to_light": "Включить светлую тему",

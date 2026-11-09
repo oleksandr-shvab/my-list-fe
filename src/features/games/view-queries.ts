@@ -14,7 +14,7 @@ export function isAccountViewer(viewer: Viewer): boolean {
   return viewer !== GUEST_VIEWER && viewer !== UNCONFIRMED_VIEWER
 }
 
-type GameViewTarget = { slug: string; date: string; viewer: Viewer }
+export type GameViewTarget = { slug: string; date: string; viewer: Viewer }
 
 // One key per puzzle day and viewer, whichever address opened it: `/` and `/games/{slug}/{date}` show one view.
 export function gameViewKey({ slug, date, viewer }: GameViewTarget) {
@@ -40,6 +40,45 @@ export function checkSessionOfView(
   client: QueryClient,
 ) {
   if (view.signed_in && !isAccountViewer(viewer)) void refreshSession(client)
+}
+
+// An answer (a guess's or a resume's) goes under the key of the viewer it names, and one that names a user the page
+// does not know asks who is signed in. A guest's answer never blanks what the view knew: `counts_for_streak` and
+// `daily_proof` are null on a resume or after the first guess (SPEC-03 AC-40, AC-41).
+export function writeAnswer(
+  client: QueryClient,
+  target: GameViewTarget,
+  answer: GameGuesserView,
+) {
+  const viewer = viewerOfView(answer, target.viewer)
+  if (viewer) {
+    const key = gameViewKey({ ...target, viewer })
+    const known = answer.signed_in
+      ? undefined
+      : client.getQueryData<GameGuesserView>(key)
+    client.setQueryData(
+      key,
+      known
+        ? {
+            ...answer,
+            counts_for_streak:
+              answer.counts_for_streak ?? known.counts_for_streak,
+            daily_proof: answer.daily_proof ?? known.daily_proof,
+          }
+        : answer,
+    )
+  }
+  checkSessionOfView(answer, target.viewer, client)
+}
+
+// Asks for the page's view again and gives what the cache holds afterwards: the new view, or the old one when the
+// request failed.
+export async function refetchView(
+  client: QueryClient,
+  target: GameViewTarget,
+): Promise<GameGuesserView | undefined> {
+  await client.refetchQueries({ queryKey: gameViewKey(target), exact: true })
+  return client.getQueryData<GameGuesserView>(gameViewKey(target))
 }
 
 // The puzzle of a known day. Every later fetch of a page goes through this, so an open page keeps its day.
