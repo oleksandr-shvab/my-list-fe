@@ -4,7 +4,14 @@ import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { ApiError } from '@/lib/api-client'
 
-export function ErrorScreen({ error }: { error: Error }) {
+// By default "Try again" asks the router to load the page again. A screen that owns its own query passes `onRetry`.
+export function ErrorScreen({
+  error,
+  onRetry,
+}: {
+  error: Error
+  onRetry?: () => void
+}) {
   const { t } = useTranslation()
   const router = useRouter()
   const apiError = error instanceof ApiError ? error : null
@@ -21,7 +28,7 @@ export function ErrorScreen({ error }: { error: Error }) {
           {t('error_screen.reference', { id: apiError.requestId })}
         </p>
       )}
-      <Button type="button" onClick={() => router.invalidate()}>
+      <Button type="button" onClick={onRetry ?? (() => router.invalidate())}>
         {t('error_screen.try_again')}
       </Button>
     </div>
@@ -36,9 +43,11 @@ export function NotFoundScreen() {
 export function NotFoundMessage({
   titleKey = 'error_screen.not_found_title',
   textKey = 'error_screen.not_found_text',
+  showHomeLink = true,
 }: {
   titleKey?: ParseKeys
   textKey?: ParseKeys
+  showHomeLink?: boolean
 }) {
   const { t } = useTranslation()
 
@@ -46,9 +55,11 @@ export function NotFoundMessage({
     <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 py-6 text-center">
       <h1 className="text-2xl font-medium">{t(titleKey)}</h1>
       <p className="text-sm text-muted-foreground">{t(textKey)}</p>
-      <Button asChild>
-        <Link to="/">{t('error_screen.go_home')}</Link>
-      </Button>
+      {showHomeLink && (
+        <Button asChild>
+          <Link to="/">{t('error_screen.go_home')}</Link>
+        </Button>
+      )}
     </div>
   )
 }

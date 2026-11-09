@@ -7,7 +7,6 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import i18n from '@/i18n'
 import { GameScreen } from './game-screen'
 import { lazyWithRetry } from './lazy-with-retry'
-import { getDefaultGame } from './registry'
 import type { GameEntry } from './types'
 
 beforeEach(async () => {
@@ -21,25 +20,6 @@ afterEach(async () => {
   await i18n.changeLanguage('en')
 })
 
-describe('the placeholder screen (AC-47, AC-55a)', () => {
-  it('shows the name, the UTC day and "coming soon", and keeps its page when the language changes', async () => {
-    render(<GameScreen game={getDefaultGame()} date="2026-10-28" isToday />)
-
-    expect(screen.getByRole('status').textContent).toBe('Loading the game…')
-    expect(await screen.findByText('This game is coming soon.')).toBeTruthy()
-    const heading = screen.getByRole('heading', { level: 1 })
-    expect(heading.textContent).toBe('Game Guesser')
-    expect(screen.getByText('Puzzle for October 28, 2026')).toBeTruthy()
-
-    await act(() => i18n.changeLanguage('ru'))
-
-    expect(screen.getByRole('heading', { level: 1 })).toBe(heading)
-    expect(heading.textContent).toBe('Game Guesser')
-    expect(screen.getByText('Загадка на 28 октября 2026 г.')).toBeTruthy()
-    expect(screen.getByText('Эта игра скоро появится.')).toBeTruthy()
-  })
-})
-
 describe('the game error boundary (AC-54)', () => {
   const broken = { now: true }
   const brokenGame: GameEntry = {
@@ -48,7 +28,7 @@ describe('the game error boundary (AC-54)', () => {
     order: 1,
     isDefault: false,
     screen: lazy(async () => ({
-      default: function BrokenScreen({ date }: { date: string }) {
+      default: function BrokenScreen({ date }: { date: string | null }) {
         if (broken.now) throw new Error('the game crashed')
         return <p>Playing {date}</p>
       },
@@ -64,7 +44,7 @@ describe('the game error boundary (AC-54)', () => {
     render(
       <>
         <header>The header</header>
-        <GameScreen game={brokenGame} date="2026-10-28" isToday />
+        <GameScreen game={brokenGame} date="2026-10-28" />
       </>,
     )
 
@@ -86,7 +66,7 @@ describe('the game error boundary (AC-54)', () => {
       <>
         <button type="button">Outside</button>
         <div data-testid="area">
-          <GameScreen game={brokenGame} date="2026-10-28" isToday />
+          <GameScreen game={brokenGame} date="2026-10-28" />
         </div>
       </>,
     )
@@ -105,7 +85,7 @@ describe('the game error boundary (AC-54)', () => {
 
   it('starts clean for another day, and shows the error text in the current language', async () => {
     const { rerender } = render(
-      <GameScreen game={brokenGame} date="2026-10-28" isToday />,
+      <GameScreen game={brokenGame} date="2026-10-28" />,
     )
     await screen.findByRole('alert')
 
@@ -116,7 +96,7 @@ describe('the game error boundary (AC-54)', () => {
     expect(screen.getByRole('button').textContent).toBe('Попробовать снова')
 
     broken.now = false
-    rerender(<GameScreen game={brokenGame} date="2026-10-27" isToday={false} />)
+    rerender(<GameScreen game={brokenGame} date="2026-10-27" />)
 
     expect(await screen.findByText('Playing 2026-10-27')).toBeTruthy()
     expect(screen.queryByRole('alert')).toBeNull()
@@ -130,7 +110,7 @@ describe('a screen whose code fails to download (AC-53, AC-54)', () => {
       .fn()
       .mockRejectedValueOnce(new Error('Failed to fetch the module'))
       .mockResolvedValue({
-        default: function LoadedScreen({ date }: { date: string }) {
+        default: function LoadedScreen({ date }: { date: string | null }) {
           return <p>Playing {date}</p>
         },
       })
@@ -141,7 +121,7 @@ describe('a screen whose code fails to download (AC-53, AC-54)', () => {
       isDefault: false,
       screen: lazyWithRetry(load),
     }
-    render(<GameScreen game={game} date="2026-10-28" isToday />)
+    render(<GameScreen game={game} date="2026-10-28" />)
 
     await screen.findByRole('alert')
     expect(load).toHaveBeenCalledTimes(1)
@@ -176,7 +156,7 @@ describe('the page heading and the loading status (AC-53, AC-54)', () => {
           }),
       ),
     }
-    render(<GameScreen game={game} date="2026-10-28" isToday />)
+    render(<GameScreen game={game} date="2026-10-28" />)
 
     const status = screen.getByRole('status')
     expect(status.textContent).toBe('Loading the game…')
@@ -202,7 +182,7 @@ describe('the page heading and the loading status (AC-53, AC-54)', () => {
         },
       })),
     }
-    render(<GameScreen game={game} date="2026-10-28" isToday />)
+    render(<GameScreen game={game} date="2026-10-28" />)
 
     await screen.findByRole('alert')
 

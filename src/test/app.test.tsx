@@ -7,6 +7,7 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import i18n from '@/i18n'
 import {
+  gameView,
   GUEST,
   ME_URL,
   SERVER_ERROR,
@@ -30,6 +31,27 @@ function renderApp(path: string, me: Reply) {
   return app
 }
 
+// The game screen asks the backend for its puzzle; "today" is the server's 2026-10-28.
+// The server says `signed_in` as the session is: a view that disagrees would end or start a session.
+function servePuzzles(app: ReturnType<typeof renderApp>) {
+  const path = '/v1/games/game-guesser/puzzles/'
+  const puzzle = (date: string) => () => ({
+    status: 200,
+    data: gameView({
+      date,
+      signed_in: app.backend.replies.get(ME_URL) === SIGNED_IN,
+    }),
+  })
+  app.backend.replies.set(`${path}today`, puzzle('2026-10-28'))
+  // After the first answer a page asks for its own day, whoever is signed in.
+  app.backend.replies.set(`${path}2026-10-28`, puzzle('2026-10-28'))
+  app.backend.replies.set(`${path}2026-10-01`, puzzle('2026-10-01'))
+  app.backend.replies.set(`${path}2026-10-29`, {
+    status: 404,
+    data: { status: 404, code: 'puzzle_not_found', request_id: 'req-404' },
+  })
+}
+
 beforeEach(async () => {
   vi.useFakeTimers({ toFake: ['Date'] })
   vi.setSystemTime(new Date('2026-10-28T12:00:00Z'))
@@ -49,7 +71,7 @@ afterEach(async () => {
 describe('the game pages in the layout (AC-3, AC-47, AC-48)', () => {
   it('shows the game for today, then follows the language in the page and the tab title', async () => {
     const user = userEvent.setup()
-    renderApp('/games/game-guesser/archive', GUEST)
+    servePuzzles(renderApp('/games/game-guesser/archive', GUEST))
 
     expect((await screen.findByRole('heading', { level: 1 })).textContent).toBe(
       'Archive',
@@ -69,44 +91,56 @@ describe('the game pages in the layout (AC-3, AC-47, AC-48)', () => {
     expect((await screen.findByRole('heading', { level: 1 })).textContent).toBe(
       'Game Guesser',
     )
-    expect(
-      await screen.findByText('Загадка на 28 октября 2026 г.'),
-    ).toBeTruthy()
-    expect(screen.getByText('Эта игра скоро появится.')).toBeTruthy()
+    expect(await screen.findByText('#308 · 28 октября 2026 г.')).toBeTruthy()
     expect(document.title).toBe('Game Guesser | Daily Game Challenge')
   })
 
   it.each([
-    ['/games/nope', 'Unknown game', 'There is no game at this address.'],
+    [
+      '/games/nope',
+      'Unknown game',
+      'There is no game at this address.',
+      'Page not found',
+    ],
+    // The backend's 404 is shown by the game screen, so the tab keeps the game's name (AC-7).
     [
       '/games/game-guesser/2026-10-29',
       'No puzzle for this date',
       "Check the date in the address, or play today's puzzle.",
+      'Game Guesser',
     ],
-    ['/lists', 'Page not found', 'This page does not exist or was moved.'],
+    [
+      '/lists',
+      'Page not found',
+      'This page does not exist or was moved.',
+      'Page not found',
+    ],
   ])(
     'shows %s as "not found" inside the layout, with a way back to today',
-    async (path, title, text) => {
+    async (path, title, text, tabTitle) => {
       const user = userEvent.setup()
-      renderApp(path, GUEST)
+      servePuzzles(renderApp(path, GUEST))
 
-      expect(
-        (await screen.findByRole('heading', { level: 1 })).textContent,
-      ).toBe(title)
+      // The dated page shows its game's heading while the backend answers.
+      await waitFor(() =>
+        expect(screen.getByRole('heading', { level: 1 }).textContent).toBe(
+          title,
+        ),
+      )
       expect(screen.getByText(text)).toBeTruthy()
       expect(
         screen.getByRole('link', { name: 'Daily Game Challenge' }),
       ).toBeTruthy()
       await waitFor(() =>
-        expect(document.title).toBe('Page not found | Daily Game Challenge'),
+        expect(document.title).toBe(`${tabTitle} | Daily Game Challenge`),
       )
 
       await user.click(
         screen.getByRole('link', { name: "Go to today's puzzle" }),
       )
-      expect(
-        (await screen.findByText('Puzzle for October 28, 2026')).tagName,
-      ).toBe('P')
+      expect((await screen.findByText('#308 · October 28, 2026')).tagName).toBe(
+        'P',
+      )
     },
   )
 })
@@ -114,13 +148,16 @@ describe('the game pages in the layout (AC-3, AC-47, AC-48)', () => {
 describe('the account area (AC-21, AC-24, AC-32, AC-33)', () => {
   it('holds its place while `/auth/me` is slow, then offers log in and sign up with this page', async () => {
     const late = slowReply()
-    renderApp('/games/game-guesser/2026-10-01', late.reply)
+    servePuzzles(renderApp('/games/game-guesser/2026-10-01', late.reply))
 
-    expect(await screen.findByText('Puzzle for October 1, 2026')).toBeTruthy()
+    // The page is there, but the puzzle waits for the session check (the view is keyed by who plays).
+    expect(await screen.findByRole('heading', { level: 1 })).toBeTruthy()
+    expect(screen.queryByText('#308 · October 1, 2026')).toBeNull()
     expect(screen.queryByRole('link', { name: 'Log in' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Retry' })).toBeNull()
 
     await act(async () => late.answer(GUEST))
+    expect(await screen.findByText('#308 · October 1, 2026')).toBeTruthy()
 
     const page = encodeURIComponent('/games/game-guesser/2026-10-01')
     const logIn = await screen.findByRole('link', { name: 'Log in' })
@@ -133,8 +170,9 @@ describe('the account area (AC-21, AC-24, AC-32, AC-33)', () => {
   it('offers a retry when the check fails, then shows the user, and log out keeps the page', async () => {
     const user = userEvent.setup()
     const app = renderApp('/games/game-guesser', SERVER_ERROR)
+    servePuzzles(app)
 
-    expect(await screen.findByText('Puzzle for October 28, 2026')).toBeTruthy()
+    expect(await screen.findByText('#308 · October 28, 2026')).toBeTruthy()
     const retry = await screen.findByRole('button', { name: 'Retry' })
     expect(screen.getByText("Couldn't check your sign-in.")).toBeTruthy()
 
@@ -144,7 +182,11 @@ describe('the account area (AC-21, AC-24, AC-32, AC-33)', () => {
     expect(await screen.findByText(USER.email)).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Retry' })).toBeNull()
 
-    app.backend.replies.set('/v1/auth/logout', { status: 204 })
+    // After a logout the server knows no session: `/auth/me` and the puzzle views say so.
+    app.backend.replies.set('/v1/auth/logout', () => {
+      app.backend.replies.set(ME_URL, GUEST)
+      return { status: 204 }
+    })
     await user.click(
       screen.getByRole('button', { name: `Account: ${USER.email}` }),
     )
@@ -153,6 +195,6 @@ describe('the account area (AC-21, AC-24, AC-32, AC-33)', () => {
     expect(await screen.findByRole('link', { name: 'Log in' })).toBeTruthy()
     expect(screen.queryByText(USER.email)).toBeNull()
     expect(app.router.state.location.pathname).toBe('/games/game-guesser')
-    expect(screen.getByText('Puzzle for October 28, 2026')).toBeTruthy()
+    expect(await screen.findByText('#308 · October 28, 2026')).toBeTruthy()
   })
 })

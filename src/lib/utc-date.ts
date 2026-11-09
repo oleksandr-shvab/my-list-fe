@@ -1,8 +1,5 @@
 // "Today" and puzzle dates are UTC days written as YYYY-MM-DD, never the device's local day.
 
-// Temporary lower bound until the backend lists past days (M1-16).
-export const FIRST_PUZZLE_DATE = '2026-01-01'
-
 const PUZZLE_DATE_FORMAT = /^\d{4}-\d{2}-\d{2}$/
 
 function pad(value: number, length: number) {
@@ -16,15 +13,8 @@ export function todayUtc(now: Date = new Date()): string {
   return `${year}-${month}-${day}`
 }
 
-export type PuzzleDate = {
-  date: string
-  isToday: boolean
-}
-
-export function parsePuzzleDate(
-  value: string,
-  today: string,
-): PuzzleDate | null {
+// Only the shape and "a real day" are checked here. Whether a puzzle exists for the day is the backend's answer (404).
+export function parsePuzzleDate(value: string): string | null {
   if (!PUZZLE_DATE_FORMAT.test(value)) return null
 
   const [year, month, day] = value.split('-').map(Number)
@@ -34,10 +24,8 @@ export function parsePuzzleDate(
     roundTrip.getUTCFullYear() === year &&
     roundTrip.getUTCMonth() === month - 1 &&
     roundTrip.getUTCDate() === day
-  // Both are YYYY-MM-DD, so comparing the text compares the days.
-  if (!isRealDay || value < FIRST_PUZZLE_DATE || value > today) return null
 
-  return { date: value, isToday: value === today }
+  return isRealDay ? value : null
 }
 
 export function formatPuzzleDate(date: string, language: string): string {

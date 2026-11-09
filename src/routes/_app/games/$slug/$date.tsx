@@ -1,31 +1,22 @@
 import { createFileRoute, notFound } from '@tanstack/react-router'
-import { NotFoundMessage } from '@/components/error-screen'
 import { GameScreen } from '@/features/games/game-screen'
+import { NoPuzzle } from '@/features/games/no-puzzle'
 import { parsePuzzleDate } from '@/lib/utc-date'
 
-// The day must be a real YYYY-MM-DD day not after today in UTC (AC-44, AC-45). Today gives the same screen as the page
-// without a date, with no redirect (AC-41b).
+// The day must be a real YYYY-MM-DD day (AC-3). Whether a puzzle exists for it is the backend's answer, which the
+// screen shows. Today's date gives the same screen as the page without a date, with no redirect.
 export const Route = createFileRoute('/_app/games/$slug/$date')({
-  beforeLoad: ({ context, params }) => {
-    const puzzle = parsePuzzleDate(params.date, context.today)
-    if (!puzzle) throw notFound()
-    return puzzle
+  beforeLoad: ({ params }) => {
+    const date = parsePuzzleDate(params.date)
+    if (!date) throw notFound()
+    return { date }
   },
   notFoundComponent: NoPuzzle,
   component: DatePage,
 })
 
-function NoPuzzle() {
-  return (
-    <NotFoundMessage
-      titleKey="games.no_puzzle"
-      textKey="games.no_puzzle_text"
-    />
-  )
-}
-
 function DatePage() {
-  const { game, date, isToday } = Route.useRouteContext()
+  const { game, date } = Route.useRouteContext()
 
-  return <GameScreen game={game} date={date} isToday={isToday} />
+  return <GameScreen game={game} date={date} />
 }
