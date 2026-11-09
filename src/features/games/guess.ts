@@ -3,14 +3,7 @@ import { useRef } from 'react'
 import { gamesSubmitGuess } from '@/api/generated/api'
 import type { GameGuesserView } from '@/api/generated/models'
 import { ApiError } from '@/lib/api-client'
-import {
-  checkSessionOfView,
-  gameViewKey,
-  viewerOfView,
-  type Viewer,
-} from './view-queries'
-
-type GuessTarget = { slug: string; date: string; viewer: Viewer }
+import { refetchView, writeAnswer, type GameViewTarget } from './view-queries'
 
 // After these the server holds a game the page may not show (a lost answer, another tab or device played), so the
 // view is asked for again and only then is the message shown.
@@ -28,7 +21,7 @@ export function useGuess({
   target,
   view,
 }: {
-  target: GuessTarget
+  target: GameViewTarget
   view: GameGuesserView
 }) {
   const queryClient = useQueryClient()
@@ -45,20 +38,13 @@ export function useGuess({
         })
         // Written here and not in `onSuccess`: when the answer says `signed_in: false`, the session guard has
         // already signed the page out, and the guest query must have this answer before it asks for its own.
-        const viewer = viewerOfView(answer, target.viewer)
-        if (viewer) {
-          queryClient.setQueryData(gameViewKey({ ...target, viewer }), answer)
-        }
-        checkSessionOfView(answer, target.viewer, queryClient)
+        writeAnswer(queryClient, target, answer)
         return answer
       } catch (error) {
         // What the shown view says about the server decides, not who the page thinks is signed in: a guest's
         // game lives in the browser, and asking the server again would only give an empty one (AC-53).
         if (view.signed_in && leavesViewStale(error)) {
-          await queryClient.refetchQueries({
-            queryKey: gameViewKey(target),
-            exact: true,
-          })
+          await refetchView(queryClient, target)
         }
         throw error
       }
