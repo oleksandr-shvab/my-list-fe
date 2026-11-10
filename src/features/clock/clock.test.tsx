@@ -5,7 +5,7 @@ import { renderHook, waitFor } from '@testing-library/react'
 import type { ReactNode } from 'react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { GUEST, startApp, type Reply } from '@/test/router-harness'
-import { useServerClock } from './clock'
+import { formatCountdown, useServerClock } from './clock'
 
 const CLOCK_URL = '/v1/clock'
 
@@ -90,5 +90,18 @@ describe('useServerClock (AC-76, AC-102, AC-105)', () => {
 
     await waitFor(() => expect(result.current.offsetMs).toBe(10 * 60_000))
     expect(app.backend.count(CLOCK_URL)).toBe(2)
+  })
+})
+
+describe('formatCountdown (AC-101)', () => {
+  it('pads each part, counts a part second as a whole one, keeps hours past 24, and floors at zero', () => {
+    expect(formatCountdown(3_661_000)).toBe('01:01:01')
+    // 00:00:00 is only shown once it is over.
+    expect(formatCountdown(400)).toBe('00:00:01')
+    expect(formatCountdown(0)).toBe('00:00:00')
+    expect(formatCountdown(-5_000)).toBe('00:00:00')
+    expect(formatCountdown(25 * 3_600_000)).toBe('25:00:00')
+    // Never NaN.
+    expect(formatCountdown(NaN)).toBe('00:00:00')
   })
 })

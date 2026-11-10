@@ -40,21 +40,39 @@ function deviceClock() {
 }
 
 export function useServerClock() {
-  const { data, isPending } = useQuery(clockQueryOptions())
+  const { data, isFetched, isFetching } = useQuery(clockQueryOptions())
 
-  // The device's guess is worked out when the answer changes, not on every render, and only while there is none.
+  // The device's guess is worked out when the answer changes, not on every render, and only while there is none. An
+  // answer whose reset or time cannot be read counts as a failed call (AC-102): a countdown to NaN helps no one.
   const clock = useMemo(
     () =>
-      data
+      data &&
+      Number.isFinite(Date.parse(data.nextReset)) &&
+      Number.isFinite(data.offsetMs)
         ? { ...data, source: 'server' as const }
         : { ...deviceClock(), source: 'device' as const },
     [data],
   )
 
   return {
-    // False while the first answer is on its way.
-    ready: !isPending,
+    // False only until the first answer or failure; asking again never takes it back, so what is shown on it does not
+    // unmount (a component that unmounts and mounts again asks a failed clock again, and so on without end).
+    ready: isFetched,
+    // A call is on its way: the first one, or the one after the tab became visible (AC-105).
+    isFetching,
     // `device` is for a guest's own numbers (AC-76) and the countdown (AC-102), never for what is visible.
     ...clock,
   }
 }
+
+// hh:mm:ss for what is left; a part second counts as a whole one, so 00:00:00 is only shown when it is over.
+export function formatCountdown(remainingMs: number): string {
+  // Never NaN, whatever came in.
+  const total = Number.isFinite(remainingMs)
+    ? Math.max(0, Math.ceil(remainingMs / 1000))
+    : 0
+  const part = (n: number) => String(n).padStart(2, '0')
+  return `${part(Math.floor(total / 3600))}:${part(Math.floor(total / 60) % 60)}:${part(total % 60)}`
+}
+
+export type ServerClock = ReturnType<typeof useServerClock>
