@@ -29,6 +29,10 @@ export function getFieldErrorMessage(error: FieldError, t: TFunction): string {
   return translate(t, error.code, 'errors.invalid_value', error.params)
 }
 
-export function getErrorMessage(error: ApiError, t: TFunction): string {
-  return translate(t, error.code, 'errors.unknown', error.params)
+export function getErrorMessage(
+  error: ApiError,
+  t: TFunction,
+  fallbackKey = 'errors.unknown',
+): string {
+  return translate(t, error.code, fallbackKey, error.params)
 }

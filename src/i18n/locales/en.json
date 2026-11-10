@@ -33,6 +33,18 @@
     "guesses_left_one": "{{count}} guess left",
     "guesses_left_other": "{{count}} guesses left",
     "skip": "Skip",
+    "submit": "Guess",
+    "search": {
+      "label": "Search for a game",
+      "placeholder": "Search for a game…",
+      "too_short": "Type at least 2 letters",
+      "loading": "Loading…",
+      "count_one": "{{count}} result",
+      "count_other": "{{count}} results",
+      "empty": "No games found",
+      "failed": "Search failed. Try again.",
+      "tried": "Already tried"
+    },
     "steps_label": "Clue steps",
     "step": "Step {{n}}",
     "step_locked": "Step {{n}}, locked",
