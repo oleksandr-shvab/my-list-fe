@@ -43,3 +43,7 @@ window.scrollTo = noop
 
 // Testing Library auto-cleans only when test globals are on, and they are off.
 afterEach(cleanup)
+
+// A guest's games are stored in `localStorage`, which jsdom keeps for the whole file: one test's records must not
+// reach the next.
+afterEach(() => window.localStorage.clear())

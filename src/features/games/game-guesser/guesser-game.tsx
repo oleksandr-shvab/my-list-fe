@@ -1,3 +1,4 @@
+import { Link } from '@tanstack/react-router'
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { GameGuesserView } from '@/api/generated/models'
@@ -7,8 +8,10 @@ import { ApiError } from '@/lib/api-client'
 import { getErrorMessage } from '@/lib/error-messages'
 import { formatPuzzleDate } from '@/lib/utc-date'
 import { ClueLadder } from '../clue-ladder/clue-ladder'
-import { useGuess } from '../guess'
+import { isGameChanged, useGuess } from '../guess'
+import { isInvalidHistory } from '../guest-progress'
 import { useRefreshLinks } from '../refresh-links'
+import { useDayChange } from '../use-day-change'
 import type { Viewer } from '../view-queries'
 import { GuessList } from './guess-list'
 import { RESULT_KEYS } from './results'
@@ -37,7 +40,14 @@ export function GuesserGame({
 }: GuesserGameProps) {
   const { t, i18n } = useTranslation()
   const clock = useServerClock()
-  const guess = useGuess({ target: { slug, date, viewer }, view })
+  // The page keeps its puzzle across midnight; a guess that is really sent is one of the moments it says that the day
+  // has moved (AC-48).
+  const dayChange = useDayChange(openedAsToday ? date : null)
+  const guess = useGuess({
+    target: { slug, date, viewer },
+    view,
+    onSend: dayChange.check,
+  })
   const refreshLinks = useRefreshLinks({ target: { slug, date, viewer }, view })
 
   // A new step is selected when it is earned (AC-10). The screen owns the selection, so it survives a language
@@ -61,10 +71,14 @@ export function GuesserGame({
   // The status line says what happened to the last guess, or why it failed (AC-61, AC-62, AC-110).
   let message = ''
   if (guess.error) {
-    message =
-      guess.error instanceof ApiError
-        ? getErrorMessage(guess.error, t)
-        : t('errors.unknown')
+    // A guest's damaged record is dropped and the puzzle starts again; the server's own text is for the merge.
+    message = isInvalidHistory(guess.error)
+      ? t('games.progress_damaged')
+      : isGameChanged(guess.error)
+        ? t('games.game_changed')
+        : guess.error instanceof ApiError
+          ? getErrorMessage(guess.error, t)
+          : t('errors.unknown')
   } else if (guess.answer) {
     const last = guess.answer.guesses.at(-1)
     if (last) {
@@ -99,6 +113,22 @@ export function GuesserGame({
           </p>
         )}
       </header>
+
+      {/* The region is always there, so the message is announced when it arrives (AC-62). */}
+      <div role="status" className="text-sm">
+        {dayChange.changed && (
+          <p>
+            {t('games.day_changed')}{' '}
+            <Link
+              to="/games/$slug"
+              params={{ slug }}
+              className="font-medium underline underline-offset-4"
+            >
+              {t('games.play_today')}
+            </Link>
+          </p>
+        )}
+      </div>
 
       <ClueLadder
         steps={view.steps}

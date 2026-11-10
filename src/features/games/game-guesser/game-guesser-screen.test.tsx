@@ -14,6 +14,7 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { GameGuesserView, StepRead } from '@/api/generated/models'
 import i18n from '@/i18n'
+import { readGuestRecord } from '@/features/games/guest-records'
 import {
   gameView,
   GUEST,
@@ -431,6 +432,14 @@ describe('a guess the account answers as a guest (AC-10, AC-17, AC-51)', () => {
     expect(app.backend.bodiesOf(GUESS_URL)).toEqual([
       { title_id: null, previous: [42] },
     ])
+    // From now on the game is this browser's: the record holds the answer's guesses (AC-52).
+    expect(
+      readGuestRecord({
+        slug: 'game-guesser',
+        variant: 'default',
+        date: DAY,
+      })?.guesses,
+    ).toEqual([{ title_id: 42, name: 'Doom', result: 'wrong' }, SKIPPED])
   })
 })
 
