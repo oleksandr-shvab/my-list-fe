@@ -12,6 +12,7 @@ import { useRefreshLinks } from '../refresh-links'
 import type { Viewer } from '../view-queries'
 import { GuessList } from './guess-list'
 import { RESULT_KEYS } from './results'
+import { TitleSearch } from './title-search'
 
 function newestStep(view: GameGuesserView): number {
   return Math.max(1, ...view.steps.map((step) => step.step))
@@ -125,6 +126,10 @@ export function GuesserGame({
             {t('games.skip')}
           </Button>
         </div>
+      )}
+
+      {inProgress && (
+        <TitleSearch slug={slug} guesses={view.guesses} guess={guess} />
       )}
 
       <p

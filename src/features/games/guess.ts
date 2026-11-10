@@ -54,10 +54,17 @@ export function useGuess({
     },
   })
 
-  function send(titleId: number | null) {
+  // The callbacks run only while the screen is still shown, so the box that sent the guess can clear itself.
+  function send(
+    titleId: number | null,
+    callbacks?: {
+      onSuccess?: (answer: GameGuesserView) => void
+      onError?: (error: unknown) => void
+    },
+  ) {
     if (sending.current) return
     sending.current = true
-    mutation.mutate(titleId)
+    mutation.mutate(titleId, callbacks)
   }
 
   return {
