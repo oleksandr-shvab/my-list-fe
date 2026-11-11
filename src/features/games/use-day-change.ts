@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import type { ServerClock } from '@/features/clock/clock'
-import { todayUtc } from '@/lib/utc-date'
+import { serverToday, type ServerClock } from '@/features/clock/clock'
 
 // Says when the server's day, by the clock offset at the moment of the check, has moved past the puzzle a page with no
 // date opened with (AC-47); it never switches anything itself. It checks when the tab becomes visible, and `check`
@@ -16,7 +15,7 @@ export function useDayChange(
   const check = useCallback(() => {
     // The device's clock never decides.
     if (openedDate === null || source !== 'server') return
-    if (todayUtc(new Date(Date.now() + offsetMs)) > openedDate) {
+    if (serverToday({ offsetMs }) > openedDate) {
       setChanged(true)
     }
   }, [openedDate, offsetMs, source])

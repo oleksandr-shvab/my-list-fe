@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { flushSync } from 'react-dom'
 import { useTranslation } from 'react-i18next'
 import type { GameGuesserView } from '@/api/generated/models'
@@ -12,6 +12,8 @@ import { buildShareText } from './share-text'
 
 type EndScreenProps = {
   slug: string
+  // The Statistics button, built by the game screen with the mark for this game's guess count.
+  statsButton: ReactNode
   // A won or a lost game.
   view: GameGuesserView
   // The game ended while the player was on the page, so the heading takes the focus (AC-64). A finished puzzle that is
@@ -34,6 +36,7 @@ const LINK_BUTTON = cn(buttonVariants({ variant: 'outline' }), 'max-md:h-11')
 
 export function EndScreen({
   slug,
+  statsButton,
   view,
   focusHeading,
   openedAsToday,
@@ -137,6 +140,7 @@ export function EndScreen({
         >
           {t('games.share')}
         </Button>
+        {statsButton}
         <Link
           to="/games/$slug/archive"
           params={{ slug }}

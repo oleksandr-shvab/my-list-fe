@@ -64,4 +64,31 @@ describe('the records listed for stats, archive and merge (AC-40)', () => {
     ])
     expect(readGuestRecord({ ...KEY, date: '2026-11-04' })).toEqual(proofOnly)
   })
+
+  it('leaves out a key whose date is not a real day', () => {
+    writeGuestRecord(KEY, RECORD)
+    // Anyone can write a key into the storage; 2026-13-40 has the shape of a day and is none.
+    localStorage.setItem(
+      'dgc.guest.v1.game-guesser.default.2026-13-40',
+      JSON.stringify(RECORD),
+    )
+
+    expect(readGuestRecords('game-guesser')).toEqual([
+      { key: KEY, record: RECORD },
+    ])
+  })
+
+  it('lists a record once, though a stray key resolves to the same day', () => {
+    writeGuestRecord(KEY, RECORD)
+    // The date is the last ten characters and the variant is what precedes the separator, so this one reads as
+    // `default` + 2026-11-05 too.
+    localStorage.setItem(
+      'dgc.guest.v1.game-guesser.defaultX2026-11-05',
+      JSON.stringify(RECORD),
+    )
+
+    expect(readGuestRecords('game-guesser')).toEqual([
+      { key: KEY, record: RECORD },
+    ])
+  })
 })
