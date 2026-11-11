@@ -6,6 +6,7 @@ import { PhoneHeader } from '@/components/phone-header'
 import { MAIN_ID, SkipLink } from '@/components/skip-link'
 import { SIDEBAR_COOKIE_NAME, SidebarProvider } from '@/components/ui/sidebar'
 import { TooltipProvider } from '@/components/ui/tooltip'
+import { useGuestMerge } from '@/features/games/guest-merge'
 
 export const Route = createFileRoute('/_app')({
   component: AppLayout,
@@ -20,6 +21,8 @@ function getStoredSidebarOpen() {
 
 function AppLayout() {
   const linkFollowedRef = useRef(false)
+  // Moves this browser's games into the account on any page after a login, sign-up or reload (AC-95, AC-98).
+  useGuestMerge()
 
   return (
     <TooltipProvider>

@@ -7,6 +7,7 @@ import { Button, buttonVariants } from '@/components/ui/button'
 import type { ServerClock } from '@/features/clock/clock'
 import { Countdown } from '@/features/clock/countdown'
 import { cn } from '@/lib/utils'
+import { SignUpNudge } from '../sign-up-nudge'
 import { GuessList } from './guess-list'
 import { buildShareText } from './share-text'
 
@@ -163,6 +164,15 @@ export function EndScreen({
           value={text}
           aria-label={t('games.share_text_label')}
           className="w-full max-w-md rounded-lg border bg-background p-2 font-mono text-sm"
+        />
+      )}
+
+      {/* Only a guest's win: the account already has its games (AC-90, AC-92). */}
+      {won && !view.signed_in && (
+        <SignUpNudge
+          slug={slug}
+          date={view.date}
+          onDismiss={() => headingRef.current?.focus()}
         />
       )}
 
