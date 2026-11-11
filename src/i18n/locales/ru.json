@@ -84,7 +84,22 @@
     "clue_failed": "Подсказка не загрузилась.",
     "clip_play": "Воспроизвести клип",
     "clip_pause": "Приостановить клип",
-    "clue_retry": "Попробовать снова"
+    "clue_retry": "Попробовать снова",
+    "win": "Угадали!",
+    "solved_in_one": "Угадано с {{count}} попытки",
+    "solved_in_few": "Угадано с {{count}} попыток",
+    "solved_in_many": "Угадано с {{count}} попыток",
+    "solved_in_other": "Угадано с {{count}} попыток",
+    "lose": "В этот раз не вышло",
+    "franchise_line": "Серия: {{franchise}}",
+    "share": "Поделиться результатом",
+    "share_copied": "Результат скопирован",
+    "share_failed": "Не удалось скопировать. Выделите текст ниже и скопируйте его.",
+    "share_text_label": "Текст результата",
+    "share_title": "{{app}}: {{game}} #{{number}}",
+    "play_previous": "Играть в прошлые дни",
+    "countdown": "Следующая загадка через {{time}}",
+    "countdown_done": "Новая загадка уже доступна"
   },
   "theme": {
     "switch_to_light": "Включить светлую тему",

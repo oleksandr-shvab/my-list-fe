@@ -13,6 +13,7 @@ import { isInvalidHistory } from '../guest-progress'
 import { useRefreshLinks } from '../refresh-links'
 import { useDayChange } from '../use-day-change'
 import type { Viewer } from '../view-queries'
+import { EndScreen } from './end-screen'
 import { GuessList } from './guess-list'
 import { RESULT_KEYS } from './results'
 import { TitleSearch } from './title-search'
@@ -42,7 +43,7 @@ export function GuesserGame({
   const clock = useServerClock()
   // The page keeps its puzzle across midnight; a guess that is really sent is one of the moments it says that the day
   // has moved (AC-48).
-  const dayChange = useDayChange(openedAsToday ? date : null)
+  const dayChange = useDayChange(openedAsToday ? date : null, clock)
   const guess = useGuess({
     target: { slug, date, viewer },
     view,
@@ -66,7 +67,10 @@ export function GuesserGame({
         view.date < clock.today))
 
   const inProgress = view.status === 'in_progress'
-  const answer = view.answer
+  // The end screen takes the focus only when the game ended while this page was open (AC-64): a page that saw the game
+  // in progress. A finished puzzle that is opened never did.
+  const [sawInProgress, setSawInProgress] = useState(inProgress)
+  if (inProgress && !sawInProgress) setSawInProgress(true)
 
   // The status line says what happened to the last guess, or why it failed (AC-61, AC-62, AC-110).
   let message = ''
@@ -138,7 +142,7 @@ export function GuesserGame({
         onRefreshLinks={refreshLinks}
       />
 
-      <GuessList guesses={view.guesses} />
+      {inProgress && <GuessList guesses={view.guesses} />}
 
       {inProgress && (
         <div className="flex flex-wrap items-center gap-3">
@@ -162,21 +166,26 @@ export function GuesserGame({
         <TitleSearch slug={slug} guesses={view.guesses} guess={guess} />
       )}
 
+      {/* The answer is shown only from the view, which has it only at the end (AC-18). The game's status line stays the
+          last live region of the page. */}
+      {!inProgress && (
+        <EndScreen
+          slug={slug}
+          view={view}
+          focusHeading={sawInProgress}
+          openedAsToday={openedAsToday}
+          clock={clock}
+          dayChanged={dayChange.changed}
+          onCountdownZero={dayChange.check}
+        />
+      )}
+
       <p
         role="status"
         className={guess.error ? 'text-sm text-destructive' : 'text-sm'}
       >
         {message}
       </p>
-
-      {/* Until the end screen (M1-33) the answer shows as plain text, and only from the view. */}
-      {answer && (
-        <p className="font-medium">
-          {answer.year === null
-            ? t('games.answer_no_year', { name: answer.name })
-            : t('games.answer', { name: answer.name, year: answer.year })}
-        </p>
-      )}
     </div>
   )
 }

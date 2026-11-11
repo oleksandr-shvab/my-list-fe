@@ -80,7 +80,20 @@
     "clue_failed": "The clue didn't load.",
     "clip_play": "Play clip",
     "clip_pause": "Pause clip",
-    "clue_retry": "Try again"
+    "clue_retry": "Try again",
+    "win": "You got it!",
+    "solved_in_one": "Solved in {{count}} guess",
+    "solved_in_other": "Solved in {{count}} guesses",
+    "lose": "Not this time",
+    "franchise_line": "Series: {{franchise}}",
+    "share": "Share result",
+    "share_copied": "Result copied",
+    "share_failed": "Couldn't copy. Select the text below and copy it.",
+    "share_text_label": "Result text",
+    "share_title": "{{app}}: {{game}} #{{number}}",
+    "play_previous": "Play previous days",
+    "countdown": "Next puzzle in {{time}}",
+    "countdown_done": "A new puzzle is ready"
   },
   "theme": {
     "switch_to_light": "Switch to light mode",
