@@ -23,7 +23,26 @@
       "name": "Game Guesser"
     },
     "archive_title": "Архив",
-    "archive_coming_soon": "Архив скоро появится.",
+    "archive": {
+      "back_to_today": "К сегодняшней загадке",
+      "list_label": "Прошлые загадки",
+      "number": "#{{number}}",
+      "loading": "Загружаем архив…",
+      "empty": "Прошлых загадок пока нет",
+      "load_failed": "Не удалось загрузить архив.",
+      "retry": "Попробовать ещё раз",
+      "show_more": "Показать ещё",
+      "loading_more": "Загрузка…",
+      "state": {
+        "not_played": "Не сыграно",
+        "in_progress": "В процессе",
+        "won_one": "Угадано с {{count}}",
+        "won_few": "Угадано с {{count}}",
+        "won_many": "Угадано с {{count}}",
+        "won_other": "Угадано с {{count}}",
+        "lost": "Не угадано"
+      }
+    },
     "unknown_game": "Неизвестная игра",
     "unknown_game_text": "По этому адресу нет игры.",
     "no_puzzle": "Нет загадки на эту дату",

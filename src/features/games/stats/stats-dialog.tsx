@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { Link, useLocation } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
+import { InlineError } from '@/components/inline-error'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -15,7 +16,6 @@ import { Skeleton } from '@/components/ui/skeleton'
 import type { GameGuesserView } from '@/api/generated/models'
 import { serverToday, type ServerClock } from '@/features/clock/clock'
 import { ApiError } from '@/lib/api-client'
-import { getErrorMessage } from '@/lib/error-messages'
 import { DEFAULT_VARIANT, readGuestRecords } from '../guest-records'
 import { computeGuestStats } from './compute-guest-stats'
 import { statsQueryOptions } from './queries'
@@ -76,7 +76,6 @@ export function StatsDialog({
 type BodyProps = { source: StatsSource; highlight: number | null }
 
 function AccountStats({ source, highlight }: BodyProps) {
-  const { t } = useTranslation()
   const { slug, viewer, view } = source
   const stats = useQuery(statsQueryOptions(slug, viewer, progressOf(view)))
 
@@ -88,21 +87,12 @@ function AccountStats({ source, highlight }: BodyProps) {
   // A failed refetch behind numbers that are shown leaves the numbers (the error is for a dialog with nothing to show).
   if (stats.isError && !stats.isFetching && !stats.data) {
     return (
-      <div className="flex flex-col items-start gap-3">
-        <p role="alert" className="text-sm text-destructive">
-          {stats.error instanceof ApiError
-            ? getErrorMessage(stats.error, t, 'games.stats.load_failed')
-            : t('games.stats.load_failed')}
-        </p>
-        <Button
-          type="button"
-          variant="outline"
-          className="max-md:h-11"
-          onClick={() => void stats.refetch()}
-        >
-          {t('games.stats.retry')}
-        </Button>
-      </div>
+      <InlineError
+        error={stats.error}
+        fallbackKey="games.stats.load_failed"
+        retryKey="games.stats.retry"
+        onRetry={() => void stats.refetch()}
+      />
     )
   }
   return (

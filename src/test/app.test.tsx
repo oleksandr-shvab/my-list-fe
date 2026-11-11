@@ -35,17 +35,21 @@ function renderApp(path: string, me: Reply) {
 // The server says `signed_in` as the session is: a view that disagrees would end or start a session.
 function servePuzzles(app: ReturnType<typeof renderApp>) {
   const path = '/v1/games/game-guesser/puzzles/'
-  const puzzle = (date: string) => () => ({
-    status: 200,
-    data: gameView({
-      date,
-      signed_in: app.backend.replies.get(ME_URL) === SIGNED_IN,
-    }),
-  })
+  // Each day has its own number, as the archive row that links to it says.
+  const puzzle =
+    (date: string, number = 308) =>
+    () => ({
+      status: 200,
+      data: gameView({
+        date,
+        number,
+        signed_in: app.backend.replies.get(ME_URL) === SIGNED_IN,
+      }),
+    })
   app.backend.replies.set(`${path}today`, puzzle('2026-10-28'))
   // After the first answer a page asks for its own day, whoever is signed in.
   app.backend.replies.set(`${path}2026-10-28`, puzzle('2026-10-28'))
-  app.backend.replies.set(`${path}2026-10-01`, puzzle('2026-10-01'))
+  app.backend.replies.set(`${path}2026-10-01`, puzzle('2026-10-01', 280))
   app.backend.replies.set(`${path}2026-10-29`, {
     status: 404,
     data: { status: 404, code: 'puzzle_not_found', request_id: 'req-404' },
@@ -71,18 +75,30 @@ afterEach(async () => {
 describe('the game pages in the layout (AC-3, AC-47, AC-48)', () => {
   it('shows the game for today, then follows the language in the page and the tab title', async () => {
     const user = userEvent.setup()
-    servePuzzles(renderApp('/games/game-guesser/archive', GUEST))
+    const app = renderApp('/games/game-guesser/archive', GUEST)
+    servePuzzles(app)
+    // A guest's item carries no state and no guess count; the day has no record in this browser.
+    app.backend.replies.set('/v1/games/game-guesser/archive', {
+      status: 200,
+      data: {
+        items: [
+          { date: '2026-10-27', number: 307, state: null, guesses_used: null },
+        ],
+        next_before: null,
+      },
+    })
 
     expect((await screen.findByRole('heading', { level: 1 })).textContent).toBe(
       'Archive',
     )
-    expect(screen.getByText('The archive is coming soon.')).toBeTruthy()
+    expect(await screen.findByText('Not played')).toBeTruthy()
     await waitFor(() =>
       expect(document.title).toBe('Archive | Daily Game Challenge'),
     )
 
     await act(() => i18n.changeLanguage('ru'))
     expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Архив')
+    expect(screen.getByText('Не сыграно')).toBeTruthy()
     await waitFor(() =>
       expect(document.title).toBe('Архив | Daily Game Challenge'),
     )
@@ -93,6 +109,39 @@ describe('the game pages in the layout (AC-3, AC-47, AC-48)', () => {
     )
     expect(await screen.findByText('#308 · 28 октября 2026 г.')).toBeTruthy()
     expect(document.title).toBe('Game Guesser | Daily Game Challenge')
+  })
+
+  it('opens a past puzzle from its archive row without a reload, and the archive leads back to today', async () => {
+    const user = userEvent.setup()
+    const app = renderApp('/games/game-guesser/archive', GUEST)
+    servePuzzles(app)
+    app.backend.replies.set('/v1/games/game-guesser/archive', {
+      status: 200,
+      data: {
+        items: [
+          { date: '2026-10-01', number: 280, state: null, guesses_used: null },
+        ],
+        next_before: null,
+      },
+    })
+    // A plain click on a link whose default the router did not prevent would load the address.
+    let defaultPrevented: boolean | undefined
+    const watch = (event: Event) => (defaultPrevented = event.defaultPrevented)
+    document.addEventListener('click', watch)
+
+    try {
+      await user.click(await screen.findByRole('link', { name: /^#280/ }))
+      expect(await screen.findByText('#280 · October 1, 2026')).toBeTruthy()
+      expect(defaultPrevented).toBe(true)
+
+      await user.click(screen.getByRole('link', { name: 'Archive' }))
+      await user.click(
+        await screen.findByRole('link', { name: "Back to today's puzzle" }),
+      )
+      expect(await screen.findByText('#308 · October 28, 2026')).toBeTruthy()
+    } finally {
+      document.removeEventListener('click', watch)
+    }
   })
 
   it.each([
@@ -152,12 +201,12 @@ describe('the account area (AC-21, AC-24, AC-32, AC-33)', () => {
 
     // The page is there, but the puzzle waits for the session check (the view is keyed by who plays).
     expect(await screen.findByRole('heading', { level: 1 })).toBeTruthy()
-    expect(screen.queryByText('#308 · October 1, 2026')).toBeNull()
+    expect(screen.queryByText('#280 · October 1, 2026')).toBeNull()
     expect(screen.queryByRole('link', { name: 'Log in' })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Retry' })).toBeNull()
 
     await act(async () => late.answer(GUEST))
-    expect(await screen.findByText('#308 · October 1, 2026')).toBeTruthy()
+    expect(await screen.findByText('#280 · October 1, 2026')).toBeTruthy()
 
     const page = encodeURIComponent('/games/game-guesser/2026-10-01')
     const logIn = await screen.findByRole('link', { name: 'Log in' })
