@@ -2,6 +2,7 @@ import { toast } from 'sonner'
 import { z } from 'zod'
 import { GuessResult, ProgressStatus } from '@/api/generated/models'
 import i18n from '@/i18n'
+import { parsePuzzleDate } from '@/lib/utc-date'
 
 // One `localStorage` key per game, variant and day (AC-37): the guesses with results, the status, `counts_for_streak`
 // and `daily_proof`. Never the answer, a media link or anything that depends on the language.
@@ -133,8 +134,11 @@ export function readGuestRecords(
     const rest = raw.slice(prefix.length)
     const date = rest.slice(-10)
     const variant = rest.slice(0, -11)
-    if (variant === '' || !/^\d{4}-\d{2}-\d{2}$/.test(date)) continue
+    // A key anyone can write: a date that is not a real day (2026-13-40) is no record.
+    if (variant === '' || parsePuzzleDate(date) === null) continue
     const key = { slug, variant, date }
+    // A stray key (`defaultX2026-11-05`) would read as the real one and list its record twice.
+    if (storageKey(key) !== raw) continue
     const record = readGuestRecord(key)
     if (record && record.guesses.length > 0) found.push({ key, record })
   }

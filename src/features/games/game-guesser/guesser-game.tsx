@@ -11,6 +11,7 @@ import { ClueLadder } from '../clue-ladder/clue-ladder'
 import { isGameChanged, useGuess } from '../guess'
 import { isInvalidHistory } from '../guest-progress'
 import { useRefreshLinks } from '../refresh-links'
+import { StatsDialog, type StatsSource } from '../stats/stats-dialog'
 import { useDayChange } from '../use-day-change'
 import type { Viewer } from '../view-queries'
 import { EndScreen } from './end-screen'
@@ -66,6 +67,14 @@ export function GuesserGame({
         clock.source === 'server' &&
         view.date < clock.today))
 
+  // The header's button and the end screen's open the same dialog.
+  const statsSource: StatsSource = {
+    slug,
+    viewer,
+    view,
+    clock,
+  }
+
   const inProgress = view.status === 'in_progress'
   // The end screen takes the focus only when the game ended while this page was open (AC-64): a page that saw the game
   // in progress. A finished puzzle that is opened never did.
@@ -103,7 +112,12 @@ export function GuesserGame({
   return (
     <div className="flex flex-1 flex-col gap-4">
       <header className="flex flex-col gap-1">
-        <h1 className="text-2xl font-medium">{t('games.game_guesser.name')}</h1>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h1 className="text-2xl font-medium">
+            {t('games.game_guesser.name')}
+          </h1>
+          <StatsDialog {...statsSource} className="max-md:h-11" />
+        </div>
         <p className="text-muted-foreground">
           {t('games.puzzle_line', {
             number: view.number,
@@ -171,6 +185,13 @@ export function GuesserGame({
       {!inProgress && (
         <EndScreen
           slug={slug}
+          statsButton={
+            <StatsDialog
+              {...statsSource}
+              highlight={view.status === 'won' ? view.guesses_used : null}
+              className="max-md:h-11"
+            />
+          }
           view={view}
           focusHeading={sawInProgress}
           openedAsToday={openedAsToday}

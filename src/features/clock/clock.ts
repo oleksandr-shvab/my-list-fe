@@ -65,6 +65,14 @@ export function useServerClock() {
   }
 }
 
+// The server's UTC day right now, by the offset measured when the clock answered. With the device fallback the offset is
+// 0, so it is the device's UTC day.
+export function serverToday({
+  offsetMs,
+}: Pick<ServerClock, 'offsetMs'>): string {
+  return todayUtc(new Date(Date.now() + offsetMs))
+}
+
 // hh:mm:ss for what is left; a part second counts as a whole one, so 00:00:00 is only shown when it is over.
 export function formatCountdown(remainingMs: number): string {
   // Never NaN, whatever came in.
