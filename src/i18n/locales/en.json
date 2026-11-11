@@ -111,6 +111,16 @@
     "play_previous": "Play previous days",
     "countdown": "Next puzzle in {{time}}",
     "countdown_done": "A new puzzle is ready",
+    "nudge": {
+      "label": "Create an account",
+      "text": "Nice win! Sign up to keep your streak and stats on every device. Your games from this browser come with you.",
+      "sign_up": "Sign up",
+      "log_in": "Log in",
+      "not_now": "Not now"
+    },
+    "merge_done_one": "Added {{count}} game from this browser to your account.",
+    "merge_done_other": "Added {{count}} games from this browser to your account.",
+    "merge_failed": "Couldn't move your games from this browser. We'll try again next time.",
     "stats": {
       "title": "Statistics",
       "button": "Statistics",

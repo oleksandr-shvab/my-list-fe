@@ -43,11 +43,14 @@ function storageKey({ slug, variant, date }: GuestRecordKey): string {
 const memory = new Map<string, string | null>()
 let noticeShown = false
 
-// The first failure of the browser's storage tells the player once that the game lasts only for this tab (AC-44).
+// The first failure of the browser's storage tells the player once that the game lasts only for this tab (AC-44). The
+// toast waits a tick: a read can fail while a component renders, and a toast must not update the Toaster then.
 function storageFailed() {
   if (noticeShown) return
   noticeShown = true
-  toast.info(i18n.t('games.storage_blocked'), { duration: 10_000 })
+  setTimeout(() => {
+    toast.info(i18n.t('games.storage_blocked'), { duration: 10_000 })
+  }, 0)
 }
 
 // Reading `window.localStorage` itself can throw (blocked cookies), so every use goes through here.
@@ -121,28 +124,59 @@ export function deleteGuestRecord(key: GuestRecordKey) {
   removeRaw(storageKey(key))
 }
 
-// The played days of a game, for the stats, the archive and the merge: records with at least one guess. A record that
-// only keeps a `daily_proof` (a view seen, nothing guessed) is not listed; `readGuestRecord` still reads it.
-export function readGuestRecords(
-  slug: string,
-): { key: GuestRecordKey; record: GuestRecord }[] {
-  const prefix = `${KEY_PREFIX}${slug}.`
-  const found: { key: GuestRecordKey; record: GuestRecord }[] = []
+type PlayedRecord = { key: GuestRecordKey; record: GuestRecord }
+
+// The played days of the wanted games, for the stats, the archive and the merge: records with at least one guess. A
+// record that only keeps a `daily_proof` (a view seen, nothing guessed) is not listed; `readGuestRecord` still reads it.
+function collectGuestRecords(
+  wanted: (slug: string) => boolean,
+): Map<string, PlayedRecord[]> {
+  const found = new Map<string, PlayedRecord[]>()
   for (const raw of allKeys()) {
-    if (!raw.startsWith(prefix)) continue
-    // `<variant>.<date>`: the date is the last ten characters, so a variant may hold dots.
-    const rest = raw.slice(prefix.length)
+    if (!raw.startsWith(KEY_PREFIX)) continue
+    // `<slug>.<variant>.<date>`: a slug has no dots; the date is the last ten characters, so a variant may hold dots.
+    const rest = raw.slice(KEY_PREFIX.length)
+    const dot = rest.indexOf('.')
+    const slug = rest.slice(0, dot)
+    if (dot < 0 || !wanted(slug)) continue
     const date = rest.slice(-10)
-    const variant = rest.slice(0, -11)
+    const variant = rest.slice(dot + 1, -11)
     // A key anyone can write: a date that is not a real day (2026-13-40) is no record.
     if (variant === '' || parsePuzzleDate(date) === null) continue
     const key = { slug, variant, date }
     // A stray key (`defaultX2026-11-05`) would read as the real one and list its record twice.
     if (storageKey(key) !== raw) continue
     const record = readGuestRecord(key)
-    if (record && record.guesses.length > 0) found.push({ key, record })
+    if (record && record.guesses.length > 0) {
+      const played = found.get(slug) ?? []
+      played.push({ key, record })
+      found.set(slug, played)
+    }
   }
   return found
+}
+
+export function readGuestRecords(slug: string): PlayedRecord[] {
+  return collectGuestRecords((found) => found === slug).get(slug) ?? []
+}
+
+// The same for several games with one scan of the storage.
+export function readGuestRecordsByGame(
+  slugs: readonly string[],
+): Map<string, PlayedRecord[]> {
+  return collectGuestRecords((slug) => slugs.includes(slug))
+}
+
+// The sign-up nudge's "Not now" (AC-93): one flag for this browser. With storage that refuses it is kept for this tab
+// only, like a record (AC-94).
+const NUDGE_DISMISSED_KEY = 'dgc.nudge_dismissed'
+
+export function isNudgeDismissed(): boolean {
+  return readRaw(NUDGE_DISMISSED_KEY) !== null
+}
+
+export function dismissNudge() {
+  writeRaw(NUDGE_DISMISSED_KEY, '1')
 }
 
 // True once a failure sent this tab to its memory: the records are not saved for another visit.

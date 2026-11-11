@@ -16,6 +16,19 @@ import {
   type Reply,
 } from '@/test/router-harness'
 import { writeGuestRecord } from '../guest-records'
+import { guestRecordsByDate } from './archive-state'
+import { useGuestRecords } from './use-guest-records'
+
+// The page's whole path to the browser's records, wrapped to see how it is used (both still work for real). The merge
+// reads the storage directly, so its reads cannot be taken for the page's.
+vi.mock('./archive-state', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./archive-state')>()
+  return { ...actual, guestRecordsByDate: vi.fn(actual.guestRecordsByDate) }
+})
+vi.mock('./use-guest-records', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('./use-guest-records')>()
+  return { ...actual, useGuestRecords: vi.fn(actual.useGuestRecords) }
+})
 
 const SLUG = 'game-guesser'
 const ARCHIVE_URL = `/v1/games/${SLUG}/archive`
@@ -183,10 +196,11 @@ function boxesOf(row: ReturnType<typeof within>) {
 describe('the archive list for an account (AC-81, AC-84, AC-85)', () => {
   it('shows the server state and guess count, not the browser record, and draws the boxes from them', async () => {
     // Records of this browser for days the server speaks for: the server's item wins.
+    vi.mocked(guestRecordsByDate).mockClear()
+    vi.mocked(useGuestRecords).mockClear()
     record('2026-11-04', 'won', [guess(1, 'correct')])
     record('2026-11-02', 'won', [guess(2, 'correct')])
-    const read = vi.spyOn(Storage.prototype, 'getItem')
-    renderArchive(
+    const app = renderArchive(
       {
         status: 200,
         data: {
@@ -211,6 +225,17 @@ describe('the archive list for an account (AC-81, AC-84, AC-85)', () => {
       },
       SIGNED_IN,
     )
+    // The browser's games move into the account first (AC-100); the merge is what reads the records.
+    app.backend.replies.set(`/v1/games/${SLUG}/progress/merge`, {
+      status: 200,
+      data: {
+        stored: 2,
+        already_present: 0,
+        rejected: 0,
+        daily_unproven: 0,
+        rejected_entries: [],
+      },
+    })
 
     const rows = within(
       await screen.findByRole('list', { name: 'Past puzzles' }),
@@ -224,10 +249,20 @@ describe('the archive list for an account (AC-81, AC-84, AC-85)', () => {
       { name: 'In progress', count: 6, icons: 0 },
       { name: 'Not played', count: 6, icons: 0 },
     ])
-    // Every item has its state, so the browser's records are not read at all.
+    // Every item has its state, so the page never asks for the browser's records: not on any render, also the one a focus
+    // causes (it renders again, which the call count shows).
+    record('2026-11-03', 'won', [guess(3, 'correct')])
+    const renders = vi.mocked(useGuestRecords).mock.calls.length
+    await act(async () => {
+      window.dispatchEvent(new Event('focus'))
+    })
+    expect(vi.mocked(useGuestRecords).mock.calls.length).toBeGreaterThan(
+      renders,
+    )
     expect(
-      read.mock.calls.filter(([key]) => key.startsWith('dgc.guest.')),
-    ).toEqual([])
+      vi.mocked(useGuestRecords).mock.calls.map(([, needed]) => needed),
+    ).not.toContain(true)
+    expect(guestRecordsByDate).not.toHaveBeenCalled()
     expect(rows.map((row) => row.getByRole('link').textContent)).toEqual([
       expect.stringContaining('Solved in 3'),
       expect.stringContaining('Not solved'),
