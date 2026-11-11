@@ -23,7 +23,24 @@
       "name": "Game Guesser"
     },
     "archive_title": "Archive",
-    "archive_coming_soon": "The archive is coming soon.",
+    "archive": {
+      "back_to_today": "Back to today's puzzle",
+      "list_label": "Past puzzles",
+      "number": "#{{number}}",
+      "loading": "Loading the archive…",
+      "empty": "No past puzzles yet",
+      "load_failed": "Couldn't load the archive.",
+      "retry": "Try again",
+      "show_more": "Show more",
+      "loading_more": "Loading…",
+      "state": {
+        "not_played": "Not played",
+        "in_progress": "In progress",
+        "won_one": "Solved in {{count}}",
+        "won_other": "Solved in {{count}}",
+        "lost": "Not solved"
+      }
+    },
     "unknown_game": "Unknown game",
     "unknown_game_text": "There is no game at this address.",
     "no_puzzle": "No puzzle for this date",

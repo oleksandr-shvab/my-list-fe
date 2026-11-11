@@ -4,14 +4,12 @@ import { useTranslation } from 'react-i18next'
 import type { GameGuesserView } from '@/api/generated/models'
 import { ErrorScreen } from '@/components/error-screen'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useSession } from '@/features/auth/session'
 import { ApiError } from '@/lib/api-client'
 import { NoPuzzle, NoPuzzleToday } from '../no-puzzle'
 import type { GameScreenProps } from '../types'
 import { UnknownGame } from '../unknown-game'
+import { useViewer } from '../use-viewer'
 import {
-  GUEST_VIEWER,
-  UNCONFIRMED_VIEWER,
   gameViewQueryOptions,
   todayViewQueryOptions,
   type Viewer,
@@ -24,13 +22,7 @@ const UNKNOWN_VIEW_TYPE = new Error(
 
 // Default export, so the registry can load it with a plain `lazy(() => import(...))`.
 export default function GameGuesserScreen({ slug, date }: GameScreenProps) {
-  const session = useSession()
-  // A failed session check is not a guest: the key says so, and each answer's `signed_in` decides what it is.
-  const viewer =
-    session.user?.id ??
-    (session.status === 'guest' ? GUEST_VIEWER : UNCONFIRMED_VIEWER)
-  // The key names the viewer, so wait until the session check says who it is (R-2).
-  const ready = session.status !== 'pending'
+  const { viewer, ready } = useViewer()
 
   // A page without a date asks for today once and keeps the day of that answer: a refetch, a retry or a sign-in
   // later asks for that day, never for "today" again (AC-2, AC-47). The state lives as long as the screen.
