@@ -451,12 +451,13 @@ describe('the clue content (AC-11, AC-19, AC-20)', () => {
       hint: { kind, value },
     })
     serve(app, {
-      ...view(3),
+      ...view(4),
       steps: [
         withHint(1, 'platform', 'Nintendo 64'),
         withHint(2, 'franchise_rating', 'E'),
         // A name that exists on every object must not count as a known kind.
         withHint(3, 'constructor', 'x'),
+        withHint(4, 'critic_score', '90'),
       ],
     })
 
@@ -465,13 +466,19 @@ describe('the clue content (AC-11, AC-19, AC-20)', () => {
       .getAllByText((_, element) => element?.tagName === 'P')
       .map((element) => element.textContent)
       .filter((text) => text?.includes(':'))
-    expect(hints).toEqual(['Platform: Nintendo 64', 'Hint: E', 'Hint: x'])
+    expect(hints).toEqual([
+      'Platform: Nintendo 64',
+      'Hint: E',
+      'Hint: x',
+      'Critic score: 90',
+    ])
 
     const images = screen.getAllByRole('img', { hidden: true })
     expect(images.map((image) => image.getAttribute('alt'))).toEqual([
       'Clue 1 of 6',
       'Clue 2 of 6',
       'Clue 3 of 6',
+      'Clue 4 of 6',
     ])
     expect(images[0].getAttribute('width')).toBe('640')
     expect(images[0].getAttribute('height')).toBe('480')

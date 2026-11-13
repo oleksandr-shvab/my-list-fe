@@ -42,7 +42,7 @@ function viewOf(
     steps: [
       {
         step: 1,
-        hint: { kind: 'metacritic_score', value: 'Hint Value 91' },
+        hint: { kind: 'critic_score', value: 'Hint Value 91' },
         media: {
           type: 'image',
           width: 640,

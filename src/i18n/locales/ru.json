@@ -80,7 +80,7 @@
       "skipped": "Пропущено"
     },
     "hint": {
-      "metacritic_score": "Metacritic",
+      "critic_score": "Оценка критиков",
       "platform": "Платформа",
       "genre": "Жанр",
       "year": "Год выхода",
