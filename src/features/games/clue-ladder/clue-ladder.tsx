@@ -6,7 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ClueMedia } from './clue-media'
 
 const HINT_LABEL_KEYS: Record<string, ParseKeys> = {
-  metacritic_score: 'games.hint.metacritic_score',
+  critic_score: 'games.hint.critic_score',
   platform: 'games.hint.platform',
   genre: 'games.hint.genre',
   year: 'games.hint.year',

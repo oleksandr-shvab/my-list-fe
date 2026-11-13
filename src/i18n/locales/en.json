@@ -74,7 +74,7 @@
       "skipped": "Skipped"
     },
     "hint": {
-      "metacritic_score": "Metacritic",
+      "critic_score": "Critic score",
       "platform": "Platform",
       "genre": "Genre",
       "year": "Release year",
